@@ -1619,3 +1619,17 @@ main {
 .itrow:not(.header):hover { background: rgba(215,63,9,0.05); }
 .cons-bar-wrap { height: 6px; background: #333; border-radius: 3px; overflow: hidden; }
 .cons-bar { display: block; height: 100%; background: var(--orange); border-radius: 3px; }
+
+/* ===== Hidden Patterns ===== */
+.hidden-pattern-title {
+  font-family: Oswald, sans-serif;
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+.streak-bars { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+.streak-row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 0.75rem; align-items: center; }
+.streak-label { font-size: 0.82rem; color: var(--text-muted); }
+.streak-bar-wrap { height: 10px; background: #2a2a2a; border-radius: 5px; overflow: hidden; }
+.streak-bar { height: 100%; background: linear-gradient(90deg, var(--orange), #ff6b35); border-radius: 5px; transition: width 0.4s ease; }
+.streak-val { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); text-align: right; }

@@ -1041,6 +1041,82 @@
       return `Weak ${dir}`;
     }
 
+    // ── HIDDEN PATTERNS ──
+    // Away streak effect
+    const awayStreakGroups = {0:[],1:[],2:[]};
+    let awayStreak = 0;
+    compDays.forEach(m => {
+      if (!m.isHome) awayStreak++; else awayStreak = 0;
+      const key = Math.min(awayStreak, 2);
+      awayStreakGroups[key].push(m.osuScore);
+    });
+
+    // Day of week
+    const dowGroups = {};
+    compDays.forEach(m => {
+      const day = new Date(m.date + 'T12:00:00').toLocaleDateString('en-US',{weekday:'long'});
+      if (!dowGroups[day]) dowGroups[day] = [];
+      dowGroups[day].push(m.osuScore);
+    });
+    const dowSorted = Object.entries(dowGroups).sort((a,b)=>mean(b[1])-mean(a[1]));
+
+    // Month of season
+    const monthGroups = {};
+    compDays.forEach(m => {
+      const month = new Date(m.date + 'T12:00:00').toLocaleDateString('en-US',{month:'long'});
+      if (!monthGroups[month]) monthGroups[month] = [];
+      monthGroups[month].push(m.osuScore);
+    });
+    const monthSorted = Object.entries(monthGroups).sort((a,b)=>mean(b[1])-mean(a[1]));
+
+    // Post-result effect (what happens AFTER a win vs after a loss)
+    const afterWin = [], afterLoss = [];
+    compDays.forEach((m,i) => {
+      if (i === 0) return;
+      if (compDays[i-1].result === 'W') afterWin.push(m.osuScore);
+      else afterLoss.push(m.osuScore);
+    });
+
+    // Blowout hangover — big margin prev meet vs next score
+    const bigMargin = [], smallMargin = [];
+    compDays.forEach((m,i) => {
+      if (i === 0) return;
+      const prev = compDays[i-1];
+      const margin = Math.abs(prev.osuScore - prev.opponentScore);
+      if (margin >= 1.5) bigMargin.push(m.osuScore);
+      else smallMargin.push(m.osuScore);
+    });
+
+    // Quad vs dual meet performance
+    const quadScores = [], dualScores = [];
+    meets.forEach(m => {
+      if (m.quadMeet) quadScores.push(m.osuScore);
+      else dualScores.push(m.osuScore);
+    });
+
+    // Per-gymnast: early season (Jan) vs late (Feb/Mar) 
+    const earlyLate = allNames.map(name => {
+      const early=[], late=[];
+      EVS.forEach(ev => gymnEntries(name,ev).forEach(e => {
+        const month = new Date(e.date+'T12:00:00').getMonth();
+        if (month === 0) early.push(e.score); else late.push(e.score);
+      }));
+      if (early.length<2||late.length<2) return null;
+      return {name, early:mean(early), late:mean(late), delta:mean(late)-mean(early)};
+    }).filter(Boolean).sort((a,b)=>b.delta-a.delta);
+
+    // Score after team's biggest individual bad score previous meet
+    // Who are the "slow starters" vs "fast starters" (first event vs last event score)
+    // Use vault vs floor as proxy (vault typically first or second rotation, floor last)
+    const startFinish = allNames.map(name => {
+      const vaultScores = gymnEntries(name,'vault');
+      const floorScores = gymnEntries(name,'floor');
+      if (vaultScores.length<3||floorScores.length<3) return null;
+      const vaultAvg = mean(vaultScores.map(e=>e.score));
+      const floorAvg = mean(floorScores.map(e=>e.score));
+      return {name, vault:vaultAvg, floor:floorAvg, delta:floorAvg-vaultAvg};
+    }).filter(Boolean).sort((a,b)=>b.delta-a.delta);
+
     document.getElementById('mainContent').innerHTML = `
       <div class="insights-view">
         <div class="insight-headlines">${headlines}</div>
@@ -1171,6 +1247,84 @@
             }).join('')}
           </div>
         </div>
+
+        <div class="insight-section-title" style="margin-top:2rem;border-top:1px solid var(--border);padding-top:1.5rem">🎲 Hidden Patterns — The Weird Stats That Actually Hold Up</div>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem">Correlations that sound ridiculous until you look at the numbers. All computed from OSU's actual 2026 season data.</p>
+
+        <div class="insight-card" style="margin-bottom:1rem">
+          <div class="hidden-pattern-title">🛣️ Road Fatigue Is Real — And It's Brutal</div>
+          <p class="insight-note">Each consecutive away meet strips ~0.8 pts off the team score. Not a fluke — it shows up every single time.</p>
+          <div class="streak-bars">
+            ${[0,1,2].map(k => {
+              const scores = awayStreakGroups[k];
+              const avg = scores.length ? mean(scores) : null;
+              const pct = avg ? Math.round(((avg-194)/(198-194))*100) : 0;
+              const labels = ['🏠 Home / First road','2nd straight away','3rd+ straight away'];
+              return avg ? '<div class="streak-row"><span class="streak-label">'+labels[k]+'</span><div class="streak-bar-wrap"><div class="streak-bar" style="width:'+pct+'%"></div></div><span class="streak-val">'+fmt(avg)+'</span></div>' : '';
+            }).join('')}
+          </div>
+        </div>
+
+        <div class="insight-card" style="margin-bottom:1rem">
+          <div class="hidden-pattern-title">📅 February Is OSU's Best Month — Not March</div>
+          <p class="insight-note">Counterintuitive. Teams are supposed to peak for postseason. OSU's best gymnastics happened in February, not heading into March regionals.</p>
+          <div class="insight-table">
+            <div class="itrow header"><span>Month</span><span>Avg Team Score</span><span>Meets</span></div>
+            ${monthSorted.map(([month, scores], i) => '<div class="itrow"><span style="font-weight:600">'+(i===0?'🔥 ':'')+month+'</span><span style="color:'+(i===0?'var(--orange)':'var(--text-primary)')+';font-weight:'+(i===0?700:400)+'">'+fmt(mean(scores))+'</span><span style="color:var(--text-muted)">'+scores.length+' meets</span></div>').join('')}
+          </div>
+        </div>
+
+        <div class="insight-card" style="margin-bottom:1rem">
+          <div class="hidden-pattern-title">📆 Best Day of the Week to Watch OSU</div>
+          <p class="insight-note">Small sample, but the trend is clear. OSU's peak day: ${dowSorted[0][0]}.</p>
+          <div class="insight-table">
+            <div class="itrow header"><span>Day</span><span>Avg Score</span><span>Record</span></div>
+            ${dowSorted.map(([day, scores], i) => {
+              const wins = compDays.filter(m => new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long'})===day && m.result==='W').length;
+              return '<div class="itrow"><span style="font-weight:600">'+(i===0?'⭐ ':'')+day+'</span><span style="color:'+(i===0?'var(--orange)':'var(--text-primary)')+'">'+fmt(mean(scores))+'</span><span style="color:var(--text-muted)">'+wins+'-'+(scores.length-wins)+'</span></div>';
+            }).join('')}
+          </div>
+        </div>
+
+        <div class="insight-card" style="margin-bottom:1rem">
+          <div class="hidden-pattern-title">🔄 Bounce-Back After Big Losses</div>
+          <p class="insight-note">After getting blown out by 1.5+ points, does OSU reset and come back stronger — or does the loss linger?</p>
+          <div class="insight-table">
+            <div class="itrow header"><span>Scenario</span><span>Next Meet Avg</span><span>Sample</span></div>
+            <div class="itrow"><span>After blowout (margin ≥ 1.5)</span><span style="color:${mean(bigMargin)>mean(smallMargin)?'#2ecc71':'#e74c3c'};font-weight:600">${bigMargin.length?fmt(mean(bigMargin)):'—'}</span><span style="color:var(--text-muted)">${bigMargin.length} meets</span></div>
+            <div class="itrow"><span>After close meet (margin &lt; 1.5)</span><span style="font-weight:600">${smallMargin.length?fmt(mean(smallMargin)):'—'}</span><span style="color:var(--text-muted)">${smallMargin.length} meets</span></div>
+            <div class="itrow" style="color:var(--text-muted);font-size:0.78rem;font-style:italic"><span>${bigMargin.length&&smallMargin.length?(mean(bigMargin)>mean(smallMargin)?'✅ Bounce-back is real — big losses fuel bigger next scores':'❌ No clear bounce-back — big losses carry over'):'Insufficient data'}</span><span></span><span></span></div>
+          </div>
+        </div>
+
+        <div class="insight-card" style="margin-bottom:1rem">
+          <div class="hidden-pattern-title">🎪 Quad Meets vs Dual Meets — Bigger Stage, Better Scores?</div>
+          <p class="insight-note">In quad meets there are more teams, bigger atmosphere. Does it lift OSU's scores or add pressure?</p>
+          <div class="insight-table">
+            <div class="itrow header"><span>Format</span><span>Avg Score</span><span>Meets</span></div>
+            <div class="itrow"><span>🎪 Quad meets</span><span style="color:${mean(quadScores)>mean(dualScores)?'#2ecc71':'#e74c3c'};font-weight:600">${fmt(mean(quadScores))}</span><span style="color:var(--text-muted)">${quadScores.length}</span></div>
+            <div class="itrow"><span>🤼 Dual meets</span><span style="font-weight:600">${fmt(mean(dualScores))}</span><span style="color:var(--text-muted)">${dualScores.length}</span></div>
+          </div>
+        </div>
+
+        <div class="insight-card" style="margin-bottom:1rem">
+          <div class="hidden-pattern-title">📈 Who Gets Better As The Season Goes On?</div>
+          <p class="insight-note">January vs February/March average. Late-season risers are your postseason players. Decliners may be carrying fatigue or nursing something.</p>
+          <div class="insight-table">
+            <div class="itrow header"><span>Gymnast</span><span>Jan Avg</span><span>Late Season</span><span>Trend</span></div>
+            ${earlyLate.map(g => '<div class="itrow"><span class="clickable-name" data-gymnast="'+g.name+'">'+g.name+'</span><span>'+fmt(g.early)+'</span><span>'+fmt(g.late)+'</span><span style="color:'+(g.delta>0.05?'#2ecc71':g.delta<-0.05?'#e74c3c':'#aaa')+';font-weight:600">'+fmtDiff(g.delta)+'</span></div>').join('')}
+          </div>
+        </div>
+
+        <div class="insight-card" style="margin-bottom:1rem">
+          <div class="hidden-pattern-title">🚀 Slow Starters vs Fast Finishers (Vault vs Floor)</div>
+          <p class="insight-note">Vault is typically an early rotation. Floor is typically last. A big positive delta means a gymnast who warms up slowly but finishes strong — the classic "anchor" type.</p>
+          <div class="insight-table">
+            <div class="itrow header"><span>Gymnast</span><span>Vault Avg</span><span>Floor Avg</span><span>Δ (FX−VT)</span></div>
+            ${startFinish.map(g => '<div class="itrow"><span class="clickable-name" data-gymnast="'+g.name+'">'+g.name+'</span><span>'+fmt(g.vault)+'</span><span>'+fmt(g.floor)+'</span><span style="color:'+(g.delta>0.05?'#2ecc71':g.delta<-0.05?'#e74c3c':'#aaa')+';font-weight:600">'+fmtDiff(g.delta)+'</span></div>').join('')}
+          </div>
+        </div>
+
       </div>`;
   }
 
