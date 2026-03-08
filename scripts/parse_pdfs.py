@@ -38,6 +38,7 @@ MEETS = [
         "id": "alabama-jan-30", "date": "2026-01-30", "opponent": "Alabama",
         "location": "Coleman Coliseum, Tuscaloosa, AL", "isHome": False,
         "url": "https://s3.us-east-2.amazonaws.com/sidearm.nextgen.sites/oregonstate.sidearmsports.com/documents/2026/1/31/AlabamaFINAL.pdf?timestamp=20260131043916",
+        "imageBasedPdf": True,
         "hardcoded": {
             "osuScore": 195.825, "opponentScore": 197.450, "result": "L",
             "events": {
@@ -95,6 +96,7 @@ MEETS = [
         "id": "utah-state-mar-6", "date": "2026-03-06", "opponent": "Utah State",
         "location": "Dee Glen Smith Spectrum, Logan, UT", "isHome": False,
         "url": "https://s3.us-east-2.amazonaws.com/sidearm.nextgen.sites/oregonstate.sidearmsports.com/documents/2026/3/7/Utah_State_vs._Oregon_State_-_Blank_Scoresheet.pdf?timestamp=20260307041803",
+        "imageBasedPdf": True,
         "hardcoded": {
             "osuScore": 196.150, "opponentScore": 196.950, "result": "L",
             "events": {
@@ -287,7 +289,7 @@ def parse_osu_athletes(pages_text):
                             break
                     break
     
-    return list(athletes.values())
+    return fix_name_splits(list(athletes.values()))
 
 
 def _flush_event(athletes, event, scores, names_text):
@@ -302,16 +304,62 @@ def _flush_event(athletes, event, scores, names_text):
             athletes[name]["scores"][event] = scores[j]
 
 
+def fix_name_splits(athletes):
+    """
+    Post-process athlete list to fix name splitting bugs caused by PDF line breaks.
+
+    The name 'Taylor DeVries' is split by pypdf at the internal capital 'V' in 'DeVries',
+    producing 'Taylor De' (stored as an athlete) and 'Vries' (prepended to the next
+    athlete's name, e.g. 'VriesSophia Esposito').
+
+    This function:
+    1. Renames 'Taylor De' -> 'Taylor DeVries'
+    2. Strips the 'Vries' prefix from any athlete name that starts with it
+       (e.g. 'VriesSophia Esposito' -> 'Sophia Esposito')
+    3. Merges any duplicate athlete entries that result from the rename,
+       combining their event scores into a single record.
+    """
+    merged = {}
+    for athlete in athletes:
+        name = athlete["name"]
+        scores = dict(athlete["scores"])
+
+        # Fix the truncated 'Taylor De' entry
+        if name == "Taylor De":
+            name = "Taylor DeVries"
+
+        # Strip 'Vries' prefix from corrupted names (e.g. 'VriesSophia Esposito')
+        elif name.startswith("Vries") and len(name) > 5:
+            name = name[5:].strip()
+
+        if name in merged:
+            # Merge scores — existing entry takes priority for conflicts
+            for event, score in scores.items():
+                if event not in merged[name]["scores"]:
+                    merged[name]["scores"][event] = score
+        else:
+            merged[name] = {
+                "name": name,
+                "team": athlete.get("team", "Oregon State"),
+                "scores": scores,
+            }
+
+    return list(merged.values())
+
+
 def parse_meet_pdf(meet_info):
     if "hardcoded" in meet_info:
         hc = meet_info["hardcoded"]
-        return {
+        record = {
             "id": meet_info["id"], "date": meet_info["date"],
             "opponent": meet_info["opponent"], "location": meet_info["location"],
             "isHome": meet_info["isHome"], "result": hc["result"],
             "osuScore": hc["osuScore"], "opponentScore": hc["opponentScore"],
             "events": hc["events"], "athletes": hc["athletes"],
         }
+        if meet_info.get("imageBasedPdf"):
+            record["imageBasedPdf"] = True
+        return record
     
     pdf_path = os.path.join(DOWNLOAD_DIR, f"{meet_info['id']}.pdf")
     reader = PdfReader(pdf_path)
@@ -327,11 +375,17 @@ def parse_meet_pdf(meet_info):
             team_results_pages.append(text)
         if "NCAA Gymnastics Score Sheet" in text:
             score_sheet_pages.append(text)
-    
+
+    # Detect image-based PDFs: pypdf returns no usable text
+    is_image_based = all(len(t.strip()) == 0 for t in all_text)
+    if is_image_based:
+        print(f"  WARNING: Image-based PDF detected — no text extractable. Skipping athlete parsing.")
+        return None
+
     team_scores = {}
     for pt in team_results_pages:
         team_scores.update(parse_team_results(pt))
-    
+
     osu_key = next((k for k in team_scores if "oregon state" in k.lower()), None)
     if not osu_key:
         print(f"  WARNING: Oregon State not found. Teams: {list(team_scores.keys())}")
