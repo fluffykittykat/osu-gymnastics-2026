@@ -579,7 +579,7 @@
       </div>
       ${teamsTable}
       ${meet.recap ? (() => {
-        const paragraphs = meet.recap.split(/\n\n+/).filter(p => p.trim());
+        const paragraphs = meet.recap.split(/(\r?\n[\s\u00a0]*\r?\n|\r\n\u00a0\s*\r\n)/).filter(p => p.trim() && !/^\s*$/.test(p));
         const preview = paragraphs.slice(0, 2).map(p => `<p>${p.trim()}</p>`).join('');
         const rest = paragraphs.slice(2).map(p => `<p>${p.trim()}</p>`).join('');
         return `
