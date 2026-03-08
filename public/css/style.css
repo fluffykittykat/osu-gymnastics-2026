@@ -1455,3 +1455,20 @@ main {
 .toast-success { border-left: 3px solid #2ecc71; }
 .toast-error   { border-left: 3px solid #e74c3c; }
 .toast-live    { border-left: 3px solid #ff4444; }
+
+/* ===== Meet Recap ===== */
+.recap-card { margin-bottom: 1.5rem; }
+.recap-body {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+.recap-body p { margin: 0 0 0.75rem; }
+.recap-link {
+  display: inline-block;
+  margin-top: 0.75rem;
+  color: var(--orange);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.recap-link:hover { text-decoration: underline; }

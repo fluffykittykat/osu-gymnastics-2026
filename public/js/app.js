@@ -576,6 +576,12 @@
         </div>
       </div>
       ${teamsTable}
+      ${meet.recap ? `
+      <div class="section-card recap-card">
+        <h2 class="section-title">📰 Meet Recap</h2>
+        <div class="recap-body">${meet.recap.replace(/\n\n/g, '</p><p>').replace(/^/, '<p>').replace(/$/, '</p>')}</div>
+        ${meet.recapUrl ? `<a href="${meet.recapUrl}" target="_blank" class="recap-link">Read full recap on osubeavers.com →</a>` : ''}
+      </div>` : ''}
       <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
       <div class="detail-event-grid">${eventCards}</div>
     `;
