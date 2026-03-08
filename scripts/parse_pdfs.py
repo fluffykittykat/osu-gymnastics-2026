@@ -12,10 +12,12 @@ from pypdf import PdfReader
 MEETS = [
     {
         "id": "best-of-west-jan-3", "date": "2026-01-03",
-        "opponent": "Best of the West (Washington, Cal, UCLA)",
         "location": "Alaska Airlines Arena, Seattle, WA", "isHome": False,
         "url": "https://s3.us-east-2.amazonaws.com/sidearm.nextgen.sites/oregonstate.sidearmsports.com/documents/2026/1/4/Best_of_the_West_Final_Scores.pdf?timestamp=20260104035128",
         "isQuad": True,
+        "quadName": "Best of the West Quad",
+        # id prefix used to generate per-opponent IDs: {idPrefix}-{slug}-{dateSlug}
+        "idPrefix": "best-of-west",
     },
     {
         "id": "byu-jan-9", "date": "2026-01-09", "opponent": "BYU",
@@ -64,10 +66,12 @@ MEETS = [
     },
     {
         "id": "boise-state-feb-6", "date": "2026-02-06",
-        "opponent": "Boise State Quad (SJSU, UC Davis)",
         "location": "ExtraMile Arena, Boise, ID", "isHome": False,
         "url": "https://s3.us-east-2.amazonaws.com/sidearm.nextgen.sites/oregonstate.sidearmsports.com/documents/2026/2/7/BoiseStateNoJudges.pdf?timestamp=20260207062723",
         "isQuad": True,
+        "quadName": "Boise State Quad",
+        "idPrefix": "boise-state-quad",
+        "attendance": "2,677",
     },
     {
         "id": "southern-utah-feb-14", "date": "2026-02-14", "opponent": "Southern Utah",
@@ -76,10 +80,11 @@ MEETS = [
     },
     {
         "id": "twu-quad-feb-22", "date": "2026-02-22",
-        "opponent": "TWU Quad (Kent State, Arizona State)",
         "location": "Kitty Magee Arena, Denton, TX", "isHome": False,
         "url": "https://s3.us-east-2.amazonaws.com/sidearm.nextgen.sites/oregonstate.sidearmsports.com/documents/2026/2/22/TWU_Results.pdf?timestamp=20260222115459",
         "isQuad": True,
+        "quadName": "TWU Quad",
+        "idPrefix": "twu-quad",
     },
     {
         "id": "stanford-feb-27", "date": "2026-02-27", "opponent": "Stanford",
@@ -335,16 +340,65 @@ def parse_meet_pdf(meet_info):
     osu = team_scores[osu_key]
     is_quad = meet_info.get("isQuad", False)
     
+    athletes = parse_osu_athletes(score_sheet_pages)
+    
+    attendance = meet_info.get("attendance", "")
+    if not attendance:
+        for t in all_text:
+            m = re.search(r"Attendance:\s*([\d,]+)", t)
+            if m:
+                attendance = m.group(1)
+                break
+    
+    all_teams = [
+        {"team": n, "rank": d["rank"], "total": d["total"],
+         "vault": d["vault"], "bars": d["bars"], "beam": d["beam"], "floor": d["floor"]}
+        for n, d in sorted(team_scores.items(), key=lambda x: x[1]["rank"])
+    ]
+    
     if is_quad:
-        result = "W" if osu["rank"] == 1 else "L"
-        top_opp = max(((k, v) for k, v in team_scores.items() if k != osu_key), key=lambda x: x[1]["total"])
-        opp_score = top_opp[1]["total"]
-        opp_events = {e: top_opp[1][e] for e in ["vault", "bars", "beam", "floor"]}
-        all_teams = [
-            {"team": n, "rank": d["rank"], "total": d["total"],
-             "vault": d["vault"], "bars": d["bars"], "beam": d["beam"], "floor": d["floor"]}
-            for n, d in sorted(team_scores.items(), key=lambda x: x[1]["rank"])
-        ]
+        # Generate one record per opponent
+        quad_name = meet_info.get("quadName", "Quad Meet")
+        id_prefix = meet_info.get("idPrefix", meet_info["id"])
+        date_slug = meet_info["date"].replace("-", "").replace("2026", "")  # e.g. "0103"
+        month_day = meet_info["date"][5:]  # "01-03" → "jan-3" via below
+        # Build a date slug like "jan-3"
+        months = {"01":"jan","02":"feb","03":"mar","04":"apr","05":"may","06":"jun",
+                  "07":"jul","08":"aug","09":"sep","10":"oct","11":"nov","12":"dec"}
+        mo, day = meet_info["date"][5:7], str(int(meet_info["date"][8:]))
+        date_slug = f"{months[mo]}-{day}"
+        
+        records = []
+        for opp_name, opp_data in team_scores.items():
+            if opp_name == osu_key:
+                continue
+            opp_slug = re.sub(r"[^a-z0-9]+", "-", opp_name.lower()).strip("-")
+            record_id = f"{id_prefix}-{opp_slug}-{date_slug}"
+            result = "W" if osu["total"] > opp_data["total"] else "L"
+            record = {
+                "id": record_id,
+                "date": meet_info["date"],
+                "opponent": opp_name,
+                "location": meet_info["location"],
+                "isHome": meet_info["isHome"],
+                "result": result,
+                "osuScore": osu["total"],
+                "opponentScore": opp_data["total"],
+                "quadMeet": True,
+                "quadName": quad_name,
+                "events": {
+                    "vault": {"osu": osu["vault"], "opponent": opp_data["vault"]},
+                    "bars": {"osu": osu["bars"], "opponent": opp_data["bars"]},
+                    "beam": {"osu": osu["beam"], "opponent": opp_data["beam"]},
+                    "floor": {"osu": osu["floor"], "opponent": opp_data["floor"]},
+                },
+                "athletes": athletes,
+                "allTeams": all_teams,
+            }
+            if attendance:
+                record["attendance"] = attendance
+            records.append(record)
+        return records
     else:
         opps = {k: v for k, v in team_scores.items() if k != osu_key}
         if opps:
@@ -354,36 +408,23 @@ def parse_meet_pdf(meet_info):
         else:
             opp_score, opp_events = 0, {"vault": 0, "bars": 0, "beam": 0, "floor": 0}
         result = "W" if osu["total"] > opp_score else "L"
-        all_teams = None
-    
-    athletes = parse_osu_athletes(score_sheet_pages)
-    
-    attendance = ""
-    for t in all_text:
-        m = re.search(r"Attendance:\s*([\d,]+)", t)
-        if m:
-            attendance = m.group(1)
-            break
-    
-    meet_data = {
-        "id": meet_info["id"], "date": meet_info["date"],
-        "opponent": meet_info["opponent"], "location": meet_info["location"],
-        "isHome": meet_info["isHome"], "result": result,
-        "osuScore": osu["total"], "opponentScore": opp_score,
-        "events": {
-            "vault": {"osu": osu["vault"], "opponent": opp_events["vault"]},
-            "bars": {"osu": osu["bars"], "opponent": opp_events["bars"]},
-            "beam": {"osu": osu["beam"], "opponent": opp_events["beam"]},
-            "floor": {"osu": osu["floor"], "opponent": opp_events["floor"]},
-        },
-        "athletes": athletes,
-    }
-    if attendance:
-        meet_data["attendance"] = attendance
-    if all_teams:
-        meet_data["allTeams"] = all_teams
-        meet_data["isQuad"] = True
-    return meet_data
+        
+        meet_data = {
+            "id": meet_info["id"], "date": meet_info["date"],
+            "opponent": meet_info["opponent"], "location": meet_info["location"],
+            "isHome": meet_info["isHome"], "result": result,
+            "osuScore": osu["total"], "opponentScore": opp_score,
+            "events": {
+                "vault": {"osu": osu["vault"], "opponent": opp_events["vault"]},
+                "bars": {"osu": osu["bars"], "opponent": opp_events["bars"]},
+                "beam": {"osu": osu["beam"], "opponent": opp_events["beam"]},
+                "floor": {"osu": osu["floor"], "opponent": opp_events["floor"]},
+            },
+            "athletes": athletes,
+        }
+        if attendance:
+            meet_data["attendance"] = attendance
+        return meet_data
 
 
 def main():
@@ -397,14 +438,22 @@ def main():
         print(f"Parsing {info['id']}...")
         try:
             data = parse_meet_pdf(info)
-            if data:
+            if data is None:
+                print("  FAILED")
+            elif isinstance(data, list):
+                # Quad meet: multiple records returned
+                for record in data:
+                    meets.append(record)
+                    for a in record["athletes"]:
+                        if "aa" in a["scores"] and a["scores"]["aa"] < 30:
+                            print(f"  WARNING: Bad AA for {a['name']}: {a['scores']['aa']}")
+                    print(f"  vs {record['opponent']}: OSU {record['osuScore']} | {record['result']}")
+            else:
                 meets.append(data)
                 for a in data["athletes"]:
                     if "aa" in a["scores"] and a["scores"]["aa"] < 30:
                         print(f"  WARNING: Bad AA for {a['name']}: {a['scores']['aa']}")
                 print(f"  OSU: {data['osuScore']} | {data['result']} | Athletes: {len(data['athletes'])}")
-            else:
-                print("  FAILED")
         except Exception as e:
             print(f"  ERROR: {e}")
             import traceback; traceback.print_exc()
