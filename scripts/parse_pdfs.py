@@ -38,6 +38,7 @@ MEETS = [
         "id": "alabama-jan-30", "date": "2026-01-30", "opponent": "Alabama",
         "location": "Coleman Coliseum, Tuscaloosa, AL", "isHome": False,
         "url": "https://s3.us-east-2.amazonaws.com/sidearm.nextgen.sites/oregonstate.sidearmsports.com/documents/2026/1/31/AlabamaFINAL.pdf?timestamp=20260131043916",
+        "imageBasedPdf": True,
         "hardcoded": {
             "osuScore": 195.825, "opponentScore": 197.450, "result": "L",
             "events": {
@@ -95,6 +96,7 @@ MEETS = [
         "id": "utah-state-mar-6", "date": "2026-03-06", "opponent": "Utah State",
         "location": "Dee Glen Smith Spectrum, Logan, UT", "isHome": False,
         "url": "https://s3.us-east-2.amazonaws.com/sidearm.nextgen.sites/oregonstate.sidearmsports.com/documents/2026/3/7/Utah_State_vs._Oregon_State_-_Blank_Scoresheet.pdf?timestamp=20260307041803",
+        "imageBasedPdf": True,
         "hardcoded": {
             "osuScore": 196.150, "opponentScore": 196.950, "result": "L",
             "events": {
@@ -287,7 +289,51 @@ def parse_osu_athletes(pages_text):
                             break
                     break
     
+    normalize_athlete_names(athletes)
     return list(athletes.values())
+
+
+def normalize_athlete_names(athletes):
+    """
+    Fix PDF line-break artifacts that split 'Taylor DeVries' into 'Taylor De' + phantom
+    names like 'VriesSophia Esposito'.
+
+    Steps:
+    1. Rename 'Taylor De' → 'Taylor DeVries' (pypdf splits on the line break mid-name).
+    2. Strip the 'Vries' prefix from any name that starts with it
+       (e.g. 'VriesSophia Esposito' → 'Sophia Esposito').
+    3. Merge scores for duplicate entries (same corrected name) into one record.
+    """
+    rename_map = {}
+
+    for name in list(athletes.keys()):
+        new_name = name
+
+        # Step 1: re-join the split "Taylor De" half
+        if name == "Taylor De":
+            new_name = "Taylor DeVries"
+
+        # Step 2: strip phantom "Vries" prefix created by the line-break artifact
+        elif name.startswith("Vries") and len(name) > 5:
+            new_name = name[5:]  # drop the 5-char "Vries" prefix
+
+        if new_name != name:
+            rename_map[name] = new_name
+
+    # Apply renames and merge duplicates
+    for old_name, new_name in rename_map.items():
+        entry = athletes.pop(old_name)
+        entry["name"] = new_name
+
+        if new_name in athletes:
+            # Merge scores — existing canonical entry wins on conflicts
+            for event, score in entry["scores"].items():
+                if event not in athletes[new_name]["scores"]:
+                    athletes[new_name]["scores"][event] = score
+        else:
+            athletes[new_name] = entry
+
+    return athletes
 
 
 def _flush_event(athletes, event, scores, names_text):
@@ -305,13 +351,16 @@ def _flush_event(athletes, event, scores, names_text):
 def parse_meet_pdf(meet_info):
     if "hardcoded" in meet_info:
         hc = meet_info["hardcoded"]
-        return {
+        record = {
             "id": meet_info["id"], "date": meet_info["date"],
             "opponent": meet_info["opponent"], "location": meet_info["location"],
             "isHome": meet_info["isHome"], "result": hc["result"],
             "osuScore": hc["osuScore"], "opponentScore": hc["opponentScore"],
             "events": hc["events"], "athletes": hc["athletes"],
         }
+        if meet_info.get("imageBasedPdf"):
+            record["imageBasedPdf"] = True
+        return record
     
     pdf_path = os.path.join(DOWNLOAD_DIR, f"{meet_info['id']}.pdf")
     reader = PdfReader(pdf_path)
@@ -327,6 +376,12 @@ def parse_meet_pdf(meet_info):
             team_results_pages.append(text)
         if "NCAA Gymnastics Score Sheet" in text:
             score_sheet_pages.append(text)
+    
+    # Detect image-based PDFs (scanned images — pypdf extracts zero text)
+    total_text = "".join(all_text).strip()
+    if not total_text:
+        print(f"  WARNING: No text extracted — image-based PDF. Skipping individual athlete scores.")
+        return None
     
     team_scores = {}
     for pt in team_results_pages:
