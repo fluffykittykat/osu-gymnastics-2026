@@ -1884,6 +1884,19 @@ main {
 .quad-tab-result.l { color: #e74c3c; }
 .quad-tab.active .quad-tab-result { color: rgba(255,255,255,0.8); }
 
+/* Overview tab — distinct gold style */
+.quad-tab-overview {
+  background: #2a2200;
+  border-color: #a07800;
+  color: #f5c518;
+  font-weight: 600;
+}
+.quad-tab-overview.active {
+  background: #f5c518;
+  border-color: #f5c518;
+  color: #111;
+}
+
 /* ===== Bio Pills on Profile Header ===== */
 .bio-pills {
   display: flex;

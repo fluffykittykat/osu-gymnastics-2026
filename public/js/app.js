@@ -990,6 +990,184 @@
       </div>`;
   }
 
+  // ===== Quad Meet Overview =====
+  function showQuadOverview(quadName, date) {
+    _meetDetailOrigin = currentView;
+    const siblings = meets.filter(m => m.quadMeet && m.quadName === quadName && m.date === date);
+    if (!siblings.length) return;
+
+    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    const view = document.getElementById('view-meet');
+    view.style.display = 'block';
+
+    const content = document.getElementById('meetDetailContent');
+    const first = siblings[0];
+
+    // Build tabs — Overview is active
+    const overviewTabActive = `<button class="quad-tab quad-tab-overview active" data-quad-overview="${quadName}|${date}">🏆 Overview</button>`;
+    const siblingTabs = siblings.map(s =>
+      `<button class="quad-tab" data-meet-id="${s.id}">vs ${s.opponent} <span class="quad-tab-result ${s.result?.toLowerCase()}">${s.result||''}</span></button>`
+    ).join('');
+
+    const quadNav = `
+      <div class="quad-nav">
+        <div class="quad-nav-label">🏆 ${quadName}</div>
+        <div class="quad-nav-tabs">${overviewTabActive}${siblingTabs}</div>
+      </div>`;
+
+    // Hero photo
+    const mpData = meetPhotos[date];
+    const heroImg = mpData?.heroImage;
+    const heroHtml = heroImg ? `
+      <div style="position:relative;width:100%;height:220px;overflow:hidden;border-radius:12px;margin-bottom:1rem;">
+        <img src="${heroImg}" alt="${quadName}" style="width:100%;height:100%;object-fit:cover;object-position:center top;" loading="lazy" onerror="this.parentElement.style.display='none'">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 50%)"></div>
+        <div style="position:absolute;bottom:0.75rem;left:1rem;">
+          <span style="color:#fff;font-family:Oswald;font-size:1.2rem;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.9)">${quadName}</span>
+          <div style="color:rgba(255,255,255,0.7);font-size:0.75rem;margin-top:0.2rem">${formatDateLong(date)} · ${first.location}</div>
+        </div>
+      </div>` : '';
+
+    // Full standings (allTeams from any sibling)
+    const allTeams = first.allTeams || [];
+    const osuRank = allTeams.findIndex(t => t.team.toLowerCase().includes('oregon')) + 1;
+    const rankEmoji = ['🥇','🥈','🥉','4️⃣'][osuRank - 1] || '';
+
+    const standingsRows = allTeams.map((t, i) => {
+      const isOSU = t.team.toLowerCase().includes('oregon');
+      const medals = ['🥇','🥈','🥉',''];
+      return `<tr class="${isOSU ? 'osu-row' : ''}">
+        <td style="font-size:1.1rem">${medals[i] || i+1}</td>
+        <td><strong>${t.team}</strong></td>
+        <td>${t.vault?.toFixed(3) ?? '—'}</td>
+        <td>${t.bars?.toFixed(3) ?? '—'}</td>
+        <td>${t.beam?.toFixed(3) ?? '—'}</td>
+        <td>${t.floor?.toFixed(3) ?? '—'}</td>
+        <td style="font-family:Oswald;font-size:1.05rem;color:${isOSU?'var(--osu-orange)':'inherit'}">${t.total.toFixed(3)}</td>
+      </tr>`;
+    }).join('');
+
+    // Per-event winner cards
+    const EVENTS = ['vault','bars','beam','floor'];
+    const evLabels = {vault:'Vault 🤸',bars:'Bars 💫',beam:'Beam ⚖️',floor:'Floor 🔥'};
+    const evCards = EVENTS.map(ev => {
+      const sorted = [...allTeams].sort((a,b) => (b[ev]||0) - (a[ev]||0));
+      const winner = sorted[0];
+      const isOSUWin = winner?.team.toLowerCase().includes('oregon');
+      return `
+        <div style="background:#1a1a1a;border-radius:10px;padding:0.85rem;border:1px solid ${isOSUWin ? 'var(--osu-orange)' : '#333'}">
+          <div style="font-size:0.7rem;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem">${evLabels[ev]}</div>
+          ${sorted.map((t,i) => {
+            const isOSU = t.team.toLowerCase().includes('oregon');
+            const score = t[ev];
+            if (!score) return '';
+            const pct = ((score / sorted[0][ev]) * 100).toFixed(0);
+            return `
+              <div style="margin-bottom:0.35rem">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.15rem">
+                  <span style="font-size:0.78rem;color:${isOSU?'var(--osu-orange)':i===0?'#fff':'#aaa'};font-weight:${i===0?'700':'400'}">${t.team.replace('Oregon State','OSU').replace('Washington','UW').replace('California','Cal').replace('Arizona State','ASU').replace('Kent State','Kent')}</span>
+                  <span style="font-family:Oswald;font-size:0.85rem;color:${isOSU?'var(--osu-orange)':i===0?'#fff':'#aaa'}">${score.toFixed(3)}</span>
+                </div>
+                <div style="height:3px;background:#333;border-radius:2px;overflow:hidden">
+                  <div style="height:100%;width:${pct}%;background:${isOSU?'var(--osu-orange)':i===0?'#fff':'#555'};border-radius:2px"></div>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>`;
+    }).join('');
+
+    // Top individual performers across ALL teams in this quad
+    const allAthletes = [];
+    siblings.forEach(s => {
+      (s.athletes || []).forEach(a => {
+        EVENTS.forEach(ev => {
+          if (a.scores[ev] !== undefined) {
+            allAthletes.push({ name: a.name, team: a.team, event: ev, score: a.scores[ev] });
+          }
+        });
+      });
+    });
+    // Best per event (deduplicated by athlete+event)
+    const topByEvent = EVENTS.map(ev => {
+      const evScores = allAthletes.filter(x => x.event === ev);
+      const dedupMap = {};
+      evScores.forEach(x => {
+        const key = x.name + '|' + x.team;
+        if (!dedupMap[key] || dedupMap[key].score < x.score) dedupMap[key] = x;
+      });
+      return Object.values(dedupMap).sort((a,b) => b.score - a.score).slice(0, 3);
+    });
+
+    const topRows = EVENTS.map((ev, ei) => {
+      return topByEvent[ei].map((x, rank) => {
+        const isOSU = x.team.toLowerCase().includes('oregon');
+        const medals = ['🥇','🥈','🥉'];
+        const isClickable = isOSU;
+        const nameHtml = isClickable
+          ? `<span class="clickable-name" data-gymnast="${x.name}" style="color:var(--osu-orange)">${x.name}</span>`
+          : `<span style="color:#ccc">${x.name}</span>`;
+        return `<tr>
+          <td style="color:#888;font-size:0.75rem">${medals[rank]||rank+1}</td>
+          <td style="font-size:0.8rem">${EVENT_SHORT[ev]}</td>
+          <td>${nameHtml}</td>
+          <td style="color:${isOSU?'var(--osu-orange)':'#888'};font-size:0.7rem">${x.team.replace('Oregon State','OSU')}</td>
+          <td style="font-family:Oswald;color:${rank===0?'#fff':'#aaa'}">${x.score.toFixed(3)}</td>
+        </tr>`;
+      }).join('');
+    }).join('');
+
+    // OSU summary callout
+    const osuWins = siblings.filter(m => m.result === 'W').length;
+    const osuLosses = siblings.filter(m => m.result === 'L').length;
+    const osuScore = first.osuScore;
+    const summaryColor = osuRank === 1 ? '#4caf50' : osuRank === 2 ? '#ff9800' : '#ef5350';
+
+    content.innerHTML = `
+      <button class="back-btn" onclick="showView('${_meetDetailOrigin}')">← Back</button>
+      ${quadNav}
+      ${heroHtml}
+
+      <div class="section-card" style="border-left:3px solid ${summaryColor}">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
+          <div>
+            <div style="font-family:Oswald;font-size:1.3rem">${rankEmoji} Oregon State finished <strong style="color:${summaryColor}">${['1st','2nd','3rd','4th'][osuRank-1]||osuRank+'th'}</strong></div>
+            <div style="color:#aaa;font-size:0.85rem;margin-top:0.2rem">${osuScore.toFixed(3)} total · ${osuWins}W–${osuLosses}L in matchups</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:Oswald;font-size:1.8rem;color:var(--osu-orange)">${osuScore.toFixed(3)}</div>
+            <div style="font-size:0.7rem;color:#888">Oregon State</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h2 class="section-title">📊 Full Standings</h2>
+        <div style="overflow-x:auto">
+          <table class="all-teams-table">
+            <thead><tr><th></th><th>Team</th><th>VT</th><th>UB</th><th>BB</th><th>FX</th><th>Total</th></tr></thead>
+            <tbody>${standingsRows}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h2 class="section-title">🎯 Event Breakdown</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">${evCards}</div>
+      </div>
+
+      <div class="section-card">
+        <h2 class="section-title">⭐ Top Scores — All Teams</h2>
+        <p style="color:#888;font-size:0.8rem;margin-bottom:0.75rem">Best individual scores across all competitors in this quad. OSU names are clickable.</p>
+        <div style="overflow-x:auto">
+          <table class="lineup-table">
+            <thead><tr><th></th><th>Ev</th><th>Athlete</th><th>Team</th><th style="text-align:right">Score</th></tr></thead>
+            <tbody>${topRows}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
   // ===== Meet Detail =====
   let _meetDetailOrigin = 'season';
   function renderMeetWildStats(meet) {
@@ -1429,19 +1607,20 @@
       ? '<span class="badge badge-upcoming" style="font-size:1rem;padding:0.3rem 0.8rem;">UPCOMING</span>'
       : `<span class="badge badge-${meet.result.toLowerCase()}" style="font-size:1rem;padding:0.3rem 0.8rem;">${meet.result}</span>`;
 
-    // Quad meet sibling navigation
+    // Quad meet sibling navigation + Overview tab
     let quadNav = '';
     if (meet.quadMeet && meet.quadName) {
       const siblings = meets.filter(m => m.quadMeet && m.quadName === meet.quadName && m.date === meet.date);
       if (siblings.length > 1) {
+        const overviewTab = `<button class="quad-tab quad-tab-overview" data-quad-overview="${meet.quadName}|${meet.date}">🏆 Overview</button>`;
         const tabs = siblings.map(s => {
           const active = s.id === meet.id;
-          return `<button class="quad-tab${active?' active':''}" data-meet-id="${s.id}">${active?'▶ ':''} vs ${s.opponent} <span class="quad-tab-result ${s.result?.toLowerCase()}">${s.result||''}</span></button>`;
+          return `<button class="quad-tab${active?' active':''}" data-meet-id="${s.id}">vs ${s.opponent} <span class="quad-tab-result ${s.result?.toLowerCase()}">${s.result||''}</span></button>`;
         });
         quadNav = `
           <div class="quad-nav">
             <div class="quad-nav-label">🏆 ${meet.quadName}</div>
-            <div class="quad-nav-tabs">${tabs.join('')}</div>
+            <div class="quad-nav-tabs">${overviewTab}${tabs.join('')}</div>
           </div>`;
       }
     }
@@ -3425,6 +3604,12 @@
         return;
       }
       const quadTab = e.target.closest('.quad-tab');
+      if (quadTab && quadTab.dataset.quadOverview) {
+        e.preventDefault();
+        const [quadName, date] = quadTab.dataset.quadOverview.split('|');
+        showQuadOverview(quadName, date);
+        return;
+      }
       if (quadTab && quadTab.dataset.meetId) {
         e.preventDefault();
         showMeetDetail(quadTab.dataset.meetId);
