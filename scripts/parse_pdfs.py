@@ -290,6 +290,53 @@ def parse_osu_athletes(pages_text):
     return list(athletes.values())
 
 
+def fix_athlete_names(athletes):
+    """
+    Post-process athlete names to fix parsing issues:
+    1. Fix split names like 'Taylor De' + 'Vries' → 'Taylor DeVries'
+    2. Strip 'Vries' prefix from phantom athletes (e.g., 'VriesSophia Esposito' → 'Sophia Esposito')
+    3. Merge duplicate athlete entries by combining their scores
+    """
+    if not athletes:
+        return athletes
+    
+    # Step 1 & 2: Fix names and collect corrections
+    name_corrections = {}  # Maps old name -> new name
+    
+    for athlete in athletes:
+        name = athlete.get("name", "")
+        
+        # Fix "Taylor De" - this should be joined with "Vries" to make "Taylor DeVries"
+        if name == "Taylor De":
+            name_corrections[name] = "Taylor DeVries"
+        
+        # Strip "Vries" prefix from corrupted names
+        elif name.startswith("Vries"):
+            corrected = name[5:].strip()  # Remove "Vries" prefix
+            if corrected:
+                name_corrections[name] = corrected
+    
+    # Apply name corrections
+    for athlete in athletes:
+        old_name = athlete.get("name", "")
+        if old_name in name_corrections:
+            athlete["name"] = name_corrections[old_name]
+    
+    # Step 3: Merge duplicate athletes by name
+    merged = {}  # name -> athlete dict
+    for athlete in athletes:
+        name = athlete.get("name", "")
+        if name not in merged:
+            merged[name] = athlete
+        else:
+            # Combine scores from duplicate entries
+            for event, score in athlete.get("scores", {}).items():
+                if event not in merged[name]["scores"]:
+                    merged[name]["scores"][event] = score
+    
+    return list(merged.values())
+
+
 def _flush_event(athletes, event, scores, names_text):
     """Assign scores to athletes for a given event."""
     if not event or not scores or not names_text:
@@ -328,6 +375,10 @@ def parse_meet_pdf(meet_info):
         if "NCAA Gymnastics Score Sheet" in text:
             score_sheet_pages.append(text)
     
+    # Check if PDF is image-based (scanned) by detecting zero text extraction
+    total_text_length = sum(len(t) for t in all_text)
+    is_image_based = total_text_length < 100  # Scanned PDFs have minimal/no text
+    
     team_scores = {}
     for pt in team_results_pages:
         team_scores.update(parse_team_results(pt))
@@ -340,7 +391,9 @@ def parse_meet_pdf(meet_info):
     osu = team_scores[osu_key]
     is_quad = meet_info.get("isQuad", False)
     
+    # Parse athletes and fix names
     athletes = parse_osu_athletes(score_sheet_pages)
+    athletes = fix_athlete_names(athletes)
     
     attendance = meet_info.get("attendance", "")
     if not attendance:
@@ -397,6 +450,8 @@ def parse_meet_pdf(meet_info):
             }
             if attendance:
                 record["attendance"] = attendance
+            if is_image_based:
+                record["imageBasedPdf"] = True
             records.append(record)
         return records
     else:
@@ -424,6 +479,8 @@ def parse_meet_pdf(meet_info):
         }
         if attendance:
             meet_data["attendance"] = attendance
+        if is_image_based:
+            meet_data["imageBasedPdf"] = True
         return meet_data
 
 
@@ -447,13 +504,15 @@ def main():
                     for a in record["athletes"]:
                         if "aa" in a["scores"] and a["scores"]["aa"] < 30:
                             print(f"  WARNING: Bad AA for {a['name']}: {a['scores']['aa']}")
-                    print(f"  vs {record['opponent']}: OSU {record['osuScore']} | {record['result']}")
+                    img_note = " [IMAGE-BASED PDF - team scores only]" if record.get("imageBasedPdf") else ""
+                    print(f"  vs {record['opponent']}: OSU {record['osuScore']} | {record['result']}{img_note}")
             else:
                 meets.append(data)
                 for a in data["athletes"]:
                     if "aa" in a["scores"] and a["scores"]["aa"] < 30:
                         print(f"  WARNING: Bad AA for {a['name']}: {a['scores']['aa']}")
-                print(f"  OSU: {data['osuScore']} | {data['result']} | Athletes: {len(data['athletes'])}")
+                img_note = " [IMAGE-BASED PDF - team scores only]" if data.get("imageBasedPdf") else ""
+                print(f"  OSU: {data['osuScore']} | {data['result']} | Athletes: {len(data['athletes'])}{img_note}")
         except Exception as e:
             print(f"  ERROR: {e}")
             import traceback; traceback.print_exc()
