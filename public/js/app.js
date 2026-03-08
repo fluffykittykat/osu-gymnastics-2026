@@ -32,6 +32,33 @@
       const res = await fetch('/api/meets');
       meets = await res.json();
       document.getElementById('loading').style.display = 'none';
+
+      // Build search index and initialize search UI
+      if (window.OSUSearch) {
+        OSUSearch.buildIndex(meets);
+        OSUSearch.createUI();
+        // Wire navigation callbacks
+        OSUSearch.onGymnastSelect = function (name) {
+          showView('gymnasts');
+          showGymnastProfile(name);
+        };
+        OSUSearch.onMeetSelect = function (meetId) {
+          showMeetDetail(meetId);
+        };
+        OSUSearch.onLeaderboardSelect = function (event) {
+          showView('leaderboards');
+          renderLeaderboard(event);
+        };
+        OSUSearch.onFilterSelect = function (filter) {
+          showView('season');
+          currentFilter = filter;
+          document.querySelectorAll('.filter-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.filter === filter);
+          });
+          renderMeetCards();
+        };
+      }
+
       showView('season');
     } catch (err) {
       document.getElementById('loading').innerHTML =
