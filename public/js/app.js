@@ -977,7 +977,7 @@
     return `
       <div class="quad-group" style="border:1px solid ${isLive ? 'rgba(255,68,68,0.5)' : '#333'};border-radius:12px;overflow:hidden;background:var(--card);">
         ${qThumbHtml}
-        <div style="background:#1a1a1a;padding:0.75rem 1rem;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;">
+        <div style="background:var(--black);padding:0.75rem 1rem;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;">
           <div>
             <span style="font-family:Oswald;font-size:1.1rem;color:var(--orange);">${first.quadName}</span>
             <span class="badge" style="background:#333;color:#aaa;margin-left:0.5rem;font-size:0.7rem;">QUAD</span>
@@ -1061,7 +1061,7 @@
       const winner = sorted[0];
       const isOSUWin = winner?.team.toLowerCase().includes('oregon');
       return `
-        <div style="background:#1a1a1a;border-radius:10px;padding:0.85rem;border:1px solid ${isOSUWin ? 'var(--osu-orange)' : '#333'}">
+        <div style="background:var(--card);border-radius:10px;padding:0.85rem;border:1px solid ${isOSUWin ? 'var(--osu-orange)' : '#333'}">
           <div style="font-size:0.7rem;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem">${evLabels[ev]}</div>
           ${sorted.map((t,i) => {
             const isOSU = t.team.toLowerCase().includes('oregon');
@@ -1764,7 +1764,7 @@
 
       if (p.bioOnly) {
         const bio = bios[p.name] || {};
-        const pos = bio.position ? `<span class="event-badge" style="background:var(--osu-orange);color:#fff">${bio.position}</span>` : '';
+        const pos = bio.position ? `<span class="event-badge" style="background:var(--orange-dark);color:#fff">${bio.position}</span>` : '';
         const yr = bio.classYear ? `<span class="event-badge">${bio.classYear}</span>` : '';
         return `
           <div class="gymnast-card" data-gymnast="${p.name}" style="opacity:0.75">
@@ -1809,7 +1809,7 @@
         ? `<img src="${photo}" class="profile-photo" alt="${name}" loading="lazy">`
         : `<div class="gymnast-headshot-placeholder" style="width:80px;height:80px;font-size:1.5rem;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#333;color:#fff;margin:0 auto 1rem;">${name.split(' ').map(n=>n[0]).join('')}</div>`;
       const pills = [
-        bio.position ? `<span style="background:var(--osu-orange);color:#fff;padding:0.2rem 0.7rem;border-radius:999px;font-size:0.75rem;font-weight:700">${bio.position}</span>` : '',
+        bio.position ? `<span style="background:var(--orange-dark);color:#fff;padding:0.2rem 0.7rem;border-radius:999px;font-size:0.75rem;font-weight:700">${bio.position}</span>` : '',
         bio.classYear ? `<span style="background:#333;color:#aaa;padding:0.2rem 0.7rem;border-radius:999px;font-size:0.75rem">${bio.classYear}</span>` : '',
         bio.hometown ? `<span style="background:#222;color:#aaa;padding:0.2rem 0.7rem;border-radius:999px;font-size:0.75rem">📍 ${bio.hometown}</span>` : '',
       ].filter(Boolean).join(' ');
@@ -1884,7 +1884,7 @@
           ${(()=>{
             const pb = bios[p.name]||{};
             const chips = [];
-            if(pb.position) chips.push(`<span style="background:var(--osu-orange);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.7rem;font-weight:700">${pb.position}</span>`);
+            if(pb.position) chips.push(`<span style="background:var(--orange-dark);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.7rem;font-weight:700">${pb.position}</span>`);
             if(pb.classYear) chips.push(`<span style="background:rgba(255,255,255,0.15);color:#ddd;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.7rem">${pb.classYear}</span>`);
             if(pb.hometown) chips.push(`<span style="color:rgba(255,255,255,0.7);font-size:0.7rem">📍 ${pb.hometown}</span>`);
             return chips.length ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.4rem;align-items:center">${chips.join('')}</div>` : '';

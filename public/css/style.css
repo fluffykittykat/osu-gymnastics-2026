@@ -1,17 +1,22 @@
 /* ===== Variables ===== */
 :root {
-  --orange: #D73F09;
-  --orange-light: #E85A2A;
-  --orange-dark: #B53407;
-  --black: #1a1a1a;
-  --dark: #121212;
-  --card: #2a2a2a;
-  --card-hover: #333;
-  --text: #f0f0f0;
-  --text-muted: #999;
-  --green: #2ecc71;
-  --red: #e74c3c;
-  --border: #3a3a3a;
+  /* OSU Orange — #D73F09 is the true brand color but only 4.1:1 contrast on dark.
+     --orange is brightened to #FF6B35 (5.6:1) for readable text/icons.
+     --orange-dark stays at the true brand value for backgrounds/badges. */
+  --orange: #FF6B35;
+  --osu-orange: #FF6B35;
+  --orange-dark: #D73F09;
+  --orange-light: #FF8C5A;
+  /* Warm charcoal palette — feels like Reser Stadium at night, not a fintech app */
+  --black: #1a1612;
+  --dark: #100e0b;
+  --card: #2a241e;
+  --card-hover: #332d26;
+  --text: #F5EFEA;
+  --text-muted: #A08B78;
+  --green: #4caf82;
+  --red: #e05c4a;
+  --border: #3d3228;
   --transition: 0.3s ease;
 }
 
@@ -352,7 +357,7 @@ main {
 }
 
 .badge-home {
-  background: #D73F09;
+  background: var(--orange-dark);
   color: white;
   font-size: 0.75rem;
   padding: 0.25rem 0.75rem;
@@ -370,7 +375,7 @@ main {
 }
 
 .badge-home-short {
-  background: #D73F09;
+  background: var(--orange-dark);
   color: white;
   font-size: 0.7rem;
   padding: 0.15rem 0.5rem;
@@ -1631,7 +1636,7 @@ main {
 .streak-row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 0.75rem; align-items: center; }
 .streak-label { font-size: 0.82rem; color: var(--text-muted); }
 .streak-bar-wrap { height: 10px; background: #2a2a2a; border-radius: 5px; overflow: hidden; }
-.streak-bar { height: 100%; background: linear-gradient(90deg, var(--orange), #ff6b35); border-radius: 5px; transition: width 0.4s ease; }
+.streak-bar { height: 100%; background: linear-gradient(90deg, var(--orange-dark), var(--orange)); border-radius: 5px; transition: width 0.4s ease; }
 .streak-val { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); text-align: right; }
 
 
@@ -1702,7 +1707,7 @@ main {
 }
 .gi-gauge-bar {
   height: 100%;
-  background: linear-gradient(90deg, #cc4400, var(--orange));
+  background: linear-gradient(90deg, #cc4400, var(--orange-dark));
   border-radius: 3px;
   transition: width 0.5s ease;
 }
@@ -1973,7 +1978,7 @@ main {
 .wild-bar {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--orange), #ff7a45);
+  background: linear-gradient(90deg, var(--orange-dark), var(--orange));
   border-radius: 4px;
   transition: width 0.4s ease;
 }
@@ -2199,7 +2204,7 @@ main {
 .hm-diff { display: block; font-size: 0.62rem; font-weight: 400; margin-top: 0.1rem; }
 .hm-overall { font-weight: 700; color: var(--orange); border-left: 1px solid #2a2a2a; }
 .hm-photo { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; margin-right: 0.4rem; vertical-align: middle; }
-.hm-spec-badge { font-size: 0.6rem; background: rgba(215,63,9,0.2); border: 1px solid var(--orange); border-radius: 4px; padding: 0.05rem 0.3rem; color: var(--orange); margin-left: 0.3rem; vertical-align: middle; }
+.hm-spec-badge { font-size: 0.6rem; background: rgba(215,63,9,0.25); border: 1px solid var(--orange); border-radius: 4px; padding: 0.05rem 0.3rem; color: var(--orange); margin-left: 0.3rem; vertical-align: middle; }
 
 /* ===== Factor × Event Matrix ===== */
 .mx-table-wrap { overflow-x: auto; }
