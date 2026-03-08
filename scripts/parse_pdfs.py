@@ -38,6 +38,7 @@ MEETS = [
         "id": "alabama-jan-30", "date": "2026-01-30", "opponent": "Alabama",
         "location": "Coleman Coliseum, Tuscaloosa, AL", "isHome": False,
         "url": "https://s3.us-east-2.amazonaws.com/sidearm.nextgen.sites/oregonstate.sidearmsports.com/documents/2026/1/31/AlabamaFINAL.pdf?timestamp=20260131043916",
+        "imageBasedPdf": True,
         "hardcoded": {
             "osuScore": 195.825, "opponentScore": 197.450, "result": "L",
             "events": {
@@ -95,6 +96,7 @@ MEETS = [
         "id": "utah-state-mar-6", "date": "2026-03-06", "opponent": "Utah State",
         "location": "Dee Glen Smith Spectrum, Logan, UT", "isHome": False,
         "url": "https://s3.us-east-2.amazonaws.com/sidearm.nextgen.sites/oregonstate.sidearmsports.com/documents/2026/3/7/Utah_State_vs._Oregon_State_-_Blank_Scoresheet.pdf?timestamp=20260307041803",
+        "imageBasedPdf": True,
         "hardcoded": {
             "osuScore": 196.150, "opponentScore": 196.950, "result": "L",
             "events": {
@@ -352,13 +354,16 @@ def _flush_event(athletes, event, scores, names_text):
 def parse_meet_pdf(meet_info):
     if "hardcoded" in meet_info:
         hc = meet_info["hardcoded"]
-        return {
+        record = {
             "id": meet_info["id"], "date": meet_info["date"],
             "opponent": meet_info["opponent"], "location": meet_info["location"],
             "isHome": meet_info["isHome"], "result": hc["result"],
             "osuScore": hc["osuScore"], "opponentScore": hc["opponentScore"],
             "events": hc["events"], "athletes": hc["athletes"],
         }
+        if meet_info.get("imageBasedPdf"):
+            record["imageBasedPdf"] = True
+        return record
     
     pdf_path = os.path.join(DOWNLOAD_DIR, f"{meet_info['id']}.pdf")
     reader = PdfReader(pdf_path)

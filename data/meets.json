@@ -1094,7 +1094,8 @@
           "beam": 9.7
         }
       }
-    ]
+    ],
+    "imageBasedPdf": true
   },
   {
     "id": "boise-state-quad-san-jose-state-feb-6",
@@ -2528,6 +2529,7 @@
           "beam": 9.8
         }
       }
-    ]
+    ],
+    "imageBasedPdf": true
   }
 ]
