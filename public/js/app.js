@@ -519,8 +519,7 @@
       } else {
         // Fallback: sort by score descending (legacy behaviour)
         const eventAthletes = meet.athletes
-          .filter(a => a.scores[event] !== undefined)
-          .sort((a, b) => b.scores[event] - a.scores[event]);
+          .filter(a => a.scores[event] !== undefined);
         rows = eventAthletes.map((a, i) => `
           <tr>
             <td>${i + 1}</td>
