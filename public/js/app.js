@@ -26,13 +26,68 @@
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
   }
 
+  function slugify(name) {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function navigateTo(hash) {
+    window.location.hash = hash;
+  }
+
+  // ===== Breadcrumb =====
+  function updateBreadcrumb(parts) {
+    const el = document.getElementById('breadcrumb');
+    if (!parts || parts.length === 0) {
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = 'block';
+    el.innerHTML = parts.map((p, i) => {
+      if (i < parts.length - 1 && p.hash) {
+        return '<a href="' + p.hash + '" onclick="event.preventDefault();window.location.hash=\'' + p.hash + '\'">' + p.label + '</a>';
+      }
+      return '<span>' + p.label + '</span>';
+    }).join('<span class="breadcrumb-sep">›</span>');
+  }
+
+  // ===== Routing =====
+  function parseAndRoute() {
+    const raw = window.location.hash.slice(1);
+    if (!raw || raw === 'season') {
+      showView('season');
+    } else if (raw.startsWith('season?')) {
+      const params = new URLSearchParams(raw.split('?')[1]);
+      const filter = params.get('filter');
+      if (filter) {
+        currentFilter = filter;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+      }
+      showView('season');
+    } else if (raw.startsWith('meet/')) {
+      const meetId = raw.slice(5);
+      showMeetDetailById(meetId);
+    } else if (raw === 'gymnast' || raw === 'gymnasts') {
+      showView('gymnasts');
+    } else if (raw.startsWith('gymnast/')) {
+      const slug = raw.slice(8);
+      showGymnastProfileBySlug(slug);
+    } else if (raw.startsWith('leaderboard/')) {
+      const event = raw.slice(12);
+      showView('leaderboards');
+      renderLeaderboard(event);
+      document.querySelectorAll('.event-tab').forEach(t => t.classList.toggle('active', t.dataset.event === event));
+    } else {
+      showView('season');
+    }
+  }
+
   // ===== Data Loading =====
   async function loadData() {
     try {
       const res = await fetch('/api/meets');
       meets = await res.json();
       document.getElementById('loading').style.display = 'none';
-      showView('season');
+      parseAndRoute();
     } catch (err) {
       document.getElementById('loading').innerHTML =
         '<div class="empty-state"><div class="empty-icon">😕</div><p class="empty-text">Failed to load data. Is the server running?</p></div>';
@@ -54,9 +109,16 @@
       el.style.animation = '';
     }
 
-    if (view === 'season') renderSeason();
-    else if (view === 'gymnasts') renderGymnasts();
-    else if (view === 'leaderboards') renderLeaderboard('vault');
+    if (view === 'season') {
+      updateBreadcrumb([{label: 'Season'}]);
+      renderSeason();
+    } else if (view === 'gymnasts') {
+      updateBreadcrumb([{label: 'Season', hash: '#season'}, {label: 'Gymnasts'}]);
+      renderGymnasts();
+    } else if (view === 'leaderboards') {
+      updateBreadcrumb([{label: 'Season', hash: '#season'}, {label: 'Leaderboards'}]);
+      renderLeaderboard('vault');
+    }
   }
 
   // ===== Season Overview =====
@@ -182,9 +244,11 @@
   }
 
   // ===== Meet Detail =====
-  function showMeetDetail(meetId) {
+  function showMeetDetailById(meetId) {
     const meet = meets.find(m => m.id === meetId);
     if (!meet) return;
+
+    updateBreadcrumb([{label: 'Season', hash: '#season'}, {label: meet.opponent + ' ' + formatDate(meet.date)}]);
 
     document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
     const view = document.getElementById('view-meet');
@@ -213,6 +277,24 @@
         </div>`;
     }
 
+    // Recap section
+    let recapSection = '';
+    if (meet.recap) {
+      const paragraphs = meet.recap.split('\n\n').filter(p => p.trim().length > 30);
+      const lede = paragraphs[0] ? paragraphs[0].trim() : '';
+      const restParas = paragraphs.slice(1);
+      const restHtml = restParas.map(p => '<p>' + p.trim() + '</p>').join('');
+      const restId = 'recap-rest-' + meet.id;
+      recapSection = '<div class="section-card recap-card">'
+        + '<h2 class="section-title">📰 Meet Recap</h2>'
+        + '<div class="recap-content">'
+        + '<p class="recap-lede">' + lede + '</p>'
+        + (restHtml ? '<div class="recap-body" id="' + restId + '" style="display:none">' + restHtml + '</div>'
+            + '<button class="recap-toggle" data-target="' + restId + '">Read more ↓</button>' : '')
+        + '<p class="recap-attribution"><a href="' + meet.recapUrl + '" target="_blank" rel="noopener">Source: Oregon State Athletics ↗</a></p>'
+        + '</div></div>';
+    }
+
     // Event detail cards with athlete lineups
     const eventCards = ['vault', 'bars', 'beam', 'floor'].map(event => {
       const eventAthletes = meet.athletes
@@ -222,7 +304,7 @@
       const rows = eventAthletes.map((a, i) => `
         <tr>
           <td>${i + 1}</td>
-          <td>${a.name}</td>
+          <td><a href="#gymnast/${slugify(a.name)}" onclick="event.preventDefault();window.location.hash='#gymnast/${slugify(a.name)}'">${a.name}</a></td>
           <td class="score-cell">${a.scores[event].toFixed(3)}</td>
         </tr>`).join('');
 
@@ -232,7 +314,7 @@
 
       return `
         <div class="detail-event-card">
-          <div class="detail-event-title">${EVENT_NAMES[event]}</div>
+          <div class="detail-event-title"><a href="#leaderboard/${event}" onclick="event.preventDefault();window.location.hash='#leaderboard/${event}'">${EVENT_NAMES[event]}</a></div>
           <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
             <span style="color:var(--orange);font-family:Oswald;font-weight:600;">${osuScore.toFixed(3)}</span>
             <span style="color:var(--text-muted);font-size:0.85rem;">vs ${oppScore.toFixed(3)}</span>
@@ -247,13 +329,15 @@
         </div>`;
     }).join('');
 
+    const locationFilter = meet.isHome ? 'home' : 'away';
+
     content.innerHTML = `
       <div class="detail-hero">
         <div class="meet-header">
           <div>
             <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent}</div>
             <div class="meet-date">${formatDateLong(meet.date)}</div>
-            <div class="meet-location">${meet.location}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
+            <div class="meet-location"><a href="#season?filter=${locationFilter}" onclick="event.preventDefault();window.location.hash='#season?filter=${locationFilter}'">${meet.location}</a>${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
           </div>
           <span class="badge badge-${meet.result.toLowerCase()}" style="font-size:1rem;padding:0.3rem 0.8rem;">${meet.result}</span>
         </div>
@@ -264,6 +348,7 @@
         </div>
       </div>
       ${teamsTable}
+      ${recapSection}
       <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
       <div class="detail-event-grid">${eventCards}</div>
     `;
@@ -341,11 +426,23 @@
     }).join('');
   }
 
+  function showGymnastProfileBySlug(slug) {
+    const profiles = getGymnastProfiles();
+    const p = profiles.find(pr => slugify(pr.name) === slug);
+    if (!p) return;
+    showGymnastProfile(p.name);
+  }
+
   function showGymnastProfile(name) {
     const profiles = getGymnastProfiles();
     const p = profiles.find(pr => pr.name === name);
     if (!p) return;
 
+    updateBreadcrumb([{label: 'Season', hash: '#season'}, {label: 'Gymnasts', hash: '#gymnast'}, {label: name}]);
+
+    // Show gymnasts view but hide cards, show detail
+    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    document.getElementById('view-gymnasts').style.display = 'block';
     document.getElementById('gymnastCards').style.display = 'none';
     const detail = document.getElementById('gymnastDetail');
     detail.style.display = 'block';
@@ -382,10 +479,10 @@
       const cells = ['vault', 'bars', 'beam', 'floor'].map(e => {
         if (m.scores[e] === undefined) return '<td style="color:var(--text-muted)">—</td>';
         const isBest = p.bests[e] === m.scores[e];
-        return `<td class="${isBest ? 'personal-best' : ''}">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</td>`;
+        return `<td class="${isBest ? 'personal-best' : ''}"><a href="#meet/${m.meetId}" onclick="event.preventDefault();window.location.hash='#meet/${m.meetId}'">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</a></td>`;
       }).join('');
       const aa = m.scores.aa ? `<td>${m.scores.aa.toFixed(3)}</td>` : '<td style="color:var(--text-muted)">—</td>';
-      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent}</td>${cells}${aa}</tr>`;
+      return `<tr><td><a href="#meet/${m.meetId}" onclick="event.preventDefault();window.location.hash='#meet/${m.meetId}'">${formatDate(m.date)} vs ${m.opponent}</a></td>${cells}${aa}</tr>`;
     }).join('');
 
     detail.innerHTML = `
@@ -401,7 +498,7 @@
           <h2 class="section-title">Meet History</h2>
           <div style="overflow-x:auto;">
             <table class="meet-history-table">
-              <thead><tr><th>Date</th><th>Opponent</th><th>VT</th><th>UB</th><th>BB</th><th>FX</th><th>AA</th></tr></thead>
+              <thead><tr><th>Meet</th><th>VT</th><th>UB</th><th>BB</th><th>FX</th><th>AA</th></tr></thead>
               <tbody>${historyRows}</tbody>
             </table>
           </div>
@@ -409,8 +506,7 @@
       </div>`;
 
     document.getElementById('backToGymnasts').addEventListener('click', () => {
-      detail.style.display = 'none';
-      document.getElementById('gymnastCards').style.display = 'grid';
+      navigateTo('#gymnast');
     });
   }
 
@@ -471,8 +567,8 @@
       <div class="leaderboard-item">
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
         <div class="lb-info">
-          <div class="lb-name">${s.name}</div>
-          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent}</div>
+          <div class="lb-name"><a href="#gymnast/${slugify(s.name)}" onclick="event.preventDefault();window.location.hash='#gymnast/${slugify(s.name)}'">${s.name}</a></div>
+          <div class="lb-context"><a href="#meet/${s.meetId}" onclick="event.preventDefault();window.location.hash='#meet/${s.meetId}'">${formatDate(s.meetDate)} vs ${s.opponent}</a></div>
         </div>
         <div class="lb-score">${s.score.toFixed(3)}</div>
       </div>`).join('');
@@ -482,11 +578,18 @@
   document.addEventListener('DOMContentLoaded', () => {
     loadData();
 
+    window.addEventListener('hashchange', () => {
+      if (meets.length > 0) parseAndRoute();
+    });
+
     // Navigation
     document.querySelectorAll('[data-view]').forEach(link => {
       link.addEventListener('click', e => {
         e.preventDefault();
-        showView(link.dataset.view);
+        const view = link.dataset.view;
+        if (view === 'season') navigateTo('#season');
+        else if (view === 'gymnasts') navigateTo('#gymnast');
+        else if (view === 'leaderboards') navigateTo('#leaderboard/vault');
       });
     });
 
@@ -496,18 +599,18 @@
         currentFilter = btn.dataset.filter;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        renderMeetCards();
+        navigateTo('#season?filter=' + btn.dataset.filter);
       });
     });
 
     // Meet card click
     document.getElementById('meetsGrid').addEventListener('click', e => {
       const card = e.target.closest('.meet-card');
-      if (card) showMeetDetail(card.dataset.meetId);
+      if (card) navigateTo('#meet/' + card.dataset.meetId);
     });
 
     // Back button
-    document.getElementById('backToSeason').addEventListener('click', () => showView('season'));
+    document.getElementById('backToSeason').addEventListener('click', () => navigateTo('#season'));
 
     // Gymnast search
     document.getElementById('gymnastSearch').addEventListener('input', e => {
@@ -517,13 +620,22 @@
     // Gymnast card click
     document.getElementById('gymnastCards').addEventListener('click', e => {
       const card = e.target.closest('.gymnast-card');
-      if (card) showGymnastProfile(card.dataset.gymnast);
+      if (card) navigateTo('#gymnast/' + slugify(card.dataset.gymnast));
     });
 
     // Event tabs
     document.getElementById('eventTabs').addEventListener('click', e => {
       const tab = e.target.closest('.event-tab');
-      if (tab) renderLeaderboard(tab.dataset.event);
+      if (tab) navigateTo('#leaderboard/' + tab.dataset.event);
+    });
+
+    // Recap toggle
+    document.getElementById('meetDetailContent').addEventListener('click', e => {
+      const btn = e.target.closest('.recap-toggle');
+      if (btn) {
+        const target = document.getElementById(btn.dataset.target);
+        if (target) { target.style.display = 'block'; btn.style.display = 'none'; }
+      }
     });
   });
 })();

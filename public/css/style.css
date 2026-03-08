@@ -855,6 +855,93 @@ main {
   }
 }
 
+/* Breadcrumb */
+.breadcrumb {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.breadcrumb a {
+  color: var(--orange);
+  text-decoration: none;
+}
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+.breadcrumb-sep {
+  margin: 0 0.4rem;
+}
+
+/* Meet Recap */
+.recap-card { margin-bottom: 1.5rem; }
+.recap-content {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  max-width: 720px;
+  color: var(--text);
+}
+.recap-lede {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.recap-body p {
+  margin-bottom: 0.8rem;
+  color: var(--text-muted);
+}
+.recap-toggle {
+  background: none;
+  border: 1px solid var(--orange);
+  color: var(--orange);
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
+.recap-toggle:hover {
+  background: var(--orange);
+  color: #000;
+}
+.recap-attribution {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 1rem;
+}
+.recap-attribution a {
+  color: var(--text-muted);
+}
+.recap-attribution a:hover {
+  color: var(--orange);
+}
+
+/* Cross-link styles */
+.detail-event-title a,
+.lineup-table td a,
+.meet-location a,
+.leaderboard-item .lb-name a,
+.leaderboard-item .lb-context a,
+.meet-history-table td a {
+  color: inherit;
+  text-decoration: none;
+}
+.detail-event-title a:hover { color: var(--orange); }
+.lineup-table td a:hover { color: var(--orange); }
+.meet-location a { color: var(--text-muted); }
+.meet-location a:hover { color: var(--orange); }
+.leaderboard-item .lb-name a:hover { color: var(--orange); }
+.leaderboard-item .lb-context a:hover { color: var(--orange); }
+.meet-history-table td a { color: var(--text-muted); }
+.meet-history-table td a:hover { color: var(--orange); }
+
+@media (max-width: 768px) {
+  .recap-content { font-size: 0.9rem; }
+}
+
 /* Small phone */
 @media (max-width: 374px) {
   .hero-title {
