@@ -4,6 +4,13 @@ const fs = require('fs');
 const { exec } = require('child_process');
 
 const app = express();
+const { execSync } = require('child_process');
+
+// Cache-bust version = git commit hash (short)
+let ASSET_VERSION = 'dev';
+try {
+  ASSET_VERSION = execSync('git rev-parse --short HEAD', { cwd: __dirname }).toString().trim();
+} catch (e) {}
 
 // Keep meets data in memory for fast serving
 let meetsData = null;
@@ -19,6 +26,14 @@ function loadMeetsData() {
 
 // Load on startup
 loadMeetsData();
+
+// Serve index.html with injected asset version for automatic cache-busting
+app.get('/', (req, res) => {
+  let html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+  html = html.replace(/\?v=[^"']*/g, `?v=${ASSET_VERSION}`);
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
 
 app.use(express.static('public'));
 
