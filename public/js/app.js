@@ -841,10 +841,28 @@
       bestWinDelta&&bestWinDelta.wlDiff>0.02 ? `<div class="insight-headline">🏆 Raises game in wins on <strong>${EV_LBL[bestWinDelta.ev]}</strong> — <strong>${gdiff(bestWinDelta.wlDiff)}</strong> vs losing days</div>` : '',
     ].filter(Boolean).join('');
 
-    const cards = evStats.map(e => `
+    // Team averages per event for comparison
+    const teamAvg = {};
+    ['vault','bars','beam','floor'].forEach(ev => {
+      const all = [];
+      meets.forEach(m => m.athletes.filter(a=>a.team==='Oregon State'&&a.scores[ev]!==undefined).forEach(a=>all.push(a.scores[ev])));
+      teamAvg[ev] = all.length ? gmean(all) : null;
+    });
+
+    const cards = evStats.map(e => {
+      const SCORE_MIN = 9.4, SCORE_MAX = 9.95;
+      const barPct = Math.round(Math.max(0,Math.min(100,((e.avg-SCORE_MIN)/(SCORE_MAX-SCORE_MIN))*100)));
+      const vTeam = teamAvg[e.ev];
+      const vsDiff = vTeam ? e.avg - vTeam : null;
+      return `
       <div class="gi-ev-card">
         <div class="gi-ev-title">${EV_LBL[e.ev]} <span class="gi-n">${e.n} meets</span></div>
-        <div class="gi-row"><span>Avg</span><span style="color:var(--orange);font-weight:700">${gfmt(e.avg)}</span></div>
+        <div class="gi-score-display">
+          <span class="gi-big-avg">${gfmt(e.avg)}</span>
+          ${vsDiff!==null?`<span class="gi-vs-team" style="color:${vsDiff>0?'#2ecc71':vsDiff<0?'#e74c3c':'#aaa'}">${gdiff(vsDiff)} vs team</span>`:''}
+        </div>
+        <div class="gi-gauge-wrap"><div class="gi-gauge-bar" style="width:${barPct}%"></div></div>
+        <div class="gi-divider"></div>
         <div class="gi-row"><span>Best</span><span>${gfmt(e.best)}</span></div>
         ${e.sd!==null?`<div class="gi-row"><span>Consistency</span><span>${e.sd.toFixed(3)} SD</span></div>`:''}
         ${e.slope!==null?`<div class="gi-row"><span>Trend</span><span>${arrow(e.slope)} ${e.slope>=0?'+':''}${e.slope.toFixed(3)}/wk</span></div>`:''}
@@ -852,7 +870,8 @@
         ${e.wlDiff!==null?`<div class="gi-row"><span>Win/Loss Δ</span><span style="color:${e.wlDiff>0?'#2ecc71':e.wlDiff<0?'#e74c3c':'#aaa'}">${gdiff(e.wlDiff)}</span></div>`:''}
         ${e.clutch!==null?`<div class="gi-row"><span>Close meets</span><span>${gfmt(e.clutch)}</span></div>`:''}
         ${e.seasonDiff!==null?`<div class="gi-row"><span>Jan→Late Δ</span><span style="color:${e.seasonDiff>0.01?'#2ecc71':e.seasonDiff<-0.01?'#e74c3c':'#aaa'}">${gdiff(e.seasonDiff)}</span></div>`:''}
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     return `
       <div class="section-card" style="margin-bottom:1rem">
