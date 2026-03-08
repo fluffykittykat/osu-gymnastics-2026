@@ -1130,260 +1130,205 @@ main {
   }
 }
 
-/* ===== Refresh Button ===== */
-.nav-actions {
-  display: flex;
-  align-items: center;
-  margin-left: 1rem;
-}
-
-.refresh-btn {
+/* ===== Breadcrumbs ===== */
+.breadcrumb {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  background: rgba(215, 63, 9, 0.15);
-  border: 1px solid var(--orange);
-  color: var(--orange);
-  padding: 0.4rem 0.85rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  font-family: 'Inter', sans-serif;
-  transition: all var(--transition);
-}
-
-.refresh-btn:hover {
-  background: rgba(215, 63, 9, 0.3);
-}
-
-.refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.refresh-btn.refreshing .refresh-icon {
-  animation: spin 0.8s linear infinite;
-}
-
-.refresh-label {
-  display: inline;
-}
-
-/* Hide refresh label on smaller desktop */
-@media (max-width: 900px) and (min-width: 768px) {
-  .refresh-label {
-    display: none;
-  }
-}
-
-/* ===== Last Updated Bar ===== */
-.last-updated-bar {
-  text-align: center;
-  padding: 0.3rem 1rem;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  background: rgba(0,0,0,0.3);
-  border-bottom: 1px solid var(--border);
-}
-
-/* ===== Toast Notifications ===== */
-.toast-container {
-  position: fixed;
-  bottom: 1rem;
-  right: 1rem;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  pointer-events: none;
-}
-
-.toast {
-  background: #2a2a2a;
-  border-left: 4px solid var(--orange);
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  color: var(--text);
-  font-size: 0.85rem;
-  max-width: 340px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-  pointer-events: auto;
-  animation: toastSlideIn 0.3s ease forwards;
-}
-
-.toast.toast-success {
-  border-left-color: var(--green);
-}
-
-.toast.toast-error {
-  border-left-color: var(--red);
-}
-
-.toast.toast-live {
-  border-left-color: #ff4444;
-}
-
-.toast.toast-exit {
-  animation: toastSlideOut 0.3s ease forwards;
-}
-
-@keyframes toastSlideIn {
-  from { opacity: 0; transform: translateX(100%); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes toastSlideOut {
-  from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(100%); }
-}
-
-/* ===== Live Badge ===== */
-.badge-live {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  background: #ff4444;
-  color: white;
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  animation: livePulse 2s ease-in-out infinite;
-}
-
-.badge-live::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  background: white;
-  border-radius: 50%;
-  animation: liveDot 1.5s ease-in-out infinite;
-}
-
-@keyframes livePulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
-}
-
-@keyframes liveDot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-/* ===== In-Progress Banner (meet detail) ===== */
-.live-banner {
-  background: linear-gradient(135deg, rgba(255, 68, 68, 0.15), rgba(255, 68, 68, 0.05));
-  border: 1px solid rgba(255, 68, 68, 0.3);
-  border-radius: 10px;
-  padding: 0.75rem 1rem;
   margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-muted);
   flex-wrap: wrap;
-  gap: 0.5rem;
 }
 
-.live-banner-text {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.breadcrumb-link {
+  color: var(--orange);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.breadcrumb-link:hover {
+  color: var(--orange-light);
+  text-decoration: underline;
+}
+
+.breadcrumb-sep {
+  color: var(--text-muted);
   font-size: 0.9rem;
+}
+
+.breadcrumb-current {
+  color: var(--text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+}
+
+/* ===== Inline Links (meet detail cross-links) ===== */
+.inline-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.inline-link:hover {
+  color: var(--orange-light);
+  border-bottom-color: var(--orange-light);
+}
+
+.detail-event-title .inline-link {
+  color: var(--text);
+  font-family: 'Oswald', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.detail-event-title .inline-link:hover {
+  color: var(--orange);
+}
+
+/* Gymnast name links in meet detail lineup */
+.lineup-table a.inline-link {
   color: var(--text);
 }
 
-.live-banner-time {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+.lineup-table a.inline-link:hover {
+  color: var(--orange-light);
 }
 
-/* ===== Auto-Refresh Toggle ===== */
-.auto-refresh-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+/* Leaderboard links */
+.lb-name a.inline-link {
+  color: var(--text);
+  font-weight: 600;
 }
 
-.toggle-switch {
-  position: relative;
-  width: 36px;
-  height: 20px;
-  background: var(--border);
-  border-radius: 10px;
+.lb-context a.inline-link {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.lb-context a.inline-link:hover {
+  color: var(--orange-light);
+}
+
+/* Meet history table links */
+.meet-history-table a.inline-link {
+  color: var(--text);
+}
+
+.meet-history-table a.inline-link:hover {
+  color: var(--orange-light);
+}
+
+/* PB badge in history table */
+.pb-badge {
+  display: inline-block;
+  background: rgba(215, 63, 9, 0.25);
+  color: var(--orange);
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0 4px;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
   cursor: pointer;
   transition: background var(--transition);
 }
 
-.toggle-switch.active {
-  background: var(--orange);
+.pb-badge:hover {
+  background: rgba(215, 63, 9, 0.45);
 }
 
-.toggle-switch::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  background: white;
-  border-radius: 50%;
-  transition: transform var(--transition);
+/* Profile stat PB link */
+.profile-stat a.inline-link {
+  color: var(--text);
 }
 
-.toggle-switch.active::after {
-  transform: translateX(16px);
+.profile-stat a.inline-link:hover {
+  color: var(--orange-light);
 }
 
-/* ===== Score Flash Animation ===== */
-@keyframes scoreFlash {
-  0% { background-color: transparent; }
-  20% { background-color: rgba(215, 63, 9, 0.3); }
-  100% { background-color: transparent; }
+/* ===== Meet Recap Section ===== */
+.recap-card {
+  margin-bottom: 1.5rem;
 }
 
-.score-updated {
-  animation: scoreFlash 1.5s ease;
+.recap-body {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #ddd;
+  max-width: 720px;
 }
 
-/* ===== Badge for upcoming/in_progress status ===== */
-.badge-upcoming {
-  background: var(--border);
+.recap-body p {
+  margin-bottom: 1rem;
+}
+
+.recap-body p:first-child {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.recap-hidden p {
+  margin-bottom: 1rem;
+}
+
+.recap-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--orange);
+  font-size: 0.85rem;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  padding: 0.35rem 0.75rem;
+  margin-top: 0.25rem;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.recap-toggle:hover {
+  background: rgba(215, 63, 9, 0.1);
+  border-color: var(--orange);
+}
+
+.recap-attribution {
+  margin-top: 1rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
 }
 
-/* ===== Mobile refresh button in bottom nav ===== */
-.refresh-mobile.refreshing .nav-icon {
-  animation: spin 0.8s linear infinite;
-  display: inline-block;
+.recap-attribution a.inline-link {
+  color: var(--orange);
 }
 
-/* Bottom nav adjustments for 4 items */
-@media (max-width: 767px) {
-  .bottom-nav {
-    justify-content: space-around;
-  }
-  
-  .toast-container {
-    bottom: 5rem;
-    right: 0.5rem;
-    left: 0.5rem;
-  }
-  
-  .toast {
-    max-width: none;
-  }
-  
-  .last-updated-bar {
-    display: none !important;
-  }
+.recap-attribution a.inline-link:hover {
+  color: var(--orange-light);
 }
 
-@media (min-width: 768px) {
-  .last-updated-bar {
+/* Recap mobile: always show toggle; on desktop only show if > 3 paragraphs */
+@media (min-width: 769px) {
+  .recap-toggle {
+    display: none;
+  }
+  .recap-hidden {
     display: block !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .recap-body {
+    font-size: 0.95rem;
+  }
+
+  .recap-body p:first-child {
+    font-size: 1rem;
   }
 }

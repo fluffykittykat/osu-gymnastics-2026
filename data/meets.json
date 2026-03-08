@@ -1,5 +1,375 @@
 [
   {
+    "id": "best-of-west-washington-jan-3",
+    "date": "2026-01-03",
+    "opponent": "Washington",
+    "location": "Alaska Airlines Arena, Seattle, WA",
+    "isHome": false,
+    "result": "L",
+    "osuScore": 195.55,
+    "opponentScore": 195.625,
+    "quadMeet": true,
+    "quadName": "Best of the West Quad",
+    "events": {
+      "vault": {
+        "osu": 48.85,
+        "opponent": 48.675
+      },
+      "bars": {
+        "osu": 48.95,
+        "opponent": 48.725
+      },
+      "beam": {
+        "osu": 49.075,
+        "opponent": 49.275
+      },
+      "floor": {
+        "osu": 48.675,
+        "opponent": 48.95
+      }
+    },
+    "athletes": [
+      {
+        "name": "Kyanna Crabb",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.75
+        }
+      },
+      {
+        "name": "Katie Rude",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.375
+        }
+      },
+      {
+        "name": "Savannah Miller",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.725,
+          "bars": 9.75,
+          "floor": 9.7
+        }
+      },
+      {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.675,
+          "beam": 9.7
+        }
+      },
+      {
+        "name": "Sophia Esposito",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "beam": 9.825,
+          "floor": 9.8
+        }
+      },
+      {
+        "name": "Camryn Richardson",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "bars": 9.825
+        }
+      },
+      {
+        "name": "Francesca Caso",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.7
+        }
+      },
+      {
+        "name": "Kaylee Cheek",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 8.4,
+          "beam": 9.85
+        }
+      },
+      {
+        "name": "Ellie Weaver",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.75,
+          "beam": 9.75
+        }
+      },
+      {
+        "name": "Taylor DeVries",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.925
+        }
+      },
+      {
+        "name": "Mia Heather",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.8
+        }
+      },
+      {
+        "name": "Lauren Letzsch",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.85
+        }
+      },
+      {
+        "name": "Sophia Kaloudis",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.775
+        }
+      },
+      {
+        "name": "Paulina Vargas",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.7
+        }
+      },
+      {
+        "name": "Reina Marchal",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.7
+        }
+      }
+    ],
+    "allTeams": [
+      {
+        "team": "UCLA",
+        "rank": 1,
+        "total": 196.975,
+        "vault": 49.15,
+        "bars": 49.225,
+        "beam": 49.525,
+        "floor": 49.075
+      },
+      {
+        "team": "California",
+        "rank": 2,
+        "total": 196.0,
+        "vault": 48.975,
+        "bars": 49.275,
+        "beam": 49.025,
+        "floor": 48.725
+      },
+      {
+        "team": "Washington",
+        "rank": 3,
+        "total": 195.625,
+        "vault": 48.675,
+        "bars": 48.725,
+        "beam": 49.275,
+        "floor": 48.95
+      },
+      {
+        "team": "Oregon State",
+        "rank": 4,
+        "total": 195.55,
+        "vault": 48.85,
+        "bars": 48.95,
+        "beam": 49.075,
+        "floor": 48.675
+      }
+    ],
+    "recapUrl": "https://osubeavers.com/news/2026/1/3/womens-gymnastics-espositos-strong-meet-helps-beavers-at-best-of-the-west-quad",
+    "recap": "SEATTLE, Wash. \u2013 Oregon State gymnastics opened its 2026 season on Saturday, posting a 195.550 to finish in fourth place against No. 20 California, No. 4 UCLA and hosts Washington.\n\r\n \n\r\nSophia Esposito finished with a trio of 9.800-plus scores, earning a 9.825 to lead off the beam lineup before also scoring a 9.800 on floor and 9.850 for her vault. Now a junior, Esposito is coming off a strong sophomore campaign that included a perfect 39 hits on 39 routines.\n\r\n \n\r\nTaylor DeVries was credited with the team's first 9.900-plus score of 2026, earning a 9.925 for her bars routine. Now in her junior season, DeVries came within striking distance of her career high, 9.950, which was set against Arizona State back in 2024. With a 9.925, DeVries also tied UCLA's Jordan Chiles and Cal's Tonya Paulsson for the meet's highest score, marking the Beavers' first event title of the year.\n\r\n \n\r\nCamryn Richardson, competing in her first meet as a Beaver, was given a pair of 9.825 or better scores, tying with Esposito for the highest mark on vault with a 9.850 before earning a 9.825 on bars, while Kaylee Cheek was given a 9.850 in her first routine at the collegiate level, which came during the Beavers' opening rotation on beam.\n\r\n \n\r\nThat first rotation, beam, proved to be the team's strongest of the meet, counting four 9.800-plus scores. Esposito's 9.825 was followed by Cheek's 9.850 which set the stage for a Mia Heather 9.800 and Lauren Letzsch 9.850; Ellie Weaver competed in the six spot and was given a 9.750 as the team posted a 49.075 rotation score.\n\r\n \n\r\nOregon State gymnastics returns to action next week, traveling to Provo, Utah, to face BYU. Action at the Marriott Center is slated to begin at 7 p.m. MT / 6 p.m. PT."
+  },
+  {
+    "id": "best-of-west-california-jan-3",
+    "date": "2026-01-03",
+    "opponent": "California",
+    "location": "Alaska Airlines Arena, Seattle, WA",
+    "isHome": false,
+    "result": "L",
+    "osuScore": 195.55,
+    "opponentScore": 196.0,
+    "quadMeet": true,
+    "quadName": "Best of the West Quad",
+    "events": {
+      "vault": {
+        "osu": 48.85,
+        "opponent": 48.975
+      },
+      "bars": {
+        "osu": 48.95,
+        "opponent": 49.275
+      },
+      "beam": {
+        "osu": 49.075,
+        "opponent": 49.025
+      },
+      "floor": {
+        "osu": 48.675,
+        "opponent": 48.725
+      }
+    },
+    "athletes": [
+      {
+        "name": "Kyanna Crabb",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.75
+        }
+      },
+      {
+        "name": "Katie Rude",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.375
+        }
+      },
+      {
+        "name": "Savannah Miller",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.725,
+          "bars": 9.75,
+          "floor": 9.7
+        }
+      },
+      {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.675,
+          "beam": 9.7
+        }
+      },
+      {
+        "name": "Sophia Esposito",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "beam": 9.825,
+          "floor": 9.8
+        }
+      },
+      {
+        "name": "Camryn Richardson",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "bars": 9.825
+        }
+      },
+      {
+        "name": "Francesca Caso",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.7
+        }
+      },
+      {
+        "name": "Kaylee Cheek",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 8.4,
+          "beam": 9.85
+        }
+      },
+      {
+        "name": "Ellie Weaver",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.75,
+          "beam": 9.75
+        }
+      },
+      {
+        "name": "Taylor DeVries",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.925
+        }
+      },
+      {
+        "name": "Mia Heather",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.8
+        }
+      },
+      {
+        "name": "Lauren Letzsch",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.85
+        }
+      },
+      {
+        "name": "Sophia Kaloudis",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.775
+        }
+      },
+      {
+        "name": "Paulina Vargas",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.7
+        }
+      },
+      {
+        "name": "Reina Marchal",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.7
+        }
+      }
+    ],
+    "allTeams": [
+      {
+        "team": "UCLA",
+        "rank": 1,
+        "total": 196.975,
+        "vault": 49.15,
+        "bars": 49.225,
+        "beam": 49.525,
+        "floor": 49.075
+      },
+      {
+        "team": "California",
+        "rank": 2,
+        "total": 196.0,
+        "vault": 48.975,
+        "bars": 49.275,
+        "beam": 49.025,
+        "floor": 48.725
+      },
+      {
+        "team": "Washington",
+        "rank": 3,
+        "total": 195.625,
+        "vault": 48.675,
+        "bars": 48.725,
+        "beam": 49.275,
+        "floor": 48.95
+      },
+      {
+        "team": "Oregon State",
+        "rank": 4,
+        "total": 195.55,
+        "vault": 48.85,
+        "bars": 48.95,
+        "beam": 49.075,
+        "floor": 48.675
+      }
+    ],
+    "recapUrl": "https://osubeavers.com/news/2026/1/3/womens-gymnastics-espositos-strong-meet-helps-beavers-at-best-of-the-west-quad",
+    "recap": "SEATTLE, Wash. \u2013 Oregon State gymnastics opened its 2026 season on Saturday, posting a 195.550 to finish in fourth place against No. 20 California, No. 4 UCLA and hosts Washington.\n\r\n \n\r\nSophia Esposito finished with a trio of 9.800-plus scores, earning a 9.825 to lead off the beam lineup before also scoring a 9.800 on floor and 9.850 for her vault. Now a junior, Esposito is coming off a strong sophomore campaign that included a perfect 39 hits on 39 routines.\n\r\n \n\r\nTaylor DeVries was credited with the team's first 9.900-plus score of 2026, earning a 9.925 for her bars routine. Now in her junior season, DeVries came within striking distance of her career high, 9.950, which was set against Arizona State back in 2024. With a 9.925, DeVries also tied UCLA's Jordan Chiles and Cal's Tonya Paulsson for the meet's highest score, marking the Beavers' first event title of the year.\n\r\n \n\r\nCamryn Richardson, competing in her first meet as a Beaver, was given a pair of 9.825 or better scores, tying with Esposito for the highest mark on vault with a 9.850 before earning a 9.825 on bars, while Kaylee Cheek was given a 9.850 in her first routine at the collegiate level, which came during the Beavers' opening rotation on beam.\n\r\n \n\r\nThat first rotation, beam, proved to be the team's strongest of the meet, counting four 9.800-plus scores. Esposito's 9.825 was followed by Cheek's 9.850 which set the stage for a Mia Heather 9.800 and Lauren Letzsch 9.850; Ellie Weaver competed in the six spot and was given a 9.750 as the team posted a 49.075 rotation score.\n\r\n \n\r\nOregon State gymnastics returns to action next week, traveling to Provo, Utah, to face BYU. Action at the Marriott Center is slated to begin at 7 p.m. MT / 6 p.m. PT."
+  },
+  {
     "id": "best-of-west-ucla-jan-3",
     "date": "2026-01-03",
     "opponent": "UCLA",
@@ -549,7 +919,9 @@
         "beam": 49.075,
         "floor": 48.675
       }
-    ]
+    ],
+    "recapUrl": "https://osubeavers.com/news/2026/1/3/womens-gymnastics-espositos-strong-meet-helps-beavers-at-best-of-the-west-quad",
+    "recap": "SEATTLE, Wash. \u2013 Oregon State gymnastics opened its 2026 season on Saturday, posting a 195.550 to finish in fourth place against No. 20 California, No. 4 UCLA and hosts Washington.\n\r\n \n\r\nSophia Esposito finished with a trio of 9.800-plus scores, earning a 9.825 to lead off the beam lineup before also scoring a 9.800 on floor and 9.850 for her vault. Now a junior, Esposito is coming off a strong sophomore campaign that included a perfect 39 hits on 39 routines.\n\r\n \n\r\nTaylor DeVries was credited with the team's first 9.900-plus score of 2026, earning a 9.925 for her bars routine. Now in her junior season, DeVries came within striking distance of her career high, 9.950, which was set against Arizona State back in 2024. With a 9.925, DeVries also tied UCLA's Jordan Chiles and Cal's Tonya Paulsson for the meet's highest score, marking the Beavers' first event title of the year.\n\r\n \n\r\nCamryn Richardson, competing in her first meet as a Beaver, was given a pair of 9.825 or better scores, tying with Esposito for the highest mark on vault with a 9.850 before earning a 9.825 on bars, while Kaylee Cheek was given a 9.850 in her first routine at the collegiate level, which came during the Beavers' opening rotation on beam.\n\r\n \n\r\nThat first rotation, beam, proved to be the team's strongest of the meet, counting four 9.800-plus scores. Esposito's 9.825 was followed by Cheek's 9.850 which set the stage for a Mia Heather 9.800 and Lauren Letzsch 9.850; Ellie Weaver competed in the six spot and was given a 9.750 as the team posted a 49.075 rotation score.\n\r\n \n\r\nOregon State gymnastics returns to action next week, traveling to Provo, Utah, to face BYU. Action at the Marriott Center is slated to begin at 7 p.m. MT / 6 p.m. PT."
   },
   {
     "id": "byu-jan-9",
@@ -694,7 +1066,9 @@
         }
       }
     ],
-    "attendance": "4,002"
+    "attendance": "4,002",
+    "recapUrl": "https://osubeavers.com/news/2026/1/9/womens-gymnastics-strong-foor-rotation-not-enough-in-loss-at-byu",
+    "recap": "PROVO, Utah \u2013 Oregon State gymnastics tallied the highest rotation score of either team in its dual against BYU, a 49.200 on floor exercise, but that wasn't enough as the Beavers finished with a 194.525 and fell to the Cougars on Friday inside the Marriott Center.\n\r\n \n\r\nEllie Weaver had a great meet for the Beavers in Provo, earning a 9.800 on bars in the team's first rotation before posting a 9.850 in the anchor spot on beam, which OSU competed in the fourth and final rotation. For the Vancouver, Wash., native, her performance was a near tenth of a point average improvement from last week, having posted a pair of 9.750s in Seattle.\n\r\n \n\r\nSophia Esposito won her first event title of the season on Friday, earning a 9.900 on floor to tie for the meet's highest score, also adding a 9.800 for her vault. Esposito, who earned a trio of 9.800-plus scores last weekend, also competed on beam along with Lauren Letzsch, who earned her second 9.800-plus score in as many weeks.\n\r\n \n\r\nUtah natives Olivia Buckner and Kaylee Cheek both competed close to home, with Buckner earning a 9.800 for her vault and Cheek hitting on both routines; Camryn Richardson added a 9.800 for her bars routine and was also given a 9.750 in her first floor exercise appearance of the season.\n\r\n \n\r\nThe Beaver floor lineup earned the highest rotation score of either team in Friday's competition, combining for a 49.200. Paulina Vargas scored a 9.825 that was followed by Richardson's 9.750, setting the stage for the back half of the lineup, which featured a Savannah Miller 9.875, Reina Marchal 9.850 and Esposito's 9.900.\n\r\n \n\r\nOregon State gymnastics returns home for its next two meets, hosting Sacramento State (Jan. 16, 7 p.m.) and Utah State (Jan. 25, 1 p.m.). Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix."
   },
   {
     "id": "sac-state-jan-16",
@@ -828,7 +1202,9 @@
         }
       }
     ],
-    "attendance": "3,310"
+    "attendance": "3,310",
+    "recapUrl": "https://osubeavers.com/news/2026/1/16/womens-gymnastics-espositos-39-500-helps-beavers-to-home-victory",
+    "recap": "CORVALLIS, Ore. \u2013 Sophia Esposito put up a pair of 9.900-plus scores on her way to a 39.500 in the all-around, helping the Oregon State Beavers defeat Sacramento State 196.375-193.675 at Gill Coliseum.\n\r\n \n\r\nEsposito started the meet with a 9.850 during the Beavers' vault rotation and followed it up with a new career high on bars, 9.900, before a 9.825 on beam set the stage for another 9.900-plus, earning a 9.925 for her floor exercise routine. Friday's floor score marked Esposito's second-consecutive week finishing with the meet's highest score on that event.\n\r\n \n\r\nKyanna Crabb led the entire meet off with a 9.875 in the first spot of OSU's vault lineup, earning a 9.900 from judge two and setting a new Oregon State career high in the process. Originally from Vancouver, Wash., Crabb has vaulted and completed an exhibition routine on floor in every single meet this season, and earned a 9.925 for her exhibition on Friday.\n\r\n \n\r\nEllie Weaver set a new career high in the meet's second rotation, earning a 9.950 on the uneven bars while anchoring the lineup, surpassing the 9.925 she set against Utah on March 11, 2023; the Battle Ground, Wash., native also competed on the beam, earning a 9.775, moving her beam average to 9.792 on the season while improving to a 9.833 average on the uneven bars.\n\r\n \n\r\nOlivia Buckner earned a pair of 9.875s on beam and floor, with the floor score setting a new personal best. Lauren Letzsch went 9.875 on beam while Savannah Miller earned a 9.875 on her floor routine for the second time in as many weeks.\n\r\n \n\r\nOSU's floor exercise lineup exceled against the Hornets, led off by Sophia Kaloudis' career-best 9.850 that was followed by a Paulina Vargas 9.825 and the 9.875s by Buckner and Miller; Esposito rounded out the rotation with her 9.925 to help the Beavers to a 49.350 rotation score, which is the highest on the season.\n\r\n \n\r\nThe Beavers improved in every single rotation, starting with a. 48.850 and progressing to a 49.050 bars score and 49.125 beam before floor exercise in the fourth.\n\r\n \n\r\nOregon State gymnastics stays home for its next meet, hosting Utah State next Sunday, Jan. 25. Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix."
   },
   {
     "id": "utah-state-jan-25",
@@ -955,7 +1331,9 @@
         }
       }
     ],
-    "attendance": "3,651"
+    "attendance": "3,651",
+    "recapUrl": "https://osubeavers.com/news/2026/1/25/womens-gymnastics-beaver-bars-set-the-tone-in-victory-over-23rd-ranked-utah-state",
+    "recap": "CORVALLIS, Ore. \u2013 Oregon State Gymnastics defeated the No. 23 Utah State Aggies on Sunday inside Gill Coliseum, posting a season-high 196.600 to secure a second-consecutive home victory.\n\r\n\n\r\nOSU's bars lineup was pivotal in the win, posting a season-high score for a single rotation with five scores tallying a 49.425, counting no lower than a 9.800 and posting a trio of 9.900-plus scores.\n\r\n \n\r\nFrancesca Caso, competing in the two spot, tied her career high with a 9.900 before Camryn Richardson and Ellie Weaver ended the rotation with back-to-back 9.925s; Sophia Esposito scored a 9.800 and Kaylee Cheek set a new season and career high thanks to a 9.875.\n\r\n \n\r\nFor Richardson, the 9.925 was a new career high and earned her first career event title thanks to Sunday's tie with Weaver, while Weaver has now won back-to-back event titles on the uneven bars after a 9.950 against Sacramento State last week. Esposito's bars routine helped fuel a second all-around title in as many weeks, also earning scores of 9.825 (VT), 9.850 (BB) and 9.750 (FX) to finish with a 39.225.\n\r\n\n\r\nOlivia Buckner also won her second event title of the year thanks to a 9.850 vault score, later adding a 9.800 during the team's third rotation on beam. Sunday's vault marked a new season high for the Riverton, Utah, native, who had earned a 9.800 at BYU two weeks ago.\n\r\n \n\r\nMia Heather's 9.900 on the balance beam was the meet's highest score on that event, earning a raucous response from Beaver faithful in attendance while surpassing the 9.825 scored last season in Tuscaloosa, Ala., at the NCAA Regional. The beam score also continued a strong start to Heather's collegiate career, having now hit on each of the seven routines she's completed as a Beav.\n\r\n \n\r\nPaulina Vargas led off the final rotation with a career-best 9.875 on floor while Reina Marchal earned her second 9.800-plus score in four routines this season, scoring a 9.825, while Savannah Miller tied her career high on that event thanks a 9.900 - her ninth time posting a 9.900.\n\r\n \n\r\nOregon State gymnastics is on the road for its next two meets, heading to face the Alabama Crimson Tide in Tuscaloosa next week and then to Boise, Idaho, on Feb. 6 before returning home Feb. 14 for another Pac-12 preview against Southern Utah, which is scheduled for Feb. 14 at 2 p.m. Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix.\n\r\n Skip Ad Next EventatAlabamaL, 195.825-197.450Jan 30 (Fri)\n\n 4:30 p.m.RecapResultsSECN+PreviewLive Scoring History Full Schedule<h3 name=\"h3\" class=\"s-heading__m"
   },
   {
     "id": "alabama-jan-30",
@@ -1095,12 +1473,187 @@
         }
       }
     ],
-    "imageBasedPdf": true
+    "recapUrl": "https://osubeavers.com/news/2026/1/30/womens-gymnastics-beaver-gymnastics-falls-to-no-3-alabama",
+    "recap": "TUSCALOOSA, Ala. \u2013 Oregon State gymnastics was in action Friday night, posting a 195.825 in a road loss to No. 3 Alabama.\n\r\n\n\r\nThe Beaver beam lineup had a strong meet against the Tide, posting OSU's highest rotation score of any event, 49.100. Led off by Sophia Esposito's second-consecutive 9.850, Olivia Buckner earned a 9.825 to setup Kaylee Cheek, who tied a season and career high with a 9.850. Mia Heather and Lauren Letzch were both given 9.750s before Ellie Weaver anchored the lineup with a 9.825.\n\r\n \n\r\nCheek's performance came on the heels of a 9.850 on bars in rotation one, making it two-straight weeks with a 9.850 or better on that event after posting a 9.875 against No. 23 Utah State last week inside Gill Coliseum. Cheek, a freshman from Spanish Fork, Utah, has competed on bars and beam in every single meet this season.\n\r\n \n\r\nEsposito's strong bars score contributed to a 39.325 in the all-around, earning a pair of 9.800s on vault and bars before finishing her meet with a team-leading 9.875 on floor and the 9.850 beam score. The team-leader in total routines (18) and hits (18), Esposito has now posted a 9.800 or better in all but two of her routines this season.\n\r\n \n\r\nOlivia Buckner earned a pair of 9.825s on vault and beam, her second time earning a pair of 9.800-plus scores in as many weeks, while Savannah Miller posted a 9.850 during the team's floor rotation to make it four-consecutive weeks with a 9.850 or better on that event; Miller previously tied her career high with a 9.900 during last week's meet.\n\r\n \n\r\nAlabama posted a 197.450 to win Friday's competition.\n\r\n\n\r\nOregon State gymnastics stays on the road for its next meet, heading to Boise, Idaho, for a quad meet hosted by the Broncos that also features San Jos\u00e9 State and UC Davis. Action at ExtraMile Arena is slated to begin at 6 p.m. PT / 7 p.m. MT.\n\r\n \n\r\nThe team returns home Feb. 14 for a Pac-12 preview against Southern Utah, which is scheduled for Feb. 14 at 2 p.m. Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix.\n\r\n Skip Ad Next EventSan Jos\u00e9 StateL, 195.450-195.475Feb 6 (Fri)\n\n 6 p.m.RecapResultsWatchPreviewLive Scoring History Full Schedule Players Mentioned<a href=\"/sports/womens-gymnastics/roster/oli"
+  },
+  {
+    "id": "boise-state-quad-boise-feb-6",
+    "date": "2026-02-06",
+    "opponent": "Boise State",
+    "location": "ExtraMile Arena, Boise, ID",
+    "isHome": false,
+    "result": "W",
+    "osuScore": 195.45,
+    "opponentScore": 195.35,
+    "quadMeet": true,
+    "quadName": "Boise State Quad",
+    "events": {
+      "vault": {
+        "osu": 49.025,
+        "opponent": 48.85
+      },
+      "bars": {
+        "osu": 49.1,
+        "opponent": 48.975
+      },
+      "beam": {
+        "osu": 48.45,
+        "opponent": 48.625
+      },
+      "floor": {
+        "osu": 48.875,
+        "opponent": 48.9
+      }
+    },
+    "athletes": [
+      {
+        "name": "Kyanna Crabb",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "floor": 8.475
+        }
+      },
+      {
+        "name": "Reina Marchal",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.7,
+          "floor": 9.825
+        }
+      },
+      {
+        "name": "Savannah Miller",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.8,
+          "bars": 9.725
+        }
+      },
+      {
+        "name": "Camryn Richardson",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.775,
+          "bars": 9.825
+        }
+      },
+      {
+        "name": "Sophia Esposito",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.825,
+          "bars": 9.725,
+          "beam": 9.775,
+          "floor": 9.9
+        }
+      },
+      {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.775,
+          "beam": 9.675
+        }
+      },
+      {
+        "name": "Francesca Caso",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.825
+        }
+      },
+      {
+        "name": "Kaylee Cheek",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.85,
+          "beam": 9.525
+        }
+      },
+      {
+        "name": "Ellie Weaver",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.875,
+          "beam": 9.5
+        }
+      },
+      {
+        "name": "Mia Heather",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.65
+        }
+      },
+      {
+        "name": "Lauren Letzsch",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.825
+        }
+      },
+      {
+        "name": "Paulina Vargas",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.675
+        }
+      },
+      {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.775
+        }
+      }
+    ],
+    "attendance": "2,677",
+    "allTeams": [
+      {
+        "team": "San Jose State",
+        "rank": 1,
+        "total": 195.475,
+        "vault": 49.2,
+        "bars": 48.975,
+        "beam": 48.75,
+        "floor": 48.55
+      },
+      {
+        "team": "Oregon State",
+        "rank": 2,
+        "total": 195.45,
+        "vault": 49.025,
+        "bars": 49.1,
+        "beam": 48.45,
+        "floor": 48.875
+      },
+      {
+        "team": "Boise State",
+        "rank": 3,
+        "total": 195.35,
+        "vault": 48.85,
+        "bars": 48.975,
+        "beam": 48.625,
+        "floor": 48.9
+      },
+      {
+        "team": "UC Davis",
+        "rank": 4,
+        "total": 193.025,
+        "vault": 48.075,
+        "bars": 48.65,
+        "beam": 47.75,
+        "floor": 48.55
+      }
+    ],
+    "recapUrl": "https://osubeavers.com/news/2026/2/6/womens-gymnastics-comeback-falls-short-at-boise-state-quad-meet",
+    "recap": "BOISE, Idaho \u2013 Oregon State gymnastics placed second in a quad meet on Friday, tallying a 195.450 to finish behind San Jos\u00e9 State (195.475) but ahead of hosts Boise State (195.350) and UC Davis (193.025).\n\r\n\n\r\nAfter starting slow with a 48.450 during the opening rotation on beam, the Beavers built momentum throughout the meet, increasing each rotation score \u2013 which included a season-best 49.025 on vault \u2013 to rally and finish just behind San Jos\u00e9 State, who used a huge vault score in the final rotation to take the meet.\n\r\n\n\r\nEllie Weaver's 9.875 paced the bar lineup's 49.100, which came on the heels of a 9.825 from Camryn Richardson and included both a 9.8500 from Kaylee Cheek and 9.825 from Francesca Caso. For Weaver, the bars score was her third 9.850 or better this season and tied for the highest score in the meet, which makes it three event titles on the season for the Battle Ground, Wash., native.\n\r\n\n\r\nLauren Letzsch won her second event title of the 2026 season with a beautiful beam routine that was given a 9.825, one of just three 9.800 or better scores given out of 24 athletes to compete in the competition. A beam specialist who led the team in average score (9.810) entering Friday's meet, Letzsch has now earned a 9.800 or better in four competitions this season.\n\r\n\n\r\nSophia Esposito competed as an all-arounder for the fourth-consecutive week and won a pair of event titles on floor exercise and in the all-around, finishing with scores of 9.825 (VT), 9.725 (UB), 9.775 (BB) and 9.900 (FX) to finish with a 39.225. With two more event titles, Esposito increased her season total to six, which leads the team.\n\r\n\n\r\nReina Marchal earned a 9.825 for her floor routine while Savannah Miller put up a career-high 9.800 while vaulting during the third rotation; Camryn Richardson had another solid meet on vault (9.775) and bars (9.825).\n\r\n\n\r\nOregon State returns home for a meet Feb. 14, hosting a Pac-12 preview against Southern Utah, which is scheduled for 2 p.m. inside legendary Gill Coliseum. Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix.\n\r\n\n\r\n \n\n\r\nSkip Ad Next EventvsSouthern UtahL, 196.300-196.825Feb 14 (Sat)\n\n 2 p.m.RecapResultsPac-12 InsiderPreviewLive Scoring Tickets History Full Schedule<"
   },
   {
     "id": "boise-state-quad-san-jose-state-feb-6",
     "date": "2026-02-06",
-    "opponent": "San Jose State",
+    "opponent": "San Jos\u00e9 State",
     "location": "ExtraMile Arena, Boise, ID",
     "isHome": false,
     "result": "L",
@@ -1268,7 +1821,8 @@
         "floor": 48.55
       }
     ],
-    "attendance": "2,677"
+    "recapUrl": "https://osubeavers.com/news/2026/2/6/womens-gymnastics-comeback-falls-short-at-boise-state-quad-meet",
+    "recap": "BOISE, Idaho \u2013 Oregon State gymnastics placed second in a quad meet on Friday, tallying a 195.450 to finish behind San Jos\u00e9 State (195.475) but ahead of hosts Boise State (195.350) and UC Davis (193.025).\n\r\n\n\r\nAfter starting slow with a 48.450 during the opening rotation on beam, the Beavers built momentum throughout the meet, increasing each rotation score \u2013 which included a season-best 49.025 on vault \u2013 to rally and finish just behind San Jos\u00e9 State, who used a huge vault score in the final rotation to take the meet.\n\r\n\n\r\nEllie Weaver's 9.875 paced the bar lineup's 49.100, which came on the heels of a 9.825 from Camryn Richardson and included both a 9.8500 from Kaylee Cheek and 9.825 from Francesca Caso. For Weaver, the bars score was her third 9.850 or better this season and tied for the highest score in the meet, which makes it three event titles on the season for the Battle Ground, Wash., native.\n\r\n\n\r\nLauren Letzsch won her second event title of the 2026 season with a beautiful beam routine that was given a 9.825, one of just three 9.800 or better scores given out of 24 athletes to compete in the competition. A beam specialist who led the team in average score (9.810) entering Friday's meet, Letzsch has now earned a 9.800 or better in four competitions this season.\n\r\n\n\r\nSophia Esposito competed as an all-arounder for the fourth-consecutive week and won a pair of event titles on floor exercise and in the all-around, finishing with scores of 9.825 (VT), 9.725 (UB), 9.775 (BB) and 9.900 (FX) to finish with a 39.225. With two more event titles, Esposito increased her season total to six, which leads the team.\n\r\n\n\r\nReina Marchal earned a 9.825 for her floor routine while Savannah Miller put up a career-high 9.800 while vaulting during the third rotation; Camryn Richardson had another solid meet on vault (9.775) and bars (9.825).\n\r\n\n\r\nOregon State returns home for a meet Feb. 14, hosting a Pac-12 preview against Southern Utah, which is scheduled for 2 p.m. inside legendary Gill Coliseum. Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix.\n\r\n\n\r\n \n\n\r\nSkip Ad Next EventvsSouthern UtahL, 196.300-196.825Feb 14 (Sat)\n\n 2 p.m.RecapResultsPac-12 InsiderPreviewLive Scoring Tickets History Full Schedule<"
   },
   {
     "id": "boise-state-quad-boise-state-feb-6",
@@ -1614,7 +2168,8 @@
         "floor": 48.55
       }
     ],
-    "attendance": "2,677"
+    "recapUrl": "https://osubeavers.com/news/2026/2/6/womens-gymnastics-comeback-falls-short-at-boise-state-quad-meet",
+    "recap": "BOISE, Idaho \u2013 Oregon State gymnastics placed second in a quad meet on Friday, tallying a 195.450 to finish behind San Jos\u00e9 State (195.475) but ahead of hosts Boise State (195.350) and UC Davis (193.025).\n\r\n\n\r\nAfter starting slow with a 48.450 during the opening rotation on beam, the Beavers built momentum throughout the meet, increasing each rotation score \u2013 which included a season-best 49.025 on vault \u2013 to rally and finish just behind San Jos\u00e9 State, who used a huge vault score in the final rotation to take the meet.\n\r\n\n\r\nEllie Weaver's 9.875 paced the bar lineup's 49.100, which came on the heels of a 9.825 from Camryn Richardson and included both a 9.8500 from Kaylee Cheek and 9.825 from Francesca Caso. For Weaver, the bars score was her third 9.850 or better this season and tied for the highest score in the meet, which makes it three event titles on the season for the Battle Ground, Wash., native.\n\r\n\n\r\nLauren Letzsch won her second event title of the 2026 season with a beautiful beam routine that was given a 9.825, one of just three 9.800 or better scores given out of 24 athletes to compete in the competition. A beam specialist who led the team in average score (9.810) entering Friday's meet, Letzsch has now earned a 9.800 or better in four competitions this season.\n\r\n\n\r\nSophia Esposito competed as an all-arounder for the fourth-consecutive week and won a pair of event titles on floor exercise and in the all-around, finishing with scores of 9.825 (VT), 9.725 (UB), 9.775 (BB) and 9.900 (FX) to finish with a 39.225. With two more event titles, Esposito increased her season total to six, which leads the team.\n\r\n\n\r\nReina Marchal earned a 9.825 for her floor routine while Savannah Miller put up a career-high 9.800 while vaulting during the third rotation; Camryn Richardson had another solid meet on vault (9.775) and bars (9.825).\n\r\n\n\r\nOregon State returns home for a meet Feb. 14, hosting a Pac-12 preview against Southern Utah, which is scheduled for 2 p.m. inside legendary Gill Coliseum. Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix.\n\r\n\n\r\n \n\n\r\nSkip Ad Next EventvsSouthern UtahL, 196.300-196.825Feb 14 (Sat)\n\n 2 p.m.RecapResultsPac-12 InsiderPreviewLive Scoring Tickets History Full Schedule<"
   },
   {
     "id": "southern-utah-feb-14",
@@ -1748,7 +2303,9 @@
         }
       }
     ],
-    "attendance": "3,954"
+    "attendance": "3,954",
+    "recapUrl": "https://osubeavers.com/news/2026/2/14/womens-gymnastics-season-highs-on-beam-and-floor-not-enough-in-loss-to-suu",
+    "recap": "CORVALLIS, Ore. \u2013 Despite posting season-best marks on beam (49.350) and floor (49.400), Oregon State Gymnastics fell to the Southern Utah Flippin' Birds on Saturday, finishing with a 196.300 against a future Pac-12 opponent inside legendary Gill Coliseum.\n\r\n \n\r\nOlivia Buckner had a fantastic meet against SUU, finishing with scores of 9.875 (VT), 9.825 (BB) and 9.875 (FX). The vault score set a new season high and her 9.875 on floor tied a season and career high mark; Saturday's performance was also her first time with three or more 9.800-plus scores since the NCAA Tuscaloosa Regional Semifinal last spring.\n\r\n \n\r\nSophia Esposito's incredible performances in the all-around continued Saturday, finishing with a 39.450 that included bars and floor scores which tied a career high. The Melville, N.Y., native started her meet by vaulting to a 9.775 before earning her first 9.900 on the uneven bars, using that momentum to post a 9.825 for the beam team and rounding out the meet with another 9.900-plus, this time a 9.950 on floor.\n\r\n \n\r\nEsposito, who's now competed all-around in five-straight competitions, won event titles on bars and floor, and has now posted a 9.900 or better in consecutive weeks after earning a 9.900 for her floor routine in Boise.\n\r\n \n\r\nLauren Letzsch was also in the 9.900s on Saturday, earning a season high 9.925 for OSU's beam lineup that came within striking distance of her career high, which is 9.950. Letzsch, who entered the meet as the team-leader in average beam score, has now won three event titles this season that event.\n\r\n \n\r\nKaylee Cheek was also part of the 9.900 club, also earning her 9.900 on the balance beam. A true freshman from Spanish Fork, Utah, Cheek has competed on beam and bars in every meet this season and has earned a 9.850 or better for her beam routine on three different occasions.\n\r\n \n\r\nThat third rotation saw OSU score a season-high 49.350 on the beam, starting with a pair of 9.825s by Mia Heather and Buckner. After Cheek's 9.900, Ellie Weaver stepped up with a 9.875 to set the stage for Letzsch's 9.925 and an Esposito 9.825. Entering the meet as the 21st-ranked beam lineup in the country, the rotation score bested the lineup's 49.125 score against Sacramento State on Jan. 16.\n\r\n \n\r\nOSU's floor group stole the show, however, putting up a 49.400 that counted no lower than a 9.825. Sophia Kaloudis was back in the lineup and earned that 9.825 before Buckner's 9.875 and a Reina Marchal 9.900 that set a new season and career high. Savannah Miller posted her fifth-consecutive 9.850 or better with an even 9.850 before Esposito's 9.950.\n\r\n \n\r\nSouthern Utah took the win with a 196.825.\n\r\n \n\r\nBeaver Gymnastics is on the road for its next meet, traveling to Denton, Texas, to compete against Texas Woman's and Kent State and Kent State in the TWU Tri Meet, returning home the following week to host Stanford Feb. 27. Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix.\n\r\n Skip Ad Next EventatTexas Woman'sL, 195.775-195.975Feb 22 (Sun)\n\n 12 p.m.RecapResultsWatchPreviewLive stats History Full Schedule"
   },
   {
     "id": "twu-quad-twu-feb-22",
@@ -2223,7 +2780,7 @@
         "name": "Taylor DeVries",
         "team": "Oregon State",
         "scores": {
-          "floor": 9.675
+          "floor": 9.775
         }
       }
     ],
@@ -2264,7 +2821,355 @@
         "beam": 48.325,
         "floor": 48.825
       }
-    ]
+    ],
+    "recapUrl": "https://osubeavers.com/news/2026/2/22/womens-gymnastics-beavers-finish-second-at-twu-quad-meet",
+    "recap": "DENTON, Texas \u2013 Oregon State gymnastics placed second in a quad meet on Sunday, tallying a 195.775 to finish behind host Texas Woman's (195.975) but ahead of Arizona State (195.550) and Kent State (195.075) inside Kitty Magee Arena.\n\r\n \n\r\nSophia Esposito posted a 39.225 the all-around, which included a pair of 9.825s (VT, UB) and a 9.875 on floor that came on the heels of her season-high 9.950 against Southern Utah last week. A junior from Melville, N.Y., Esposito has competed in the all-around in each of her last six appearances and won a share of the floor exercise event title to make it nine on the season \u2013 five of which have come on that event.\n\r\n \n\r\nOlivia Buckner also won an event title for the second-consecutive week thanks to a 9.850 vault score, adding 9.775s on beam and floor. The Riverton, Utah, native has exceled particularly on vault in recent weeks, as Sunday's 9.850 is her fourth 9.825 or better in the last five weeks, which includes a 9.850 against Utah State and last week's 9.875.\n\r\n \n\r\nAfter an early fall, OSU's bars lineup responded in a big way, rattling off a trio of 9.800-plus scores to finish he rotation. Esposito's 9.825 in the four spot setup Texas native Camryn Richardson, who earned a 9.850, before Ellie Weaver earned the team's highest score of the meet with a 9.900 that tied for the meet's highest score.\n\r\n \n\r\nFor Weaver, the event title win was her fourth on the season, all of which have come on bars, and made it three 9.900 or better bars scores this season, while Richardson's strong showing is her third-straight meet with a 9.825 or better and increases her season average to 9.836.\n\r\n \n\r\nOn beam, Kaylee Cheek (9.825) and Lauren Letzsch (9.850) led the way, while Reina Marchal (9.850) and Savannah Miller (9.825) combined with Esposito's 9.875 to propel OSU's floor lineup to the team's highest rotation score of the meet, a 49.000.\n\r\n \n\r\nOregon State returns home for a meet Feb. 27, hosting Stanford at 7 p.m. inside legendary Gill Coliseum. Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix.\n\r\n Skip Ad Next EventvsStanfordL, 197.250-198.150Feb 27 (Fri)\n\n 7 p.m.RecapResultsPac-12 InsiderPreviewLive Scoring Tickets History Full Schedule<div data-test-id"
+  },
+  {
+    "id": "twu-quad-asu-feb-22",
+    "date": "2026-02-22",
+    "opponent": "Arizona State",
+    "location": "Kitty Magee Arena, Denton, TX",
+    "isHome": false,
+    "result": "W",
+    "osuScore": 195.775,
+    "opponentScore": 195.55,
+    "quadMeet": true,
+    "quadName": "TWU Quad",
+    "events": {
+      "vault": {
+        "osu": 48.975,
+        "opponent": 49.05
+      },
+      "bars": {
+        "osu": 48.9,
+        "opponent": 48.475
+      },
+      "beam": {
+        "osu": 48.9,
+        "opponent": 48.9
+      },
+      "floor": {
+        "osu": 49.0,
+        "opponent": 49.125
+      }
+    },
+    "athletes": [
+      {
+        "name": "Kyanna Crabb",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.725
+        }
+      },
+      {
+        "name": "Reina Marchal",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.75,
+          "floor": 9.85
+        }
+      },
+      {
+        "name": "Savannah Miller",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.775,
+          "bars": 9.775,
+          "floor": 9.825
+        }
+      },
+      {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "beam": 9.775
+        }
+      },
+      {
+        "name": "Camryn Richardson",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.775,
+          "bars": 9.85
+        }
+      },
+      {
+        "name": "Sophia Esposito",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.825,
+          "bars": 9.825,
+          "beam": 9.7,
+          "floor": 9.875
+        }
+      },
+      {
+        "name": "Francesca Caso",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.55
+        }
+      },
+      {
+        "name": "Kaylee Cheek",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 8.0,
+          "beam": 9.825
+        }
+      },
+      {
+        "name": "Ellie Weaver",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.9,
+          "beam": 9.225
+        }
+      },
+      {
+        "name": "Mia Heather",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.75
+        }
+      },
+      {
+        "name": "Lauren Letzsch",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.85
+        }
+      },
+      {
+        "name": "Paulina Vargas",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.6
+        }
+      },
+      {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.775
+        }
+      }
+    ],
+    "allTeams": [
+      {
+        "team": "TWU",
+        "rank": 1,
+        "total": 195.975,
+        "vault": 48.925,
+        "bars": 48.95,
+        "beam": 49.025,
+        "floor": 49.075
+      },
+      {
+        "team": "Oregon State",
+        "rank": 2,
+        "total": 195.775,
+        "vault": 48.975,
+        "bars": 48.9,
+        "beam": 48.9,
+        "floor": 49.0
+      },
+      {
+        "team": "Arizona State",
+        "rank": 3,
+        "total": 195.55,
+        "vault": 49.05,
+        "bars": 48.475,
+        "beam": 48.9,
+        "floor": 49.125
+      },
+      {
+        "team": "Kent State",
+        "rank": 4,
+        "total": 195.075,
+        "vault": 48.925,
+        "bars": 49.0,
+        "beam": 48.325,
+        "floor": 48.825
+      }
+    ],
+    "recapUrl": "https://osubeavers.com/news/2026/2/22/womens-gymnastics-beavers-finish-second-at-twu-quad-meet",
+    "recap": "DENTON, Texas \u2013 Oregon State gymnastics placed second in a quad meet on Sunday, tallying a 195.775 to finish behind host Texas Woman's (195.975) but ahead of Arizona State (195.550) and Kent State (195.075) inside Kitty Magee Arena.\n\r\n \n\r\nSophia Esposito posted a 39.225 the all-around, which included a pair of 9.825s (VT, UB) and a 9.875 on floor that came on the heels of her season-high 9.950 against Southern Utah last week. A junior from Melville, N.Y., Esposito has competed in the all-around in each of her last six appearances and won a share of the floor exercise event title to make it nine on the season \u2013 five of which have come on that event.\n\r\n \n\r\nOlivia Buckner also won an event title for the second-consecutive week thanks to a 9.850 vault score, adding 9.775s on beam and floor. The Riverton, Utah, native has exceled particularly on vault in recent weeks, as Sunday's 9.850 is her fourth 9.825 or better in the last five weeks, which includes a 9.850 against Utah State and last week's 9.875.\n\r\n \n\r\nAfter an early fall, OSU's bars lineup responded in a big way, rattling off a trio of 9.800-plus scores to finish he rotation. Esposito's 9.825 in the four spot setup Texas native Camryn Richardson, who earned a 9.850, before Ellie Weaver earned the team's highest score of the meet with a 9.900 that tied for the meet's highest score.\n\r\n \n\r\nFor Weaver, the event title win was her fourth on the season, all of which have come on bars, and made it three 9.900 or better bars scores this season, while Richardson's strong showing is her third-straight meet with a 9.825 or better and increases her season average to 9.836.\n\r\n \n\r\nOn beam, Kaylee Cheek (9.825) and Lauren Letzsch (9.850) led the way, while Reina Marchal (9.850) and Savannah Miller (9.825) combined with Esposito's 9.875 to propel OSU's floor lineup to the team's highest rotation score of the meet, a 49.000.\n\r\n \n\r\nOregon State returns home for a meet Feb. 27, hosting Stanford at 7 p.m. inside legendary Gill Coliseum. Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix.\n\r\n Skip Ad Next EventvsStanfordL, 197.250-198.150Feb 27 (Fri)\n\n 7 p.m.RecapResultsPac-12 InsiderPreviewLive Scoring Tickets History Full Schedule<div data-test-id"
+  },
+  {
+    "id": "twu-quad-twu-feb-22",
+    "date": "2026-02-22",
+    "opponent": "Texas Woman's",
+    "location": "Kitty Magee Arena, Denton, TX",
+    "isHome": false,
+    "result": "L",
+    "osuScore": 195.775,
+    "opponentScore": 195.975,
+    "quadMeet": true,
+    "quadName": "TWU Quad",
+    "events": {
+      "vault": {
+        "osu": 48.975,
+        "opponent": 48.925
+      },
+      "bars": {
+        "osu": 48.9,
+        "opponent": 48.95
+      },
+      "beam": {
+        "osu": 48.9,
+        "opponent": 49.025
+      },
+      "floor": {
+        "osu": 49.0,
+        "opponent": 49.075
+      }
+    },
+    "athletes": [
+      {
+        "name": "Kyanna Crabb",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.725
+        }
+      },
+      {
+        "name": "Reina Marchal",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.75,
+          "floor": 9.85
+        }
+      },
+      {
+        "name": "Savannah Miller",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.775,
+          "bars": 9.775,
+          "floor": 9.825
+        }
+      },
+      {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "beam": 9.775
+        }
+      },
+      {
+        "name": "Camryn Richardson",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.775,
+          "bars": 9.85
+        }
+      },
+      {
+        "name": "Sophia Esposito",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.825,
+          "bars": 9.825,
+          "beam": 9.7,
+          "floor": 9.875
+        }
+      },
+      {
+        "name": "Francesca Caso",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.55
+        }
+      },
+      {
+        "name": "Kaylee Cheek",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 8.0,
+          "beam": 9.825
+        }
+      },
+      {
+        "name": "Ellie Weaver",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.9,
+          "beam": 9.225
+        }
+      },
+      {
+        "name": "Mia Heather",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.75
+        }
+      },
+      {
+        "name": "Lauren Letzsch",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.85
+        }
+      },
+      {
+        "name": "Paulina Vargas",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.6
+        }
+      },
+      {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.775
+        }
+      }
+    ],
+    "allTeams": [
+      {
+        "team": "TWU",
+        "rank": 1,
+        "total": 195.975,
+        "vault": 48.925,
+        "bars": 48.95,
+        "beam": 49.025,
+        "floor": 49.075
+      },
+      {
+        "team": "Oregon State",
+        "rank": 2,
+        "total": 195.775,
+        "vault": 48.975,
+        "bars": 48.9,
+        "beam": 48.9,
+        "floor": 49.0
+      },
+      {
+        "team": "Arizona State",
+        "rank": 3,
+        "total": 195.55,
+        "vault": 49.05,
+        "bars": 48.475,
+        "beam": 48.9,
+        "floor": 49.125
+      },
+      {
+        "team": "Kent State",
+        "rank": 4,
+        "total": 195.075,
+        "vault": 48.925,
+        "bars": 49.0,
+        "beam": 48.325,
+        "floor": 48.825
+      }
+    ],
+    "recapUrl": "https://osubeavers.com/news/2026/2/22/womens-gymnastics-beavers-finish-second-at-twu-quad-meet",
+    "recap": "DENTON, Texas \u2013 Oregon State gymnastics placed second in a quad meet on Sunday, tallying a 195.775 to finish behind host Texas Woman's (195.975) but ahead of Arizona State (195.550) and Kent State (195.075) inside Kitty Magee Arena.\n\r\n \n\r\nSophia Esposito posted a 39.225 the all-around, which included a pair of 9.825s (VT, UB) and a 9.875 on floor that came on the heels of her season-high 9.950 against Southern Utah last week. A junior from Melville, N.Y., Esposito has competed in the all-around in each of her last six appearances and won a share of the floor exercise event title to make it nine on the season \u2013 five of which have come on that event.\n\r\n \n\r\nOlivia Buckner also won an event title for the second-consecutive week thanks to a 9.850 vault score, adding 9.775s on beam and floor. The Riverton, Utah, native has exceled particularly on vault in recent weeks, as Sunday's 9.850 is her fourth 9.825 or better in the last five weeks, which includes a 9.850 against Utah State and last week's 9.875.\n\r\n \n\r\nAfter an early fall, OSU's bars lineup responded in a big way, rattling off a trio of 9.800-plus scores to finish he rotation. Esposito's 9.825 in the four spot setup Texas native Camryn Richardson, who earned a 9.850, before Ellie Weaver earned the team's highest score of the meet with a 9.900 that tied for the meet's highest score.\n\r\n \n\r\nFor Weaver, the event title win was her fourth on the season, all of which have come on bars, and made it three 9.900 or better bars scores this season, while Richardson's strong showing is her third-straight meet with a 9.825 or better and increases her season average to 9.836.\n\r\n \n\r\nOn beam, Kaylee Cheek (9.825) and Lauren Letzsch (9.850) led the way, while Reina Marchal (9.850) and Savannah Miller (9.825) combined with Esposito's 9.875 to propel OSU's floor lineup to the team's highest rotation score of the meet, a 49.000.\n\r\n \n\r\nOregon State returns home for a meet Feb. 27, hosting Stanford at 7 p.m. inside legendary Gill Coliseum. Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix.\n\r\n Skip Ad Next EventvsStanfordL, 197.250-198.150Feb 27 (Fri)\n\n 7 p.m.RecapResultsPac-12 InsiderPreviewLive Scoring Tickets History Full Schedule<div data-test-id"
   },
   {
     "id": "stanford-feb-27",
@@ -2398,7 +3303,9 @@
         }
       }
     ],
-    "attendance": "3,617"
+    "attendance": "3,617",
+    "recapUrl": "https://osubeavers.com/news/2026/2/27/womens-gymnastics-espositos-career-night-leads-season-high-score",
+    "recap": "CORVALLIS, Ore. \u2013 Sophia Esposito earned four 9.900 or better scores on her way to a career-high 39.700 in the all-around as Oregon State Gymnastics' season-best 197.250 wasn't enough, falling to No. 10 Stanford's 198.150 inside legendary Gill Coliseum.\n\r\n \n\r\nEsposito bested her previous career high of 39.525 thanks to a pair of career highs on vault (9.950) and beam (9.950) to go with 9.9.00s on bars and floor. The Melville, N.Y., native has been tremendous as a junior in 2026, hitting on each of her 34 routines this season and has now posted a 9.900 or better on at least one event in three of her last four meets.\n\r\n \n\r\nOlivia Buckner had another fantastic performance, vaulting her way to a 9.900 before adding a 9.825 on the beam and 9.875 for her floor routine. With her vault, Buckner has now tallied a 9.850 or better on that event in each of the last three competitions, while the floor score tied a career high.\n\r\n \n\r\nBuckner and Esposito were both part of a strong showing for the vault lineup, who set a season-high rotation score with a 49.300. Led off by Reina Marchal's 9.775, Savannah Miller was given a 9.800 before Buckner and Esposito went back-to-back with their 9.900 and 9.950; Katie Rude finished the Beavers' scoring with a 9.875 that set a new career high.\n\r\n \n\r\nEllie Weaver led the way during OSU's bars rotation with a 9.925, her second-straight week with a 9.900 or better on that event, while the rotation also featured Esposito's 9.900, a Taylor DeVries 9.825 and Francesca Caso 9.800. \n\r\n \n\r\nThe Beaver beam lineup also set a new season-best rotation score, counting a pair of 9.900 or better scores and no lower than a 9.800. Led off by a Mia Heather 9.875 that was followed immediately by Buckner's 9.825 and a Kaylee Cheek 9.800, Lauren Letzsch posted her second 9.925 in the last three meets before Esposito's 9.950 to round out the team's 49.375 combined score on beam.\n\r\n \n\r\nSophia Kaloudis was back in the floor lineup and led it off with a career high-tying 9.850 before Buckner, Marchal and Miller rattled off three-straight 9.875s and Esposito's 9.900.\n\r\n \n\r\nFor Marchal, the 9.875 comes on the heels of a 9.850 last week in Texas and 9.900 the weekend before, while Miller's makes it six 9.850 or better scores in her last seven appearances.\n\r\n \n\r\nOregon State gymnastics is back on the road next weekend, heading to Logan, Utah, to face Utah State, returning home to face Denver on March 14 inside legendary Gill Coliseum. Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix."
   },
   {
     "id": "utah-state-mar-6",
@@ -2530,6 +3437,7 @@
         }
       }
     ],
-    "imageBasedPdf": true
+    "recapUrl": "https://osubeavers.com/news/2026/3/6/womens-gymnastics-beaver-gymnastics-falls-to-utah-state",
+    "recap": "LOGAN, Utah \u2013 Oregon State gymnastics fell to future Pac-12 opponent Utah State Friday night, posting a 196.150 at the Dee Glen Smith Spectrum.\n\r\n \n\r\nThe Beaver floor lineup led the team's scoring with a 49.275 in the third rotation. Sophia Kaloudis and Reina Marchal led off with a pair of 9.800s that were followed by a pair of 9.850s from Olivia Buckner and Reina Marchal, which was immediately followed by Savannah Miller, who earned a 9.875, and Sophia Esposito, who was given the Beavers' only 9.900 of the meet.\n\r\n \n\r\nDeVries set a new career-high with her 9.800 and Buckner made it three meets in four weeks with a 9.850 or better on that event. Marchal's 9.850 was her fourth-consecutive 9.850 or better and Esposito has now earned a 9.900 in back-to-back weeks.\n\r\n \n\r\nSavannah Miller set a new career high on bars, leading off the lineup with a 9.850, setting the stage for a rotation that counted no lower than a 9.800. Following Miller's routine, Kaloudis earned a 9.800 before Francesca Caso and Esposito rattled off back-to-back 9.850s; Ellie Weaver finished the scoring with a 9.800.\n\r\n \n\r\nBuckner added a 9.875 on vault and 9.775 on beam, while Esposito vaulted her way to a 9.850 to cap a 39.275 in the all-around.\n\r\n \n\r\nUtah State finished the meet with a 196.650 to claim victory.\n\r\n \n\r\nOregon State gymnastics returns home to face Denver on March 14 inside legendary Gill Coliseum. Tickets are available and can be purchased by calling the Beaver Ticket Office at 1-800-GO-BEAVS or visiting https://beav.es/GymnasticsTix."
   }
 ]
