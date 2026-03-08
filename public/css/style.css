@@ -852,10 +852,222 @@ main {
   font-weight: 600;
 }
 
+/* ===== Global Search Bar ===== */
+.global-search-wrap {
+  position: relative;
+}
+
+.global-search-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.global-search-inner .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  font-size: 0.9rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.global-search-input {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  padding: 0.45rem 2.5rem 0.45rem 2.25rem;
+  transition: border-color var(--transition), background var(--transition);
+  outline: none;
+}
+
+.global-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.global-search-input:focus {
+  border-color: var(--orange);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.search-shortcut-hint {
+  position: absolute;
+  right: 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+  pointer-events: none;
+  font-family: monospace;
+  line-height: 1.4;
+}
+
+/* Desktop — inside top-nav, centered */
+.desktop-search {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem;
+}
+
+.desktop-search .global-search-inner {
+  width: 100%;
+  max-width: 400px;
+}
+
+.desktop-search .global-search-input {
+  width: 100%;
+}
+
+/* Mobile — full-width bar below nav */
+.mobile-search {
+  display: flex;
+  background: var(--black);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem 1rem;
+}
+
+.mobile-search .global-search-inner {
+  width: 100%;
+}
+
+.mobile-search .global-search-input {
+  width: 100%;
+  font-size: 1rem;
+  padding: 0.65rem 1rem 0.65rem 2.25rem;
+}
+
+/* Dropdown */
+.global-search-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #1e1e1e;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  max-height: 480px;
+  overflow-y: auto;
+  z-index: 999;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.global-search-dropdown.open {
+  display: block;
+}
+
+/* Mobile dropdown needs wider context */
+.mobile-search .global-search-dropdown {
+  left: -1rem;
+  right: -1rem;
+  border-radius: 0 0 12px 12px;
+  border-top: none;
+  top: calc(100% + 0px);
+}
+
+.search-group-header {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.6rem 1rem 0.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.search-group-header:first-child {
+  border-top: none;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  transition: background var(--transition);
+  border-left: 3px solid transparent;
+}
+
+.search-result-item:hover,
+.search-result-item.active {
+  background: rgba(215, 63, 9, 0.1);
+  border-left-color: var(--orange);
+}
+
+.result-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  width: 1.5rem;
+  text-align: center;
+}
+
+.result-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-sublabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-chevron {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* No results */
+.search-no-results {
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.no-results-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.no-results-text {
+  font-size: 0.9rem;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.no-results-tips {
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
 /* ===== Responsive ===== */
 @media (min-width: 768px) {
   .top-nav {
     display: flex;
+  }
+
+  /* Hide mobile search bar on desktop */
+  .mobile-search {
+    display: none;
   }
   
   .bottom-nav {
@@ -877,6 +1089,27 @@ main {
   
   .hero-subtitle {
     font-size: 1.5rem;
+  }
+
+  /* Hide shortcut hint on small screens */
+  .search-shortcut-hint {
+    display: inline-block;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Show mobile search, hide desktop search */
+  .desktop-search {
+    display: none;
+  }
+
+  .search-shortcut-hint {
+    display: none;
+  }
+
+  /* Push main content down to account for mobile search bar */
+  main {
+    /* mobile search bar is ~56px, account for it */
   }
 }
 
