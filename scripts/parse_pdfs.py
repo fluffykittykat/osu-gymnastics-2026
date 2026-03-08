@@ -44,22 +44,8 @@ MEETS = [
                 "beam": {"osu": 49.075, "opponent": 49.375},
                 "floor": {"osu": 48.725, "opponent": 49.375},
             },
-            "athletes": [
-                {"name": "Olivia Buckner", "team": "Oregon State", "scores": {"vault": 9.875, "beam": 9.875}},
-                {"name": "Francesca Caso", "team": "Oregon State", "scores": {"bars": 9.525}},
-                {"name": "Kaylee Cheek", "team": "Oregon State", "scores": {"bars": 9.600, "beam": 9.700}},
-                {"name": "Kyanna Crabb", "team": "Oregon State", "scores": {"vault": 9.800}},
-                {"name": "Taylor DeVries", "team": "Oregon State", "scores": {"bars": 9.825}},
-                {"name": "Sophia Esposito", "team": "Oregon State", "scores": {"vault": 9.850, "bars": 9.900, "beam": 9.825, "floor": 9.825, "aa": 39.400}},
-                {"name": "Mia Heather", "team": "Oregon State", "scores": {"beam": 9.775}},
-                {"name": "Sophia Kaloudis", "team": "Oregon State", "scores": {"floor": 9.650}},
-                {"name": "Lauren Letzsch", "team": "Oregon State", "scores": {"beam": 9.900}},
-                {"name": "Reina Marchal", "team": "Oregon State", "scores": {"vault": 9.750, "floor": 9.725}},
-                {"name": "Savannah Miller", "team": "Oregon State", "scores": {"vault": 9.775, "bars": 9.750, "floor": 9.775}},
-                {"name": "Camryn Richardson", "team": "Oregon State", "scores": {"vault": 9.875, "bars": 9.850, "floor": 9.750}},
-                {"name": "Katie Rude", "team": "Oregon State", "scores": {"vault": 9.750}},
-                {"name": "Ellie Weaver", "team": "Oregon State", "scores": {"beam": 9.700}},
-            ],
+            "athletes": [],
+            "imageBasedPdf": True,
         },
     },
     {
@@ -98,21 +84,8 @@ MEETS = [
                 "beam": {"osu": 49.075, "opponent": 49.375},
                 "floor": {"osu": 49.050, "opponent": 49.175},
             },
-            "athletes": [
-                {"name": "Olivia Buckner", "team": "Oregon State", "scores": {"vault": 9.825, "beam": 9.775}},
-                {"name": "Francesca Caso", "team": "Oregon State", "scores": {"bars": 9.700}},
-                {"name": "Kaylee Cheek", "team": "Oregon State", "scores": {"bars": 9.825, "beam": 9.825}},
-                {"name": "Kyanna Crabb", "team": "Oregon State", "scores": {"vault": 9.750}},
-                {"name": "Taylor DeVries", "team": "Oregon State", "scores": {"bars": 9.850, "floor": 9.800}},
-                {"name": "Sophia Esposito", "team": "Oregon State", "scores": {"vault": 9.850, "bars": 9.900, "beam": 9.800, "floor": 9.850, "aa": 39.400}},
-                {"name": "Mia Heather", "team": "Oregon State", "scores": {"beam": 9.800}},
-                {"name": "Lauren Letzsch", "team": "Oregon State", "scores": {"beam": 9.875}},
-                {"name": "Reina Marchal", "team": "Oregon State", "scores": {"vault": 9.750, "floor": 9.800}},
-                {"name": "Savannah Miller", "team": "Oregon State", "scores": {"vault": 9.775, "bars": 9.775, "floor": 9.825}},
-                {"name": "Camryn Richardson", "team": "Oregon State", "scores": {"vault": 9.800}},
-                {"name": "Paulina Vargas", "team": "Oregon State", "scores": {"floor": 9.775}},
-                {"name": "Ellie Weaver", "team": "Oregon State", "scores": {"beam": 9.800}},
-            ],
+            "athletes": [],
+            "imageBasedPdf": True,
         },
     },
 ]
@@ -297,6 +270,70 @@ def _flush_event(athletes, event, scores, names_text):
             athletes[name]["scores"][event] = scores[j]
 
 
+def fix_corrupted_athlete_names(athletes):
+    """
+    Post-processing to fix athlete names corrupted by PDF line breaks.
+    
+    When "Taylor DeVries" splits across a line break:
+    - "Taylor De" is extracted as one athlete name
+    - "Vries" gets prepended to the next athlete (e.g., "VriesSophia Esposito")
+    
+    This function:
+    1. Strip "Vries" prefix from corrupted names
+    2. If "Taylor De" exists, merge it with "DeVries" to create "Taylor DeVries"
+       (we look for "Vries" with scores that belong to Taylor De)
+    3. Merge duplicate athlete entries by combining event scores
+    """
+    if not athletes:
+        return athletes
+    
+    # Step 1: Strip "Vries" prefix from corrupted names
+    corrupted = [a for a in athletes if a["name"].startswith("Vries")]
+    for athlete in corrupted:
+        fixed_name = athlete["name"][5:].strip()  # Remove "Vries" prefix (5 chars)
+        athlete["name"] = fixed_name
+    
+    # Step 2: Fix "Taylor De" → merge into "Taylor DeVries"
+    # Look for both "Taylor De" and standalone "Vries" or
+    # any "Taylor De" (incomplete) that needs the last name
+    taylor_de = next((a for a in athletes if a["name"] == "Taylor De"), None)
+    vries_only = next((a for a in athletes if a["name"] == "Vries"), None)
+    
+    if taylor_de:
+        if vries_only:
+            # We have both "Taylor De" and "Vries" as separate entries
+            taylor_de["name"] = "Taylor DeVries"
+            taylor_de["scores"].update(vries_only["scores"])
+            athletes.remove(vries_only)
+        else:
+            # Just rename "Taylor De" to "Taylor DeVries"
+            taylor_de["name"] = "Taylor DeVries"
+    
+    # Step 3: Merge duplicate athlete entries
+    # Group athletes by (normalized) name and combine their scores
+    normalized_map = {}
+    for athlete in athletes:
+        norm_key = athlete["name"].lower().strip()
+        if norm_key not in normalized_map:
+            normalized_map[norm_key] = athlete
+        else:
+            # Merge scores into existing entry
+            normalized_map[norm_key]["scores"].update(athlete["scores"])
+    
+    # Return deduplicated list
+    return list(normalized_map.values())
+
+
+def is_image_based_pdf(all_text):
+    """
+    Detect if PDF is image-based (scanned) by checking if text extraction yielded
+    almost nothing or only empty/whitespace content.
+    """
+    total_chars = sum(len(t.strip()) for t in all_text)
+    # If we extracted fewer than 500 characters total, likely a scanned image
+    return total_chars < 500
+
+
 def parse_meet_pdf(meet_info):
     if "hardcoded" in meet_info:
         hc = meet_info["hardcoded"]
@@ -306,6 +343,7 @@ def parse_meet_pdf(meet_info):
             "isHome": meet_info["isHome"], "result": hc["result"],
             "osuScore": hc["osuScore"], "opponentScore": hc["opponentScore"],
             "events": hc["events"], "athletes": hc["athletes"],
+            "imageBasedPdf": hc.get("imageBasedPdf", False),
         }
     
     pdf_path = os.path.join(DOWNLOAD_DIR, f"{meet_info['id']}.pdf")
@@ -322,6 +360,9 @@ def parse_meet_pdf(meet_info):
             team_results_pages.append(text)
         if "NCAA Gymnastics Score Sheet" in text:
             score_sheet_pages.append(text)
+    
+    # Check if this is an image-based PDF (scanned, no text extraction)
+    image_based = is_image_based_pdf(all_text)
     
     team_scores = {}
     for pt in team_results_pages:
@@ -356,7 +397,12 @@ def parse_meet_pdf(meet_info):
         result = "W" if osu["total"] > opp_score else "L"
         all_teams = None
     
-    athletes = parse_osu_athletes(score_sheet_pages)
+    # Parse athletes; if image-based, this will be empty
+    athletes = parse_osu_athletes(score_sheet_pages) if not image_based else []
+    
+    # Post-process to fix corrupted names and merge duplicates
+    if athletes:
+        athletes = fix_corrupted_athlete_names(athletes)
     
     attendance = ""
     for t in all_text:
@@ -378,6 +424,8 @@ def parse_meet_pdf(meet_info):
         },
         "athletes": athletes,
     }
+    if image_based:
+        meet_data["imageBasedPdf"] = True
     if attendance:
         meet_data["attendance"] = attendance
     if all_teams:

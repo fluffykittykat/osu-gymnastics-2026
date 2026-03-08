@@ -102,7 +102,8 @@
         "name": "Taylor DeVries",
         "team": "Oregon State",
         "scores": {
-          "bars": 9.925
+          "bars": 9.925,
+          "floor": 9.65
         }
       },
       {
@@ -134,14 +135,7 @@
         }
       },
       {
-        "name": "Taylor De",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.65
-        }
-      },
-      {
-        "name": "VriesReina Marchal",
+        "name": "Reina Marchal",
         "team": "Oregon State",
         "scores": {
           "floor": 9.7
@@ -621,117 +615,8 @@
         "opponent": 49.375
       }
     },
-    "athletes": [
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.875,
-          "beam": 9.875
-        }
-      },
-      {
-        "name": "Francesca Caso",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.525
-        }
-      },
-      {
-        "name": "Kaylee Cheek",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.6,
-          "beam": 9.7
-        }
-      },
-      {
-        "name": "Kyanna Crabb",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.8
-        }
-      },
-      {
-        "name": "Taylor DeVries",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.825
-        }
-      },
-      {
-        "name": "Sophia Esposito",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.85,
-          "bars": 9.9,
-          "beam": 9.825,
-          "floor": 9.825,
-          "aa": 39.4
-        }
-      },
-      {
-        "name": "Mia Heather",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.775
-        }
-      },
-      {
-        "name": "Sophia Kaloudis",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.65
-        }
-      },
-      {
-        "name": "Lauren Letzsch",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.9
-        }
-      },
-      {
-        "name": "Reina Marchal",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.75,
-          "floor": 9.725
-        }
-      },
-      {
-        "name": "Savannah Miller",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.775,
-          "bars": 9.75,
-          "floor": 9.775
-        }
-      },
-      {
-        "name": "Camryn Richardson",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.875,
-          "bars": 9.85,
-          "floor": 9.75
-        }
-      },
-      {
-        "name": "Katie Rude",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.75
-        }
-      },
-      {
-        "name": "Ellie Weaver",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.7
-        }
-      }
-    ]
+    "athletes": [],
+    "imageBasedPdf": true
   },
   {
     "id": "boise-state-feb-6",
@@ -808,7 +693,8 @@
         "team": "Oregon State",
         "scores": {
           "vault": 9.775,
-          "beam": 9.675
+          "beam": 9.675,
+          "floor": 9.775
         }
       },
       {
@@ -856,17 +742,10 @@
         }
       },
       {
-        "name": "Taylor De",
+        "name": "Taylor DeVries",
         "team": "Oregon State",
         "scores": {
           "floor": 9.7
-        }
-      },
-      {
-        "name": "VriesOlivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.775
         }
       }
     ],
@@ -1102,7 +981,8 @@
         "team": "Oregon State",
         "scores": {
           "vault": 9.85,
-          "beam": 9.775
+          "beam": 9.775,
+          "floor": 9.775
         }
       },
       {
@@ -1168,17 +1048,10 @@
         }
       },
       {
-        "name": "Taylor De",
+        "name": "Taylor DeVries",
         "team": "Oregon State",
         "scores": {
           "floor": 9.675
-        }
-      },
-      {
-        "name": "VriesOlivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.775
         }
       }
     ],
@@ -1279,7 +1152,8 @@
         "team": "Oregon State",
         "scores": {
           "vault": 9.9,
-          "beam": 9.825
+          "beam": 9.825,
+          "floor": 9.875
         }
       },
       {
@@ -1289,7 +1163,8 @@
           "vault": 9.95,
           "beam": 9.95,
           "floor": 9.9,
-          "aa": 39.7
+          "aa": 39.7,
+          "bars": 9.9
         }
       },
       {
@@ -1307,18 +1182,11 @@
         }
       },
       {
-        "name": "Taylor De",
+        "name": "Taylor DeVries",
         "team": "Oregon State",
         "scores": {
           "bars": 9.825,
           "floor": 9.775
-        }
-      },
-      {
-        "name": "VriesSophia Esposito",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.9
         }
       },
       {
@@ -1357,13 +1225,6 @@
         "scores": {
           "floor": 9.85
         }
-      },
-      {
-        "name": "VriesOlivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.875
-        }
       }
     ],
     "attendance": "3,617"
@@ -1395,108 +1256,7 @@
         "opponent": 49.175
       }
     },
-    "athletes": [
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.825,
-          "beam": 9.775
-        }
-      },
-      {
-        "name": "Francesca Caso",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.7
-        }
-      },
-      {
-        "name": "Kaylee Cheek",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.825,
-          "beam": 9.825
-        }
-      },
-      {
-        "name": "Kyanna Crabb",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.75
-        }
-      },
-      {
-        "name": "Taylor DeVries",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.85,
-          "floor": 9.8
-        }
-      },
-      {
-        "name": "Sophia Esposito",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.85,
-          "bars": 9.9,
-          "beam": 9.8,
-          "floor": 9.85,
-          "aa": 39.4
-        }
-      },
-      {
-        "name": "Mia Heather",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.8
-        }
-      },
-      {
-        "name": "Lauren Letzsch",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.875
-        }
-      },
-      {
-        "name": "Reina Marchal",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.75,
-          "floor": 9.8
-        }
-      },
-      {
-        "name": "Savannah Miller",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.775,
-          "bars": 9.775,
-          "floor": 9.825
-        }
-      },
-      {
-        "name": "Camryn Richardson",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.8
-        }
-      },
-      {
-        "name": "Paulina Vargas",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.775
-        }
-      },
-      {
-        "name": "Ellie Weaver",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.8
-        }
-      }
-    ]
+    "athletes": [],
+    "imageBasedPdf": true
   }
 ]
