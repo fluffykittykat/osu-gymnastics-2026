@@ -38,6 +38,7 @@ MEETS = [
         "id": "alabama-jan-30", "date": "2026-01-30", "opponent": "Alabama",
         "location": "Coleman Coliseum, Tuscaloosa, AL", "isHome": False,
         "url": "https://s3.us-east-2.amazonaws.com/sidearm.nextgen.sites/oregonstate.sidearmsports.com/documents/2026/1/31/AlabamaFINAL.pdf?timestamp=20260131043916",
+        "imageBasedPdf": True,
         "hardcoded": {
             "osuScore": 195.825, "opponentScore": 197.450, "result": "L",
             "events": {
@@ -95,6 +96,7 @@ MEETS = [
         "id": "utah-state-mar-6", "date": "2026-03-06", "opponent": "Utah State",
         "location": "Dee Glen Smith Spectrum, Logan, UT", "isHome": False,
         "url": "https://s3.us-east-2.amazonaws.com/sidearm.nextgen.sites/oregonstate.sidearmsports.com/documents/2026/3/7/Utah_State_vs._Oregon_State_-_Blank_Scoresheet.pdf?timestamp=20260307041803",
+        "imageBasedPdf": True,
         "hardcoded": {
             "osuScore": 196.150, "opponentScore": 196.950, "result": "L",
             "events": {
@@ -173,6 +175,56 @@ def split_concatenated_names(text):
         else:
             names.append(buf.strip())
     return names
+
+
+def fix_split_names(names):
+    """
+    Post-process parsed athlete names to fix artifacts from PDF line-break splitting.
+
+    Root cause: pypdf concatenates names without separators, and split_concatenated_names
+    splits on lowercase→uppercase boundaries. "DeVries" splits at "e|V" → "Taylor De"
+    becomes a standalone 2-word name, and "Vries" gets prepended to the next athlete.
+
+    Fixes:
+      1. "Taylor De" + "VriesNextAthlete" → "Taylor DeVries", "Next Athlete"
+      2. Any name starting with "Vries" has the prefix stripped (defensive fallback)
+    """
+    result = []
+    i = 0
+    while i < len(names):
+        name = names[i]
+        # Fix "Taylor De" split: look ahead for "Vries..." in the next name
+        if name == "Taylor De" and i + 1 < len(names) and names[i + 1].startswith("Vries"):
+            next_name = names[i + 1]
+            rest = next_name[5:].strip()  # Strip "Vries" prefix to get remaining athlete name
+            result.append("Taylor DeVries")
+            if rest:
+                result.append(rest)
+            i += 2
+            continue
+        # Defensive: strip "Vries" prefix from any name that still has it
+        if name.startswith("Vries") and len(name) > 5:
+            stripped = name[5:].strip()
+            if stripped:
+                result.append(stripped)
+            i += 1
+            continue
+        result.append(name)
+        i += 1
+    return result
+
+
+def merge_duplicate_athletes(athletes_dict):
+    """
+    Merge duplicate athlete entries (same name) by combining their event scores.
+    Returns a dict with one entry per athlete name.
+    """
+    merged = {}
+    for name, data in athletes_dict.items():
+        if name not in merged:
+            merged[name] = {"name": name, "team": data["team"], "scores": {}}
+        merged[name]["scores"].update(data["scores"])
+    return merged
 
 
 def parse_osu_athletes(pages_text):
@@ -287,6 +339,8 @@ def parse_osu_athletes(pages_text):
                             break
                     break
     
+    # Merge any duplicate athlete entries (same name, different events parsed separately)
+    athletes = merge_duplicate_athletes(athletes)
     return list(athletes.values())
 
 
@@ -295,6 +349,7 @@ def _flush_event(athletes, event, scores, names_text):
     if not event or not scores or not names_text:
         return
     names = split_concatenated_names(names_text)
+    names = fix_split_names(names)  # Fix Taylor DeVries line-break split artifacts
     for j, name in enumerate(names):
         if j < len(scores):
             if name not in athletes:
@@ -305,13 +360,16 @@ def _flush_event(athletes, event, scores, names_text):
 def parse_meet_pdf(meet_info):
     if "hardcoded" in meet_info:
         hc = meet_info["hardcoded"]
-        return {
+        record = {
             "id": meet_info["id"], "date": meet_info["date"],
             "opponent": meet_info["opponent"], "location": meet_info["location"],
             "isHome": meet_info["isHome"], "result": hc["result"],
             "osuScore": hc["osuScore"], "opponentScore": hc["opponentScore"],
             "events": hc["events"], "athletes": hc["athletes"],
         }
+        if meet_info.get("imageBasedPdf"):
+            record["imageBasedPdf"] = True
+        return record
     
     pdf_path = os.path.join(DOWNLOAD_DIR, f"{meet_info['id']}.pdf")
     reader = PdfReader(pdf_path)
@@ -327,6 +385,12 @@ def parse_meet_pdf(meet_info):
             team_results_pages.append(text)
         if "NCAA Gymnastics Score Sheet" in text:
             score_sheet_pages.append(text)
+    
+    # Detect image-based PDFs (scanned — no extractable text)
+    total_text = "".join(all_text).strip()
+    if not total_text:
+        print(f"  WARNING: PDF appears to be image-based (no extractable text). Individual scores unavailable.")
+        return None
     
     team_scores = {}
     for pt in team_results_pages:
