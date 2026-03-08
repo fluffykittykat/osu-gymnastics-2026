@@ -1140,9 +1140,37 @@
 
     const meetGroupItems = [classInsightMeet, regionInsightMeet, specInsightMeet, schoolInsightMeet].filter(Boolean);
 
+    // ── Context favorability score ──────────────────────────────────────────
+    // Based on season-wide correlations, rate each factor as favorable/neutral/unfavorable for this meet
+    const favorability = [];
+    // Moon: positive correlation with score → full moon is good
+    if (moon.fullness > 0.7) favorability.push({ label: 'Moon', rating: 'favorable', why: `${moon.emoji} Full moon (${(moon.fullness*100).toFixed(0)}%) — historically OSU scores higher` });
+    else if (moon.fullness < 0.3) favorability.push({ label: 'Moon', rating: 'unfavorable', why: `${moon.emoji} New moon (${(moon.fullness*100).toFixed(0)}%) — historically lower scoring` });
+    else favorability.push({ label: 'Moon', rating: 'neutral', why: `${moon.emoji} Quarter moon — neutral context` });
+    // Elevation: negative correlation → high altitude is bad
+    if (elev > 3000) favorability.push({ label: 'Elevation', rating: 'unfavorable', why: `🏔️ High altitude (${elev.toLocaleString()}ft) — thin air hurts OSU scores` });
+    else if (elev < 500) favorability.push({ label: 'Elevation', rating: 'favorable', why: `🏙️ Sea level (${elev}ft) — OSU's best conditions` });
+    else favorability.push({ label: 'Elevation', rating: 'neutral', why: `⛰️ Moderate altitude (${elev.toLocaleString()}ft)` });
+    // Distance: negative correlation → far is bad
+    if (dist > 1500) favorability.push({ label: 'Distance', rating: 'unfavorable', why: `✈️ ${dist.toLocaleString()} miles from home — long haul hurts` });
+    else if (dist === 0) favorability.push({ label: 'Distance', rating: 'favorable', why: `🏠 Home game — maximum favorable` });
+    else if (dist < 400) favorability.push({ label: 'Distance', rating: 'favorable', why: `🚗 Regional trip (${dist} miles) — minimal travel impact` });
+    else favorability.push({ label: 'Distance', rating: 'neutral', why: `🚌 Mid-range trip (${dist} miles)` });
+
+    const favScore = favorability.filter(f=>f.rating==='favorable').length;
+    const unfavScore = favorability.filter(f=>f.rating==='unfavorable').length;
+    const overallCtx = favScore > unfavScore ? '✅ Context was favorable for OSU' : unfavScore > favScore ? '⚠️ Tough environmental conditions' : '⚖️ Mixed conditions';
+    const ctxColor = favScore > unfavScore ? '#2ecc71' : unfavScore > favScore ? '#e74c3c' : '#f39c12';
+
     return `
       <div class="section-card wild-card">
         <h2 class="section-title">🎲 Meet Trivia & Context</h2>
+        <div class="ctx-summary" style="border-color:${ctxColor}">
+          <span class="ctx-verdict" style="color:${ctxColor}">${overallCtx}</span>
+          <div class="ctx-pills">
+            ${favorability.map(f=>`<span class="ctx-pill ctx-${f.rating}" title="${f.why}">${f.label}: ${f.rating==='favorable'?'✅':f.rating==='unfavorable'?'⚠️':'—'}</span>`).join('')}
+          </div>
+        </div>
         <div class="wild-grid">
           <div class="wild-item">${moonInsight}</div>
           <div class="wild-item">${elevInsight}</div>
@@ -1152,7 +1180,8 @@
           ${closestToHome.length > 0 ? `<div class="wild-item">🏡 <strong>Playing near home:</strong> ${closestToHome.map(a=>a.name).join(', ')} grew up in ${meetState}!</div>` : ''}
           ${meetGroupItems.map(i=>`<div class="wild-item">${i}</div>`).join('')}
         </div>
-      </div>`;
+      </div>
+    `;
   }
 
   function renderMeetInsights(meet) {
@@ -2528,10 +2557,367 @@
 
       </div>
       ${renderHotTakes()}
+      ${renderDeepCuts()}
       ${renderSeasonWildStats()}
     `;
   }
 
+
+  // ===== Deep Cuts: Factor × Event Correlation Matrix =====
+  function renderDeepCuts() {
+    function mean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
+    function pearson(xs, ys) {
+      const n = xs.length; if (n < 3) return null;
+      const mx = mean(xs), my = mean(ys);
+      const num = xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
+      const den = Math.sqrt(xs.reduce((s,x)=>s+Math.pow(x-mx,2),0)*ys.reduce((s,y)=>s+Math.pow(y-my,2),0));
+      return den === 0 ? null : num/den;
+    }
+    function fmt(n, dp=3) { return n!=null&&!isNaN(n) ? n.toFixed(dp) : '—'; }
+    function fmtR(r) { return r==null ? '—' : (r>=0?'+':'')+r.toFixed(2); }
+    function rColor(r) {
+      if (r == null) return '#333';
+      const a = Math.abs(r);
+      if (a < 0.2) return '#333';
+      if (r > 0) return `rgba(46,204,113,${Math.min(0.9, a*1.2)})`;
+      return `rgba(231,76,60,${Math.min(0.9, a*1.2)})`;
+    }
+    function rLabel(r) {
+      if (r == null) return '—';
+      const a = Math.abs(r);
+      if (a < 0.2) return 'flat';
+      if (a < 0.4) return 'weak';
+      if (a < 0.6) return 'mod';
+      if (a < 0.8) return 'strong';
+      return 'v.strong';
+    }
+
+    // ── Build per-meet-day event averages ──────────────────────────────────
+    const seenDates = new Set();
+    const meetDays = [];
+    meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m => {
+      if (seenDates.has(m.date)) return; seenDates.add(m.date);
+      const osuA = m.athletes.filter(a=>a.team==='Oregon State');
+      function evAvg(ev) {
+        const sc = osuA.map(a=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
+        return sc.length ? mean(sc) : null;
+      }
+      const osuTeam = m.teams?.find(t=>t.team==='Oregon State');
+      meetDays.push({
+        date: m.date,
+        isHome: m.isHome ? 1 : 0,
+        moonFullness: m.moonPhase?.fullness ?? null,
+        tempHigh: m.weather?.tempHighF ?? null,
+        precip: m.weather?.precipIn ?? null,
+        elevFt: m.elevationFt ?? null,
+        distMiles: m.distanceMiles ?? null,
+        vtAvg: evAvg('vault'),
+        ubAvg: evAvg('bars'),
+        bbAvg: evAvg('beam'),
+        fxAvg: evAvg('floor'),
+        total: osuTeam?.total ?? null,
+      });
+    });
+
+    const envFactors = [
+      { key: 'moonFullness', label: 'Moon Fullness', emoji: '🌙', note: '0=new, 1=full' },
+      { key: 'tempHigh', label: 'Outside Temp (°F)', emoji: '🌡️', note: 'weather at venue' },
+      { key: 'precip', label: 'Precipitation (in)', emoji: '🌧️', note: 'rain/snow at venue' },
+      { key: 'elevFt', label: 'Elevation (ft)', emoji: '🏔️', note: 'venue altitude' },
+      { key: 'distMiles', label: 'Distance from Home', emoji: '✈️', note: 'miles from Corvallis' },
+      { key: 'isHome', label: 'Home Game (1=yes)', emoji: '🏠', note: 'Gill Coliseum' },
+    ];
+    const eventCols = [
+      { key: 'vtAvg', label: 'VAULT', emoji: '🤸' },
+      { key: 'ubAvg', label: 'BARS', emoji: '💪' },
+      { key: 'bbAvg', label: 'BEAM', emoji: '⚖️' },
+      { key: 'fxAvg', label: 'FLOOR', emoji: '🔥' },
+      { key: 'total', label: 'TOTAL', emoji: '🏆' },
+    ];
+
+    // Compute all r values
+    const matrix = {};
+    let maxR = 0, maxCell = null;
+    envFactors.forEach(fac => {
+      matrix[fac.key] = {};
+      eventCols.forEach(ev => {
+        const pairs = meetDays.filter(d=>d[fac.key]!=null&&d[ev.key]!=null);
+        const r = pearson(pairs.map(d=>d[fac.key]), pairs.map(d=>d[ev.key]));
+        matrix[fac.key][ev.key] = { r, n: pairs.length };
+        if (r != null && Math.abs(r) > maxR) { maxR = Math.abs(r); maxCell = { fac, ev, r }; }
+      });
+    });
+
+    // ── Gymnast-level correlations: height & class year per event ──────────
+    const gymnLevelData = [];
+    const heightSeen = {};
+    meets.forEach(m => {
+      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
+        const bio = bios[a.name]; if (!bio) return;
+        const h = bio.height; const cls = bio.classYear;
+        const htIn = h ? (() => { const [f,i]=h.split('-').map(Number); return f*12+i; })() : null;
+        const clsN = {Freshman:1,Sophomore:2,Junior:3,Senior:4,Graduate:5}[cls] || null;
+        if (!heightSeen[a.name]) heightSeen[a.name] = true;
+        ['vault','bars','beam','floor'].forEach(ev => {
+          const s = a.scores[ev];
+          if (s === undefined || s <= 0) return;
+          gymnLevelData.push({ name: a.name, ev, score: s, htIn, clsN, date: m.date });
+        });
+      });
+    });
+
+    // Per-gymnast averages for height/class correlations
+    const gymnAvgByEvent = {};
+    const tempMap = {};
+    gymnLevelData.forEach(d => {
+      const key = `${d.name}|${d.ev}`;
+      if (!tempMap[key]) tempMap[key] = { scores:[], htIn: d.htIn, clsN: d.clsN, name: d.name };
+      tempMap[key].scores.push(d.score);
+    });
+    Object.values(tempMap).forEach(g => {
+      const ev = Object.keys(tempMap).find(k=>tempMap[k]===g)?.split('|')[1];
+    });
+
+    // Rebuild with event key
+    const gymnEventAvgs = {};
+    Object.entries(tempMap).forEach(([key, g]) => {
+      const ev = key.split('|')[1];
+      if (!gymnEventAvgs[ev]) gymnEventAvgs[ev] = [];
+      gymnEventAvgs[ev].push({ name: g.name, avg: mean(g.scores), htIn: g.htIn, clsN: g.clsN });
+    });
+
+    const gymnFactors = [
+      { key: 'htIn',  label: 'Height (inches)', emoji: '📏', note: 'per gymnast avg per event' },
+      { key: 'clsN',  label: 'Class Year (1-4)', emoji: '👩‍🎓', note: '1=Fr, 2=So, 3=Jr, 4=Sr' },
+    ];
+
+    const gymnCols = ['vault','bars','beam','floor'];
+    const gymnEvLabel = {vault:'VAULT',bars:'BARS',beam:'BEAM',floor:'FLOOR'};
+    const gymnMatrix = {};
+    let maxGymnR = 0, maxGymnCell = null;
+    gymnFactors.forEach(fac => {
+      gymnMatrix[fac.key] = {};
+      gymnCols.forEach(ev => {
+        const data = gymnEventAvgs[ev] || [];
+        const pairs = data.filter(g=>g[fac.key]!=null&&g.avg!=null);
+        const r = pearson(pairs.map(g=>g[fac.key]), pairs.map(g=>g.avg));
+        gymnMatrix[fac.key][ev] = { r, n: pairs.length };
+        if (r!=null&&Math.abs(r)>maxGymnR) { maxGymnR=Math.abs(r); maxGymnCell={fac, ev, r}; }
+      });
+    });
+
+    // ── Home state proximity effect ─────────────────────────────────────────
+    const venueStateMap = {
+      '2026-01-03': 'CA', '2026-01-09': 'OR', '2026-01-17': 'OR',
+      '2026-01-25': 'UT', '2026-01-30': 'AL', '2026-02-06': 'ID',
+      '2026-02-13': 'TX', '2026-02-21': 'OR', '2026-03-06': 'UT', '2026-03-14': 'OR',
+    };
+    const proxData = { near: [], far: [] }; // scores when gymnast is near/far from home
+    const proxByGymnast = {};
+    meets.forEach(m => {
+      const venueState = venueStateMap[m.date];
+      if (!venueState) return;
+      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
+        const homeState = bios[a.name]?.homeState;
+        if (!homeState) return;
+        const scores = ['vault','bars','beam','floor'].map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
+        if (!scores.length) return;
+        const near = homeState === venueState;
+        if (!proxByGymnast[a.name]) proxByGymnast[a.name] = { near:[], far:[] };
+        scores.forEach(s => {
+          if (near) { proxData.near.push(s); proxByGymnast[a.name].near.push(s); }
+          else { proxData.far.push(s); proxByGymnast[a.name].far.push(s); }
+        });
+      });
+    });
+    const proxNearAvg = mean(proxData.near), proxFarAvg = mean(proxData.far);
+    const proxDiff = proxNearAvg && proxFarAvg ? proxNearAvg - proxFarAvg : null;
+    const proxGymnasts = Object.entries(proxByGymnast)
+      .filter(([,g])=>g.near.length>0&&g.far.length>0)
+      .map(([name,g])=>({ name, nearAvg: mean(g.near), farAvg: mean(g.far), diff: mean(g.near)-mean(g.far) }))
+      .sort((a,b)=>Math.abs(b.diff)-Math.abs(a.diff));
+
+    // ── Pre-college achievement count vs season avg ─────────────────────────
+    const achieveData = [];
+    meets.forEach(m => {
+      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
+        const bio = bios[a.name];
+        if (!bio?.priorHistory) return;
+        const achieveCount = bio.priorHistory.filter(b=>/national|champion|qualifier|pac-12|award|place|finish/i.test(b)).length;
+        const scores = ['vault','bars','beam','floor'].map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
+        if (!scores.length||!achieveCount) return;
+        achieveData.push({ name: a.name, achieveCount, avgScore: mean(scores) });
+      });
+    });
+    const achByGymnast = {};
+    achieveData.forEach(d => {
+      if (!achByGymnast[d.name]) achByGymnast[d.name] = { count: d.achieveCount, scores: [] };
+      achByGymnast[d.name].scores.push(d.avgScore);
+    });
+    const achList = Object.entries(achByGymnast).map(([name,g])=>({ name, achieveCount: g.count, avgScore: mean(g.scores) }));
+    const achR = achList.length >= 3 ? pearson(achList.map(g=>g.achieveCount), achList.map(g=>g.avgScore)) : null;
+
+    // ── Weather type vs event ───────────────────────────────────────────────
+    // Group meets by clear/cloudy/rainy then compare event avgs
+    const weatherGroups = { '☀️ Clear/Partly Cloudy': [], '☁️ Cloudy/Foggy': [], '🌧️ Rain/Snow': [] };
+    meetDays.forEach(d => {
+      const m = meets.find(mm=>mm.date===d.date);
+      const code = m?.weather?.weatherCode ?? null;
+      if (code == null) return;
+      let group;
+      if (code <= 3) group = '☀️ Clear/Partly Cloudy';
+      else if (code <= 48) group = '☁️ Cloudy/Foggy';
+      else group = '🌧️ Rain/Snow';
+      ['vtAvg','ubAvg','bbAvg','fxAvg','total'].forEach(ev => {
+        if (d[ev] != null) {
+          if (!weatherGroups[group][ev]) weatherGroups[group][ev] = [];
+          weatherGroups[group][ev].push(d[ev]);
+        }
+      });
+      // Push total for group avg
+      if (d.total) weatherGroups[group].push(d.total);
+    });
+
+    // Render the matrix HTML
+    function matrixCell(r, n) {
+      if (r == null) return `<td class="mx-cell mx-null" title="n<3">—</td>`;
+      const bg = rColor(r);
+      const label = rLabel(r);
+      const textColor = Math.abs(r) > 0.4 ? '#fff' : '#aaa';
+      return `<td class="mx-cell" style="background:${bg};color:${textColor}" title="r=${r.toFixed(3)}, n=${n}">
+        <span class="mx-r">${fmtR(r)}</span>
+        <span class="mx-label">${label}</span>
+      </td>`;
+    }
+
+    // Find the wildest single finding to call out
+    const wildFindings = [];
+    if (maxCell) {
+      const dir = maxCell.r > 0 ? 'higher' : 'lower';
+      const ev = maxCell.ev.label;
+      const facLabel = maxCell.fac.label.toLowerCase();
+      wildFindings.push(`The single strongest correlation in the dataset: <strong>${maxCell.fac.emoji} ${maxCell.fac.label}</strong> vs <strong>${maxCell.ev.emoji} ${maxCell.ev.label}</strong> — r = <strong>${fmtR(maxCell.r)}</strong>. Translation: OSU scores significantly ${dir} on ${ev.toLowerCase()} when ${facLabel} is ${maxCell.r>0?'high':'low'}.`);
+    }
+    if (maxGymnCell) {
+      const dir = maxGymnCell.r > 0 ? 'higher' : 'lower';
+      const evLabel = gymnEvLabel[maxGymnCell.ev];
+      wildFindings.push(`Across gymnasts: <strong>${maxGymnCell.fac.emoji} ${maxGymnCell.fac.label}</strong> vs <strong>${evLabel}</strong> avg — r = <strong>${fmtR(maxGymnCell.r)}</strong>. ${maxGymnCell.fac.key==='htIn'?`${dir==='higher'?'Taller':'Shorter'} gymnasts score ${dir} on ${evLabel.toLowerCase()}. ${maxGymnCell.ev==='bars'?'More reach = more power on bars.':maxGymnCell.ev==='beam'?'Height affects center of gravity.':'The physics checks out.'}`:''}`);
+    }
+    if (proxDiff != null && Math.abs(proxDiff) > 0.01) {
+      wildFindings.push(`Playing near their home state, OSU gymnasts average <strong>${fmt(proxNearAvg)}</strong> vs <strong>${fmt(proxFarAvg)}</strong> far from home — a <strong>${proxDiff>=0?'+':''}${fmt(proxDiff)}</strong> pt/event home-state effect.${proxGymnasts[0]?` Biggest individual effect: <span class="clickable-name" data-gymnast="${proxGymnasts[0].name}">${proxGymnasts[0].name}</span> (${proxGymnasts[0].diff>=0?'+':''}${fmt(proxGymnasts[0].diff)} pts near home).`:''}`);
+    }
+    if (achR != null && Math.abs(achR) > 0.15) {
+      const dir = achR > 0 ? 'more' : 'fewer';
+      wildFindings.push(`Pre-college achievements vs season performance: r = <strong>${fmtR(achR)}</strong>. Gymnasts with ${dir} pre-college titles tend to score ${achR>0?'higher':'lower'} this season. ${achR > 0.4 ? 'Elite pedigree predicts elite performance.' : achR < -0.2 ? 'Interesting — prior accolades don\'t guarantee current form.' : 'Prior achievements explain some but not all performance.'}`);
+    }
+
+    return `
+      <div class="section-card" style="margin-top:1.5rem;">
+        <h2 class="section-title">🔬 Factor × Event Correlation Matrix</h2>
+        <p class="wild-intro">Every environmental factor crossed with every individual event. Green = higher score, Red = lower score. Deeper color = stronger signal.</p>
+
+        ${wildFindings.length ? `<div class="deep-findings">
+          ${wildFindings.map(f=>`<div class="deep-finding">⚡ ${f}</div>`).join('')}
+        </div>` : ''}
+
+        <div class="mx-section-label">🌍 Environmental Factors × Meet Performance (n=${meetDays.length} comp days)</div>
+        <div class="mx-table-wrap">
+          <table class="mx-table">
+            <thead>
+              <tr>
+                <th class="mx-factor-head">Factor</th>
+                ${eventCols.map(ev=>`<th>${ev.emoji}<br>${ev.label}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${envFactors.map(fac => `
+                <tr>
+                  <td class="mx-factor-label">
+                    <span class="mx-fac-emoji">${fac.emoji}</span>
+                    <span>${fac.label}</span>
+                    <span class="mx-fac-note">${fac.note}</span>
+                  </td>
+                  ${eventCols.map(ev => matrixCell(matrix[fac.key][ev.key].r, matrix[fac.key][ev.key].n)).join('')}
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mx-section-label" style="margin-top:1.5rem;">🧬 Gymnast Characteristics × Event Performance (per gymnast season avg)</div>
+        <div class="mx-table-wrap">
+          <table class="mx-table">
+            <thead>
+              <tr>
+                <th class="mx-factor-head">Factor</th>
+                ${gymnCols.map(ev=>`<th>${gymnEvLabel[ev]}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${gymnFactors.map(fac => `
+                <tr>
+                  <td class="mx-factor-label">
+                    <span class="mx-fac-emoji">${fac.emoji}</span>
+                    <span>${fac.label}</span>
+                    <span class="mx-fac-note">${fac.note}</span>
+                  </td>
+                  ${gymnCols.map(ev => matrixCell(gymnMatrix[fac.key][ev].r, gymnMatrix[fac.key][ev].n)).join('')}
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        ${proxData.near.length && proxData.far.length ? `
+        <div class="mx-section-label" style="margin-top:1.5rem;">🏡 Home State Proximity Effect — Do Gymnasts Perform Better Near Home?</div>
+        <div class="prox-summary">
+          <div class="prox-stat">
+            <div class="prox-val ${proxDiff>0?'prox-pos':'prox-neg'}">${fmt(proxNearAvg)}</div>
+            <div class="prox-label">Near Home State (${proxData.near.length} events)</div>
+          </div>
+          <div class="prox-vs">vs</div>
+          <div class="prox-stat">
+            <div class="prox-val">${fmt(proxFarAvg)}</div>
+            <div class="prox-label">Away from Home State (${proxData.far.length} events)</div>
+          </div>
+          <div class="prox-diff" style="color:${proxDiff>0?'#2ecc71':'#e74c3c'}">${proxDiff>=0?'+':''}${fmt(proxDiff)} pts/event</div>
+        </div>
+        ${proxGymnasts.length ? `
+        <div class="mx-table-wrap">
+          <table class="mx-table" style="margin-top:0.75rem;">
+            <thead><tr><th class="mx-factor-head">Gymnast</th><th>Home</th><th>Near-Home Avg</th><th>Away Avg</th><th>Near-Home Δ</th></tr></thead>
+            <tbody>
+              ${proxGymnasts.map(g=>`<tr>
+                <td class="mx-factor-label"><span class="clickable-name" data-gymnast="${g.name}">${g.name}</span> (${bios[g.name]?.homeState||'?'})</td>
+                <td style="font-size:0.75rem;color:#666">${bios[g.name]?.hometown?.split(',')[1]?.trim()||'?'}</td>
+                <td class="mx-cell" style="background:rgba(46,204,113,0.15)">${fmt(g.nearAvg)}</td>
+                <td class="mx-cell">${fmt(g.farAvg)}</td>
+                <td class="mx-cell" style="color:${g.diff>0?'#2ecc71':'#e74c3c'};font-weight:700">${g.diff>=0?'+':''}${fmt(g.diff)}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : ''}` : ''}
+
+        ${achList.length >= 3 ? `
+        <div class="mx-section-label" style="margin-top:1.5rem;">🏅 Pre-College Achievement Count vs Season Performance (r = ${fmtR(achR)})</div>
+        <div class="mx-table-wrap">
+          <table class="mx-table">
+            <thead><tr><th class="mx-factor-head">Gymnast</th><th>Pre-College Titles</th><th>Season Event Avg</th><th>vs Group Mean</th></tr></thead>
+            <tbody>
+              ${achList.sort((a,b)=>b.achieveCount-a.achieveCount).map(g => {
+                const groupMean = mean(achList.map(x=>x.avgScore));
+                const diff = groupMean ? g.avgScore - groupMean : null;
+                return `<tr>
+                  <td class="mx-factor-label"><span class="clickable-name" data-gymnast="${g.name}">${g.name}</span></td>
+                  <td class="mx-cell">${g.achieveCount} 🏅</td>
+                  <td class="mx-cell" style="color:var(--orange)">${fmt(g.avgScore)}</td>
+                  <td class="mx-cell" style="color:${diff>0?'#2ecc71':diff<0?'#e74c3c':'#aaa'}">${diff!=null?(diff>=0?'+':'')+fmt(diff):'—'}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>` : ''}
+
+      </div>`;
+  }
 // ===== Season Wild Stats =====
   function renderSeasonWildStats() {
     // ── Shared stats helpers ────────────────────────────────────────────────
