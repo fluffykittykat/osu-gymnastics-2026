@@ -4,6 +4,7 @@
   'use strict';
 
   let meets = [];
+  let photos = {};
   let currentFilter = 'all';
   let currentView = 'season';
   let lastRefreshedTime = null;
@@ -168,8 +169,9 @@
   // ===== Data Loading =====
   async function loadData() {
     try {
-      const res = await fetch('/api/meets');
-      meets = await res.json();
+      const [meetsRes, photosRes] = await Promise.all([fetch('/api/meets'), fetch('/api/photos')]);
+      meets = await meetsRes.json();
+      photos = await photosRes.json();
 
       // Set initial lastRefreshed from meet data
       const refreshed = meets.find(m => m.lastRefreshed);
@@ -655,11 +657,16 @@
         return `<div class="avg-stat"><div class="avg-value">${p.averages[e].toFixed(3)}</div><div class="avg-label">${EVENT_SHORT[e]}</div></div>`;
       }).join('');
 
+      const photo = photos[p.name];
+      const photoHtml = photo
+        ? `<img src="${photo}" class="gymnast-headshot" alt="${p.name}" loading="lazy">`
+        : `<div class="gymnast-headshot-placeholder">${p.name.split(' ').map(n=>n[0]).join('')}</div>`;
       return `
         <div class="gymnast-card" data-gymnast="${p.name}">
+          ${photoHtml}
           <div class="gymnast-name">${p.name}</div>
           <div class="gymnast-events">${eventBadges}</div>
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem;">${p.totalMeets} meets</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem;">${p.totalMeets} competition days</div>
           <div class="gymnast-averages">${avgStats}</div>
         </div>`;
     }).join('');
@@ -717,8 +724,9 @@
       <div class="gymnast-profile">
         <button class="back-btn" id="backToGymnasts">← Back to Gymnasts</button>
         <div class="profile-header">
+          ${photos[p.name] ? `<img src="${photos[p.name]}" class="profile-headshot" alt="${p.name}">` : ''}
           <div class="profile-name">${p.name}</div>
-          <div style="color:var(--text-muted);margin-top:0.25rem;">${p.totalMeets} meets competed • Oregon State</div>
+          <div style="color:var(--text-muted);margin-top:0.25rem;">${p.totalMeets} competition days • Oregon State</div>
           <div class="profile-stats-grid">${statsGrid}</div>
         </div>
         ${sparklines}

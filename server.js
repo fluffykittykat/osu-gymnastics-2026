@@ -22,6 +22,15 @@ loadMeetsData();
 
 app.use(express.static('public'));
 
+app.get('/api/photos', (req, res) => {
+  try {
+    const photos = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/photos.json'), 'utf8'));
+    res.json(photos);
+  } catch (e) {
+    res.json({});
+  }
+});
+
 app.get('/api/meets', (req, res) => {
   if (meetsData) {
     res.json(meetsData);

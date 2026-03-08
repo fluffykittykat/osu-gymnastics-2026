@@ -1472,3 +1472,41 @@ main {
   text-decoration: none;
 }
 .recap-link:hover { text-decoration: underline; }
+
+/* ===== Athlete headshots ===== */
+.gymnast-headshot {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+  border: 2px solid var(--orange);
+  margin-bottom: 0.5rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.gymnast-headshot-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #2a2a2a;
+  border: 2px solid #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Oswald;
+  font-size: 1.2rem;
+  color: var(--orange);
+  margin: 0 auto 0.5rem;
+}
+.profile-headshot {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+  border: 3px solid var(--orange);
+  margin-bottom: 1rem;
+  display: block;
+}
