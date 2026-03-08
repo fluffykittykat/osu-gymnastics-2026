@@ -217,7 +217,7 @@
       <div class="quad-matchup meet-card" data-meet-id="${m.id}" style="margin:0;border-radius:8px;cursor:pointer;">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent" style="font-size:1rem;">${m.opponent}</div>
+            <div class="meet-opponent" style="font-size:1rem;">${m.opponent} ${getHomeAwayBadge(m.isHome, 'full')}</div>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem;">
             <span style="font-family:Oswald;color:var(--orange);font-size:1rem;">${m.osuScore.toFixed(3)}</span>
