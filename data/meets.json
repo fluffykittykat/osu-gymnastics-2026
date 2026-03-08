@@ -313,7 +313,23 @@
       }
     ],
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.497,
+      "name": "Full Moon",
+      "emoji": "\ud83c\udf15",
+      "fullness": 1.0
+    },
+    "distanceMiles": 0,
+    "elevationFt": 230,
+    "city": "Corvallis, OR",
+    "weather": {
+      "tempHighF": 52.2,
+      "tempLowF": 41.6,
+      "precipIn": 8.5,
+      "description": "Drizzle",
+      "emoji": "\ud83c\udf26\ufe0f"
+    }
   },
   {
     "id": "best-of-west-california-jan-3",
@@ -629,7 +645,23 @@
       }
     ],
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.497,
+      "name": "Full Moon",
+      "emoji": "\ud83c\udf15",
+      "fullness": 1.0
+    },
+    "distanceMiles": 0,
+    "elevationFt": 230,
+    "city": "Corvallis, OR",
+    "weather": {
+      "tempHighF": 52.2,
+      "tempLowF": 41.6,
+      "precipIn": 8.5,
+      "description": "Drizzle",
+      "emoji": "\ud83c\udf26\ufe0f"
+    }
   },
   {
     "id": "best-of-west-washington-jan-3",
@@ -945,7 +977,23 @@
       }
     ],
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.497,
+      "name": "Full Moon",
+      "emoji": "\ud83c\udf15",
+      "fullness": 1.0
+    },
+    "distanceMiles": 0,
+    "elevationFt": 230,
+    "city": "Corvallis, OR",
+    "weather": {
+      "tempHighF": 52.2,
+      "tempLowF": 41.6,
+      "precipIn": 8.5,
+      "description": "Drizzle",
+      "emoji": "\ud83c\udf26\ufe0f"
+    }
   },
   {
     "id": "byu-jan-9",
@@ -1222,7 +1270,23 @@
     },
     "attendance": "4,002",
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.7,
+      "name": "Last Quarter",
+      "emoji": "\ud83c\udf17",
+      "fullness": 0.808
+    },
+    "distanceMiles": 800,
+    "elevationFt": 4549,
+    "city": "Provo, UT",
+    "weather": {
+      "tempHighF": 27.7,
+      "tempLowF": 21.5,
+      "precipIn": 0.1,
+      "description": "Snow",
+      "emoji": "\u2744\ufe0f"
+    }
   },
   {
     "id": "sac-state-jan-16",
@@ -1488,7 +1552,23 @@
     },
     "attendance": "3,310",
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.937,
+      "name": "Waning Crescent",
+      "emoji": "\ud83c\udf18",
+      "fullness": 0.195
+    },
+    "distanceMiles": 0,
+    "elevationFt": 230,
+    "city": "Corvallis, OR",
+    "weather": {
+      "tempHighF": 50.8,
+      "tempLowF": 38.8,
+      "precipIn": 0.0,
+      "description": "Clear sky",
+      "emoji": "\u2600\ufe0f"
+    }
   },
   {
     "id": "utah-state-jan-25",
@@ -1747,7 +1827,23 @@
     },
     "attendance": "3,651",
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.242,
+      "name": "First Quarter",
+      "emoji": "\ud83c\udf13",
+      "fullness": 0.689
+    },
+    "distanceMiles": 0,
+    "elevationFt": 230,
+    "city": "Corvallis, OR",
+    "weather": {
+      "tempHighF": 39.9,
+      "tempLowF": 22.5,
+      "precipIn": 0.0,
+      "description": "Partly cloudy",
+      "emoji": "\u26c5"
+    }
   },
   {
     "id": "alabama-jan-30",
@@ -1889,7 +1985,23 @@
     ],
     "imageBasedPdf": true,
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.411,
+      "name": "Waxing Gibbous",
+      "emoji": "\ud83c\udf14",
+      "fullness": 0.962
+    },
+    "distanceMiles": 2300,
+    "elevationFt": 200,
+    "city": "Tuscaloosa, AL",
+    "weather": {
+      "tempHighF": 53.2,
+      "tempLowF": 29.6,
+      "precipIn": 0.0,
+      "description": "Partly cloudy",
+      "emoji": "\u26c5"
+    }
   },
   {
     "id": "boise-state-quad-san-jose-state-feb-6",
@@ -2194,7 +2306,23 @@
     ],
     "attendance": "2,677",
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.648,
+      "name": "Waning Gibbous",
+      "emoji": "\ud83c\udf16",
+      "fullness": 0.893
+    },
+    "distanceMiles": 400,
+    "elevationFt": 2730,
+    "city": "Boise, ID",
+    "weather": {
+      "tempHighF": 49.5,
+      "tempLowF": 30.9,
+      "precipIn": 0.0,
+      "description": "Partly cloudy",
+      "emoji": "\u26c5"
+    }
   },
   {
     "id": "boise-state-quad-boise-state-feb-6",
@@ -2499,7 +2627,23 @@
     ],
     "attendance": "2,677",
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.648,
+      "name": "Waning Gibbous",
+      "emoji": "\ud83c\udf16",
+      "fullness": 0.893
+    },
+    "distanceMiles": 400,
+    "elevationFt": 2730,
+    "city": "Boise, ID",
+    "weather": {
+      "tempHighF": 49.5,
+      "tempLowF": 30.9,
+      "precipIn": 0.0,
+      "description": "Partly cloudy",
+      "emoji": "\u26c5"
+    }
   },
   {
     "id": "boise-state-quad-uc-davis-feb-6",
@@ -2804,7 +2948,23 @@
     ],
     "attendance": "2,677",
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.648,
+      "name": "Waning Gibbous",
+      "emoji": "\ud83c\udf16",
+      "fullness": 0.893
+    },
+    "distanceMiles": 400,
+    "elevationFt": 2730,
+    "city": "Boise, ID",
+    "weather": {
+      "tempHighF": 49.5,
+      "tempLowF": 30.9,
+      "precipIn": 0.0,
+      "description": "Partly cloudy",
+      "emoji": "\u26c5"
+    }
   },
   {
     "id": "southern-utah-feb-14",
@@ -3070,7 +3230,23 @@
     },
     "attendance": "3,954",
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.919,
+      "name": "Waning Crescent",
+      "emoji": "\ud83c\udf18",
+      "fullness": 0.251
+    },
+    "distanceMiles": 0,
+    "elevationFt": 230,
+    "city": "Corvallis, OR",
+    "weather": {
+      "tempHighF": 46.0,
+      "tempLowF": 37.8,
+      "precipIn": 3.8,
+      "description": "Drizzle",
+      "emoji": "\ud83c\udf26\ufe0f"
+    }
   },
   {
     "id": "twu-quad-twu-feb-22",
@@ -3374,7 +3550,23 @@
       }
     ],
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.19,
+      "name": "First Quarter",
+      "emoji": "\ud83c\udf13",
+      "fullness": 0.563
+    },
+    "distanceMiles": 1900,
+    "elevationFt": 634,
+    "city": "Denton, TX",
+    "weather": {
+      "tempHighF": 55.2,
+      "tempLowF": 36.4,
+      "precipIn": 0.0,
+      "description": "Partly cloudy",
+      "emoji": "\u26c5"
+    }
   },
   {
     "id": "twu-quad-arizona-state-feb-22",
@@ -3678,7 +3870,23 @@
       }
     ],
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.19,
+      "name": "First Quarter",
+      "emoji": "\ud83c\udf13",
+      "fullness": 0.563
+    },
+    "distanceMiles": 1900,
+    "elevationFt": 634,
+    "city": "Denton, TX",
+    "weather": {
+      "tempHighF": 55.2,
+      "tempLowF": 36.4,
+      "precipIn": 0.0,
+      "description": "Partly cloudy",
+      "emoji": "\u26c5"
+    }
   },
   {
     "id": "twu-quad-kent-state-feb-22",
@@ -3982,7 +4190,23 @@
       }
     ],
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.19,
+      "name": "First Quarter",
+      "emoji": "\ud83c\udf13",
+      "fullness": 0.563
+    },
+    "distanceMiles": 1900,
+    "elevationFt": 634,
+    "city": "Denton, TX",
+    "weather": {
+      "tempHighF": 55.2,
+      "tempLowF": 36.4,
+      "precipIn": 0.0,
+      "description": "Partly cloudy",
+      "emoji": "\u26c5"
+    }
   },
   {
     "id": "stanford-feb-27",
@@ -4248,7 +4472,23 @@
     },
     "attendance": "3,617",
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.36,
+      "name": "Waxing Gibbous",
+      "emoji": "\ud83c\udf14",
+      "fullness": 0.904
+    },
+    "distanceMiles": 0,
+    "elevationFt": 230,
+    "city": "Corvallis, OR",
+    "weather": {
+      "tempHighF": 53.6,
+      "tempLowF": 30.4,
+      "precipIn": 0.0,
+      "description": "Partly cloudy",
+      "emoji": "\u26c5"
+    }
   },
   {
     "id": "utah-state-mar-6",
@@ -4382,6 +4622,22 @@
     ],
     "imageBasedPdf": true,
     "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z"
+    "lastRefreshed": "2026-03-08T17:41:16Z",
+    "moonPhase": {
+      "phase": 0.597,
+      "name": "Waning Gibbous",
+      "emoji": "\ud83c\udf16",
+      "fullness": 0.954
+    },
+    "distanceMiles": 750,
+    "elevationFt": 4780,
+    "city": "Logan, UT",
+    "weather": {
+      "tempHighF": 40.8,
+      "tempLowF": 26.3,
+      "precipIn": 1.3,
+      "description": "Snow",
+      "emoji": "\u2744\ufe0f"
+    }
   }
 ]

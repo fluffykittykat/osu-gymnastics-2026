@@ -5,6 +5,7 @@
 
   let meets = [];
   let photos = {};
+  let bios = {};
   let currentFilter = 'all';
   let currentView = 'season';
   let lastRefreshedTime = null;
@@ -169,9 +170,10 @@
   // ===== Data Loading =====
   async function loadData() {
     try {
-      const [meetsRes, photosRes] = await Promise.all([fetch('/api/meets'), fetch('/api/photos')]);
+      const [meetsRes, photosRes, biosRes] = await Promise.all([fetch('/api/meets'), fetch('/api/photos'), fetch('/api/bios')]);
       meets = await meetsRes.json();
       photos = await photosRes.json();
+      bios = await biosRes.json();
 
       // Set initial lastRefreshed from meet data
       const refreshed = meets.find(m => m.lastRefreshed);
@@ -458,6 +460,103 @@
 
   // ===== Meet Detail =====
   let _meetDetailOrigin = 'season';
+  function renderMeetWildStats(meet) {
+    if (!meet.moonPhase) return '';
+    const moon = meet.moonPhase;
+    const weather = meet.weather;
+    const dist = meet.distanceMiles;
+    const elev = meet.elevationFt;
+
+    // Weather description mapping
+    function wmoDesc(code) {
+      if (code === 0) return 'Clear skies';
+      if (code <= 3) return 'Partly cloudy';
+      if (code <= 48) return 'Foggy';
+      if (code <= 57) return 'Drizzly';
+      if (code <= 67) return 'Rainy';
+      if (code <= 77) return 'Snowy';
+      if (code <= 82) return 'Rain showers';
+      return 'Stormy';
+    }
+
+    // Moon insight
+    const moonInsight = moon.fullness > 0.85
+      ? `${moon.emoji} <strong>Near full moon</strong> — OSU opened the season under a ${moon.name}. Superstition: gymnasts perform their most dramatic routines when the moon is bright.`
+      : moon.fullness < 0.2
+      ? `${moon.emoji} <strong>${moon.name}</strong> — Dark skies for this one. New moon energy: introspective, methodical, calm.`
+      : `${moon.emoji} <strong>${moon.name}</strong> — A ${(moon.fullness*100).toFixed(0)}% illuminated moon overhead.`;
+
+    // Elevation insight
+    let elevInsight = '';
+    if (elev > 3000) {
+      elevInsight = `🏔️ <strong>High altitude alert!</strong> ${elev.toLocaleString()}ft elevation — that's ${Math.round((elev-230)/1000)}k feet higher than Gill Coliseum. Thinner air = less oxygen = harder landings.`;
+    } else if (elev > 1000) {
+      elevInsight = `🏔️ Moderate elevation at ${elev.toLocaleString()}ft — noticeable but not extreme.`;
+    } else {
+      elevInsight = `⛰️ Sea-level conditions (${elev}ft) — no altitude excuses today.`;
+    }
+
+    // Distance insight
+    let distInsight = '';
+    if (dist === 0) {
+      distInsight = `🏠 <strong>Home sweet Gill.</strong> No travel, home crowd, familiar chalk.`;
+    } else if (dist > 1500) {
+      distInsight = `✈️ <strong>Cross-country haul</strong> — ${dist.toLocaleString()} miles from Corvallis. That's a time-zone shift, jet lag, and unfamiliar chalk all at once.`;
+    } else if (dist > 600) {
+      distInsight = `🚗 <strong>${dist.toLocaleString()} miles from home</strong> — a serious road trip requiring at least one flight.`;
+    } else {
+      distInsight = `🚗 <strong>${dist} miles from Corvallis</strong> — regional away, short trip.`;
+    }
+
+    // Weather insight
+    let weatherInsight = '';
+    if (weather) {
+      const temp = weather.tempHighF;
+      if (weather.precipIn > 5) {
+        weatherInsight = `🌧️ <strong>Torrential outside</strong> (${weather.precipIn}" of precipitation) while OSU competed indoors. Psychological edge: nowhere else to be.`;
+      } else if (weather.precipIn > 0.5) {
+        weatherInsight = `${weather.emoji} <strong>${weather.description}</strong> outside — ${weather.precipIn}" of precip. The gymnasts stayed dry indoors but the commute was rough.`;
+      } else if (temp < 30) {
+        weatherInsight = `🥶 <strong>Freezing outside</strong> at ${temp}°F high. Nothing like a brutal cold snap to test mental focus.`;
+      } else if (temp > 70) {
+        weatherInsight = `☀️ <strong>${temp}°F and gorgeous</strong> outside — easy to get distracted when it's that nice out.`;
+      } else {
+        weatherInsight = `${weather.emoji} ${weather.description}, ${temp}°F high. Typical competition weather.`;
+      }
+    }
+
+    // Class year breakdown for this meet's OSU athletes
+    const osuAthletes = meet.athletes.filter(a => a.team === 'Oregon State');
+    const byClass = {};
+    osuAthletes.forEach(a => {
+      const cls = bios[a.name]?.classYear || 'Unknown';
+      if (!byClass[cls]) byClass[cls] = [];
+      byClass[cls].push(a.name);
+    });
+    const classBreakdown = Object.entries(byClass)
+      .sort((a,b) => ['Freshman','Sophomore','Junior','Senior','Graduate','Unknown'].indexOf(a[0]) - ['Freshman','Sophomore','Junior','Senior','Graduate','Unknown'].indexOf(b[0]))
+      .map(([cls,names]) => `<span class="wild-pill">${cls}: ${names.length}</span>`).join('');
+
+    // Home state proximity — who's playing "near home"?
+    const venueState = { 'Corvallis OR': 'OR', 'Provo UT': 'UT', 'Tuscaloosa AL': 'AL',
+      'Boise ID': 'ID', 'Denton TX': 'TX', 'Logan UT': 'UT' };
+    const meetState = meet.city ? Object.entries(venueState).find(([k]) => meet.city.includes(k.split(' ')[1]))?.[1] : null;
+    const closestToHome = meetState ? osuAthletes.filter(a => bios[a.name]?.homeState === meetState) : [];
+
+    return `
+      <div class="section-card wild-card">
+        <h2 class="section-title">🎲 Meet Trivia & Context</h2>
+        <div class="wild-grid">
+          <div class="wild-item">${moonInsight}</div>
+          <div class="wild-item">${elevInsight}</div>
+          <div class="wild-item">${distInsight}</div>
+          ${weatherInsight ? `<div class="wild-item">${weatherInsight}</div>` : ''}
+          <div class="wild-item">👩‍🎓 <strong>Experience on the floor:</strong> ${classBreakdown || 'Unknown'}</div>
+          ${closestToHome.length > 0 ? `<div class="wild-item">🏡 <strong>Playing near home:</strong> ${closestToHome.map(a=>a.name).join(', ')} grew up in ${meetState}!</div>` : ''}
+        </div>
+      </div>`;
+  }
+
   function renderMeetInsights(meet) {
     if (!meet.events || meet.status === 'upcoming') return '';
     const EVS = ['vault','bars','beam','floor'];
@@ -720,6 +819,7 @@
         </div>`;
       })() : ''}
       ${renderMeetInsights(meet)}
+      ${renderMeetWildStats(meet)}
       <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
       <div class="detail-event-grid">${eventCards}</div>
     `;
@@ -867,6 +967,7 @@
         </div>
         ${sparklines}
         ${renderGymnastInsights(p.name)}
+        ${renderGymnastWildStats(p.name)}
         <div class="section-card">
           <h2 class="section-title">Meet History</h2>
           <div style="overflow-x:auto;">
@@ -882,6 +983,139 @@
       detail.style.display = 'none';
       document.getElementById('gymnastCards').style.display = 'grid';
     });
+  }
+
+  // ===== Gymnast Wild Stats =====
+  function renderGymnastWildStats(name) {
+    const bio = bios[name];
+    const sm = meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+    function gmean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
+    function gfmt(n) { return typeof n==='number'&&!isNaN(n)?n.toFixed(3):'—'; }
+
+    // Collect this gymnast's scores with meet context
+    const EVS = ['vault','bars','beam','floor'];
+    const scored = [];
+    const seenDates = new Set();
+    sm.forEach(meet => {
+      if(seenDates.has(meet.date)) return;
+      const a = meet.athletes.find(x=>x.name===name);
+      if(!a) return;
+      const hasScore = EVS.some(ev => a.scores[ev]!==undefined);
+      if(!hasScore) return;
+      seenDates.add(meet.date);
+      const allScores = EVS.map(ev=>a.scores[ev]).filter(s=>s!==undefined);
+      scored.push({
+        date: meet.date,
+        scores: a.scores,
+        avg: gmean(allScores),
+        moonFullness: meet.moonPhase?.fullness,
+        moonName: meet.moonPhase?.name,
+        moonEmoji: meet.moonPhase?.emoji,
+        tempHigh: meet.weather?.tempHighF,
+        precip: meet.weather?.precipIn,
+        weatherEmoji: meet.weather?.emoji,
+        weatherDesc: meet.weather?.description,
+        elevFt: meet.elevationFt,
+        distMiles: meet.distanceMiles,
+        isHome: meet.isHome,
+        result: meet.result,
+      });
+    });
+
+    if(scored.length < 3) return '';
+
+    // Moon phase correlation
+    const withMoon = scored.filter(s=>s.moonFullness!==null&&s.avg!==null);
+    const brightMoon = withMoon.filter(s=>s.moonFullness>0.7).map(s=>s.avg);
+    const darkMoon = withMoon.filter(s=>s.moonFullness<=0.7).map(s=>s.avg);
+    const moonDiff = brightMoon.length && darkMoon.length ? gmean(brightMoon)-gmean(darkMoon) : null;
+
+    // Temperature correlation
+    const withTemp = scored.filter(s=>s.tempHigh!==null&&s.avg!==null);
+    const warmMeets = withTemp.filter(s=>s.tempHigh>50).map(s=>s.avg);
+    const coldMeets = withTemp.filter(s=>s.tempHigh<=50).map(s=>s.avg);
+    const tempDiff = warmMeets.length && coldMeets.length ? gmean(warmMeets)-gmean(coldMeets) : null;
+
+    // Elevation correlation
+    const highAlt = scored.filter(s=>s.elevFt>2000&&s.avg!==null).map(s=>s.avg);
+    const lowAlt = scored.filter(s=>s.elevFt<=2000&&s.avg!==null).map(s=>s.avg);
+    const elevDiff = highAlt.length && lowAlt.length ? gmean(highAlt)-gmean(lowAlt) : null;
+
+    // Rain day performance (at home in Corvallis rain)
+    const rainyMeets = scored.filter(s=>s.precip>0.5&&s.avg!==null).map(s=>s.avg);
+    const dryMeets = scored.filter(s=>s.precip<=0.5&&s.avg!==null).map(s=>s.avg);
+    const rainDiff = rainyMeets.length && dryMeets.length ? gmean(rainyMeets)-gmean(dryMeets) : null;
+
+    // Best moon phase
+    const moonGroups = {};
+    withMoon.forEach(s => {
+      if(!moonGroups[s.moonName]) moonGroups[s.moonName] = [];
+      moonGroups[s.moonName].push(s.avg);
+    });
+    const moonBest = Object.entries(moonGroups)
+      .map(([name, avgs]) => ({name, avg: gmean(avgs), n: avgs.length}))
+      .filter(x=>x.n>0).sort((a,b)=>b.avg-a.avg)[0];
+
+    const bio = bios[name];
+    const items = [];
+
+    // Moon
+    if(moonDiff!==null) {
+      const better = moonDiff>0?'bright':'dark';
+      items.push(`${moonDiff>0?'🌕':'🌑'} <strong>Moon matters!</strong> ${name.split(' ')[0]} averages <strong>${Math.abs(moonDiff).toFixed(3)}</strong> pts ${moonDiff>0?'higher':'lower'} during bright moons (>70% illuminated). ${moonBest?`Best phase: ${moonBest.name} (${gfmt(moonBest.avg)})`:''}`);
+    }
+
+    // Temperature
+    if(tempDiff!==null && Math.abs(tempDiff)>0.02) {
+      items.push(`${tempDiff>0?'☀️':'❄️'} <strong>${tempDiff>0?'Warm weather warrior':'Cold weather specialist'}!</strong> Scores <strong>${Math.abs(tempDiff).toFixed(3)}</strong> pts ${tempDiff>0?'higher on warm days (50°F+)':'higher when it\'s cold out'}.`);
+    }
+
+    // Elevation
+    if(elevDiff!==null && Math.abs(elevDiff)>0.02) {
+      items.push(`🏔️ <strong>${elevDiff>0?'Altitude booster':'Sea level performer'}!</strong> Averages <strong>${Math.abs(elevDiff).toFixed(3)}</strong> pts ${elevDiff>0?'higher at high-altitude venues (2000ft+)':'higher at sea level'}. ${elevDiff<0?`Thin air at Logan (4,780ft) and Provo (4,549ft) may be a factor.`:''}`);
+    }
+
+    // Rain
+    if(rainDiff!==null && Math.abs(rainDiff)>0.02) {
+      items.push(`${rainDiff>0?'🌧️':'☀️'} <strong>${rainDiff>0?'Rain day performer':'Sunshine scorer'}!</strong> ${name.split(' ')[0]} goes <strong>${Math.abs(rainDiff).toFixed(3)}</strong> pts ${rainDiff>0?'higher on rainy days. Oregon weather suits them.':'higher on dry days.'}`);
+    }
+
+    // Bio fun facts
+    if(bio) {
+      if(bio.classYear) {
+        const classEmoji = {Freshman:'🐣',Sophomore:'📚',Junior:'🎯',Senior:'👑',Graduate:'🎓'}[bio.classYear]||'🎓';
+        const classInsight = {
+          Freshman: 'Still figuring it all out — but the data suggests they\'re already contributing.',
+          Sophomore: 'The sophomore slump is a myth — at least for this one.',
+          Junior: 'Peak experience without senior nerves. Prime gymnastics years.',
+          Senior: 'This is it — final season, full experience, nothing to lose.',
+        }[bio.classYear] || '';
+        items.push(`${classEmoji} <strong>${bio.classYear}</strong> from ${bio.hometown||'unknown'}. ${classInsight}`);
+      }
+
+      // Home state proximity effect
+      const homeStateMeets = scored.filter(s => {
+        const venueStateMap = {'OR':true}; // simplistic — home meets are OR
+        return s.isHome && bio.homeState === 'OR' || (!s.isHome && bio.homeState !== 'OR');
+      });
+    }
+
+    // Best and worst weather for this gymnast
+    const bestMeet = scored.filter(s=>s.avg).sort((a,b)=>b.avg-a.avg)[0];
+    const worstMeet = scored.filter(s=>s.avg).sort((a,b)=>a.avg-b.avg)[0];
+    if(bestMeet && worstMeet && bestMeet !== worstMeet) {
+      items.push(`📊 <strong>Peak conditions:</strong> Career best avg (${gfmt(bestMeet.avg)}) came on a <strong>${bestMeet.moonEmoji} ${bestMeet.moonName}</strong> night, ${bestMeet.weatherEmoji||''} ${bestMeet.weatherDesc||''} at ${bestMeet.elevFt}ft elevation.`);
+    }
+
+    if(items.length===0) return '';
+
+    return `
+      <div class="section-card wild-card">
+        <h2 class="section-title">🎲 Wild Stats & Fun Facts</h2>
+        <div class="wild-grid">
+          ${items.map(item=>`<div class="wild-item">${item}</div>`).join('')}
+        </div>
+      </div>`;
   }
 
   // ===== Per-gymnast Insights =====

@@ -37,6 +37,13 @@ app.get('/', (req, res) => {
 
 app.use(express.static('public'));
 
+app.get('/api/bios', (req, res) => {
+  try {
+    const bios = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/bios.json'), 'utf8'));
+    res.json(bios);
+  } catch (e) { res.json({}); }
+});
+
 app.get('/api/photos', (req, res) => {
   try {
     const photos = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/photos.json'), 'utf8'));
