@@ -1510,3 +1510,16 @@ main {
   margin-bottom: 1rem;
   display: block;
 }
+
+/* ===== Recap expand/collapse ===== */
+.recap-toggle {
+  background: none;
+  border: none;
+  color: var(--orange);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  margin-top: 0.25rem;
+  display: block;
+}
+.recap-toggle:hover { text-decoration: underline; }

@@ -578,12 +578,21 @@
         </div>
       </div>
       ${teamsTable}
-      ${meet.recap ? `
-      <div class="section-card recap-card">
-        <h2 class="section-title">📰 Meet Recap</h2>
-        <div class="recap-body">${meet.recap.replace(/\n\n/g, '</p><p>').replace(/^/, '<p>').replace(/$/, '</p>')}</div>
-        ${meet.recapUrl ? `<a href="${meet.recapUrl}" target="_blank" class="recap-link">Read full recap on osubeavers.com →</a>` : ''}
-      </div>` : ''}
+      ${meet.recap ? (() => {
+        const paragraphs = meet.recap.split(/\n\n+/).filter(p => p.trim());
+        const preview = paragraphs.slice(0, 2).map(p => `<p>${p.trim()}</p>`).join('');
+        const rest = paragraphs.slice(2).map(p => `<p>${p.trim()}</p>`).join('');
+        return `
+        <div class="section-card recap-card">
+          <h2 class="section-title">📰 Meet Recap</h2>
+          <div class="recap-body">
+            <div class="recap-preview">${preview}</div>
+            ${rest ? `<div class="recap-full" style="display:none;">${rest}</div>
+            <button class="recap-toggle">Read more ▾</button>` : ''}
+          </div>
+          ${meet.recapUrl ? `<a href="${meet.recapUrl}" target="_blank" class="recap-link">Full recap on osubeavers.com →</a>` : ''}
+        </div>`;
+      })() : ''}
       <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
       <div class="detail-event-grid">${eventCards}</div>
     `;
@@ -935,6 +944,14 @@
       if (teamEl) {
         e.preventDefault();
         showTeamStats(teamEl.dataset.team);
+        return;
+      }
+      const recapToggle = e.target.closest('.recap-toggle');
+      if (recapToggle) {
+        const full = recapToggle.previousElementSibling;
+        const expanded = full.style.display !== 'none';
+        full.style.display = expanded ? 'none' : 'block';
+        recapToggle.textContent = expanded ? 'Read more ▾' : 'Read less ▴';
         return;
       }
     });
