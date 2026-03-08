@@ -26,6 +26,14 @@
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
   }
 
+  // Helper to generate home/away badge
+  function getHomeAwayBadge(isHome, size = 'full') {
+    if (size === 'short') {
+      return `<span class="badge ${isHome ? 'badge-home-short' : 'badge-away-short'}">${isHome ? 'H' : 'A'}</span>`;
+    }
+    return `<span class="badge ${isHome ? 'badge-home' : 'badge-away'}">${isHome ? '🏠 Home' : '✈️ Away'}</span>`;
+  }
+
   // ===== Data Loading =====
   async function loadData() {
     try {
@@ -185,7 +193,7 @@
       <div class="meet-card" data-meet-id="${m.id}">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent">${m.opponent}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''}</div>
+            <div class="meet-opponent">${m.opponent} ${getHomeAwayBadge(m.isHome, 'full')}</div>
             <div class="meet-date">${formatDateLong(m.date)}</div>
             <div class="meet-location">${m.location}</div>
           </div>
@@ -310,8 +318,12 @@
         <div class="meet-header">
           <div>
             <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent}</div>
+            <div style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0;">
+              ${getHomeAwayBadge(meet.isHome, 'full')}
+              <span style="color:var(--text-muted);">•</span>
+              <span style="font-size:0.9rem;color:var(--text-muted);">${meet.location}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</span>
+            </div>
             <div class="meet-date">${formatDateLong(meet.date)}</div>
-            <div class="meet-location">${meet.location}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
           </div>
           <span class="badge badge-${meet.result.toLowerCase()}" style="font-size:1rem;padding:0.3rem 0.8rem;">${meet.result}</span>
         </div>
@@ -443,7 +455,9 @@
         return `<td class="${isBest ? 'personal-best' : ''}">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</td>`;
       }).join('');
       const aa = m.scores.aa ? `<td>${m.scores.aa.toFixed(3)}</td>` : '<td style="color:var(--text-muted)">—</td>';
-      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent}</td>${cells}${aa}</tr>`;
+      const meet = meets.find(mt => mt.opponent === m.opponent && mt.date === m.date);
+      const homeAwayBadge = meet ? getHomeAwayBadge(meet.isHome, 'short') : '';
+      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent} ${homeAwayBadge}</td>${cells}${aa}</tr>`;
     }).join('');
 
     detail.innerHTML = `
@@ -525,15 +539,19 @@
       return;
     }
 
-    list.innerHTML = top.map((s, i) => `
+    list.innerHTML = top.map((s, i) => {
+      const meet = meets.find(m => m.id === s.meetId);
+      const homeAwayBadge = meet ? getHomeAwayBadge(meet.isHome, 'short') : '';
+      return `
       <div class="leaderboard-item">
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
         <div class="lb-info">
           <div class="lb-name">${s.name}</div>
-          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent}</div>
+          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent} ${homeAwayBadge}</div>
         </div>
         <div class="lb-score">${s.score.toFixed(3)}</div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   // ===== Event Listeners =====

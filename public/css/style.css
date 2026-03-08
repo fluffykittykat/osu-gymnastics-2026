@@ -352,10 +352,41 @@ main {
 }
 
 .badge-home {
-  background: rgba(215, 63, 9, 0.2);
-  color: var(--orange);
-  font-size: 0.7rem;
+  background: #D73F09;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
   margin-left: 0.5rem;
+  border-radius: 4px;
+}
+
+.badge-away {
+  background: #3a3a3a;
+  color: #aaa;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  margin-left: 0.5rem;
+  border-radius: 4px;
+}
+
+.badge-home-short {
+  background: #D73F09;
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+  margin-left: 0.3rem;
+}
+
+.badge-away-short {
+  background: #3a3a3a;
+  color: #aaa;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+  margin-left: 0.3rem;
 }
 
 .meet-scores {
