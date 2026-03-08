@@ -987,7 +987,7 @@
 
   // ===== Gymnast Wild Stats =====
   function renderGymnastWildStats(name) {
-    const bio = bios[name];
+    const gymnBio = bios[name];
     const sm = meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
     function gmean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
     function gfmt(n) { return typeof n==='number'&&!isNaN(n)?n.toFixed(3):'—'; }
@@ -1056,7 +1056,6 @@
       .map(([name, avgs]) => ({name, avg: gmean(avgs), n: avgs.length}))
       .filter(x=>x.n>0).sort((a,b)=>b.avg-a.avg)[0];
 
-    const bio = bios[name];
     const items = [];
 
     // Moon
@@ -1081,22 +1080,22 @@
     }
 
     // Bio fun facts
-    if(bio) {
-      if(bio.classYear) {
-        const classEmoji = {Freshman:'🐣',Sophomore:'📚',Junior:'🎯',Senior:'👑',Graduate:'🎓'}[bio.classYear]||'🎓';
+    if(gymnBio) {
+      if(gymnBio.classYear) {
+        const classEmoji = {Freshman:'🐣',Sophomore:'📚',Junior:'🎯',Senior:'👑',Graduate:'🎓'}[gymnBio.classYear]||'🎓';
         const classInsight = {
           Freshman: 'Still figuring it all out — but the data suggests they\'re already contributing.',
           Sophomore: 'The sophomore slump is a myth — at least for this one.',
           Junior: 'Peak experience without senior nerves. Prime gymnastics years.',
           Senior: 'This is it — final season, full experience, nothing to lose.',
-        }[bio.classYear] || '';
-        items.push(`${classEmoji} <strong>${bio.classYear}</strong> from ${bio.hometown||'unknown'}. ${classInsight}`);
+        }[gymnBio.classYear] || '';
+        items.push(`${classEmoji} <strong>${gymnBio.classYear}</strong> from ${gymnBio.hometown||'unknown'}. ${classInsight}`);
       }
 
       // Home state proximity effect
       const homeStateMeets = scored.filter(s => {
         const venueStateMap = {'OR':true}; // simplistic — home meets are OR
-        return s.isHome && bio.homeState === 'OR' || (!s.isHome && bio.homeState !== 'OR');
+        return s.isHome && gymnBio.homeState === 'OR' || (!s.isHome && gymnBio.homeState !== 'OR');
       });
     }
 
