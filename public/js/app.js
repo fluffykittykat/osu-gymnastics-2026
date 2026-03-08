@@ -220,8 +220,13 @@
   }
 
   // ===== Navigation =====
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
   function showView(view) {
     currentView = view;
+    scrollToTop();
     document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
     document.querySelectorAll('.nav-link, .bottom-nav-item').forEach(l => {
       if (l.dataset.view) l.classList.remove('active');
@@ -916,7 +921,7 @@
     const mpThumb = meetPhotos[m.date]?.heroImage;
     const thumbHtml = mpThumb ? `
       <div class="meet-card-thumb" style="position:relative;height:110px;overflow:hidden;border-radius:8px 8px 0 0;margin:-1rem -1rem 0.75rem -1rem;">
-        <img src="${mpThumb}" alt="${m.opponent}" style="width:100%;height:100%;object-fit:cover;object-position:center 30%;" loading="lazy" onerror="this.parentElement.style.display='none'">
+        <img src="${mpThumb}" alt="${m.opponent}" style="width:100%;height:100%;object-fit:cover;object-position:center center;" loading="lazy" onerror="this.parentElement.style.display='none'">
         <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(26,26,26,0.95) 0%,rgba(26,26,26,0.1) 60%,transparent 100%)"></div>
       </div>` : '';
 
@@ -965,7 +970,7 @@
     // Quad card photo banner
     const qThumb = meetPhotos[first.date]?.heroImage;
     const qThumbHtml = qThumb ? `<div style="height:90px;overflow:hidden;position:relative;">
-      <img src="${qThumb}" alt="${first.quadName}" style="width:100%;height:100%;object-fit:cover;object-position:center 30%;" loading="lazy" onerror="this.parentElement.style.display='none'">
+      <img src="${qThumb}" alt="${first.quadName}" style="width:100%;height:100%;object-fit:cover;object-position:center center;" loading="lazy" onerror="this.parentElement.style.display='none'">
       <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,var(--card))"></div>
     </div>` : '';
 
@@ -996,6 +1001,7 @@
     const siblings = meets.filter(m => m.quadMeet && m.quadName === quadName && m.date === date);
     if (!siblings.length) return;
 
+    scrollToTop();
     document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
     const view = document.getElementById('view-meet');
     view.style.display = 'block';
@@ -1020,7 +1026,7 @@
     const heroImg = mpData?.heroImage;
     const heroHtml = heroImg ? `
       <div style="position:relative;width:100%;height:220px;overflow:hidden;border-radius:12px;margin-bottom:1rem;">
-        <img src="${heroImg}" alt="${quadName}" style="width:100%;height:100%;object-fit:cover;object-position:center top;" loading="lazy" onerror="this.parentElement.style.display='none'">
+        <img src="${heroImg}" alt="${quadName}" style="width:100%;height:100%;object-fit:cover;object-position:center center;" loading="lazy" onerror="this.parentElement.style.display='none'">
         <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 50%)"></div>
         <div style="position:absolute;bottom:0.75rem;left:1rem;">
           <span style="color:#fff;font-family:Oswald;font-size:1.2rem;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.9)">${quadName}</span>
@@ -1509,6 +1515,7 @@
     const meet = meets.find(m => m.id === meetId);
     if (!meet) return;
 
+    scrollToTop();
     document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
     const view = document.getElementById('view-meet');
     view.style.display = 'block';
@@ -1630,7 +1637,7 @@
     const heroImg = mpData?.heroImage;
     const heroHtml = heroImg ? `
       <div class="meet-hero-photo" style="position:relative;width:100%;height:220px;overflow:hidden;border-radius:12px;margin-bottom:1rem;">
-        <img src="${heroImg}" alt="${meet.opponent} meet" style="width:100%;height:100%;object-fit:cover;object-position:center top;" loading="lazy" onerror="this.parentElement.style.display='none'">
+        <img src="${heroImg}" alt="${meet.opponent} meet" style="width:100%;height:100%;object-fit:cover;object-position:center center;" loading="lazy" onerror="this.parentElement.style.display='none'">
         <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 50%)"></div>
         <div style="position:absolute;bottom:0.75rem;left:1rem;right:1rem;display:flex;justify-content:space-between;align-items:flex-end;">
           <span style="color:#fff;font-family:Oswald;font-size:1.1rem;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.8)">vs ${meet.opponent}</span>
@@ -1787,6 +1794,7 @@
   }
 
   function showGymnastProfile(name) {
+    scrollToTop();
     const profiles = getGymnastProfiles();
     const p = profiles.find(pr => pr.name === name);
 
@@ -1869,7 +1877,7 @@
     const gymnPhoto = photos[p.name];
     const gymnBannerHtml = gymnPhoto ? `
       <div class="gymnast-photo-banner" style="position:relative;width:100%;height:260px;overflow:hidden;border-radius:12px 12px 0 0;margin-bottom:0;">
-        <img src="${gymnPhoto}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;" loading="lazy">
+        <img src="${gymnPhoto}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;object-position:center center;" loading="lazy">
         <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(13,13,13,1) 0%,rgba(13,13,13,0.3) 50%,transparent 80%)"></div>
         <div style="position:absolute;bottom:1rem;left:1rem;right:1rem;">
           <div style="font-family:Oswald;font-size:1.8rem;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.9);line-height:1.1">${p.name}</div>
