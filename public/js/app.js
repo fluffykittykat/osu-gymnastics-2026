@@ -1463,8 +1463,8 @@
           ${meet.recapUrl ? `<a href="${meet.recapUrl}" target="_blank" class="recap-link">Full recap on osubeavers.com →</a>` : ''}
         </div>`;
       })() : ''}
-      ${renderMeetInsights(meet)}
-      ${renderMeetWildStats(meet)}
+      ${(()=>{try{return renderMeetInsights(meet);}catch(e){return '<div style="color:red;padding:1rem">⚠️ Meet Analysis error: '+e.message+'</div>';}})()}
+      ${(()=>{try{return renderMeetWildStats(meet);}catch(e){return '<div style="color:red;padding:1rem">⚠️ Wild Stats error: '+e.message+'</div>';}})()}
       <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
       <div class="detail-event-grid">${eventCards}</div>
     `;

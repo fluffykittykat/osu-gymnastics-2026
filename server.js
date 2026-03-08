@@ -35,7 +35,14 @@ app.get('/', (req, res) => {
   res.send(html);
 });
 
-app.use(express.static('public'));
+app.use(express.static('public', {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+    }
+  }
+}));
 
 app.get('/api/bios', (req, res) => {
   try {
