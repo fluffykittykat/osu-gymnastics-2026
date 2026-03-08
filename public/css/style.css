@@ -1908,3 +1908,59 @@ main {
   font-family: Oswald, sans-serif;
   letter-spacing: 0.03em;
 }
+
+/* ===== Season Wild Stats ===== */
+.wild-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+@media (max-width: 700px) { .wild-stats-grid { grid-template-columns: 1fr; } }
+.wild-stat-block {
+  background: #1a1a1a;
+  border: 1px solid #2d2d2d;
+  border-radius: 12px;
+  padding: 1rem;
+}
+.wild-stat-title {
+  font-family: Oswald, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.2rem;
+}
+.wild-caption {
+  font-size: 0.75rem;
+  color: #666;
+  margin-bottom: 0.75rem;
+  font-style: italic;
+}
+.wild-row {
+  display: grid;
+  grid-template-columns: 1fr auto 80px;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+.wild-row-label { font-size: 0.78rem; color: var(--text-muted); }
+.wild-row-val {
+  font-family: Oswald, sans-serif;
+  font-size: 0.9rem;
+  color: var(--orange);
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+.wild-bar-wrap {
+  background: #2a2a2a;
+  border-radius: 4px;
+  height: 6px;
+  overflow: hidden;
+}
+.wild-bar {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--orange), #ff7a45);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
