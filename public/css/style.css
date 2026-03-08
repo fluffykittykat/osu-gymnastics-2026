@@ -1362,3 +1362,65 @@ main {
 .score-updated {
   animation: scoreFlash 1s ease-out;
 }
+
+/* ===== Mobile optimizations ===== */
+@media (max-width: 600px) {
+
+  /* Full Standings table — horizontally scrollable, sticky team col */
+  .all-teams-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+  .all-teams-table th,
+  .all-teams-table td {
+    padding: 0.4rem 0.5rem;
+  }
+  .all-teams-table th:nth-child(1),
+  .all-teams-table th:nth-child(2),
+  .all-teams-table td:nth-child(1),
+  .all-teams-table td:nth-child(2) {
+    position: sticky;
+    background: var(--card);
+    z-index: 1;
+  }
+  .all-teams-table th:nth-child(1),
+  .all-teams-table td:nth-child(1) { left: 0; }
+  .all-teams-table th:nth-child(2),
+  .all-teams-table td:nth-child(2) { left: 2rem; }
+  .all-teams-table .osu-row td {
+    background: rgba(215, 63, 9, 0.12);
+  }
+
+  /* Event cards — 2 column grid on mobile */
+  .detail-event-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+  }
+  .detail-event-card {
+    padding: 0.75rem !important;
+  }
+  .detail-event-title {
+    font-size: 0.8rem !important;
+  }
+  .lineup-table {
+    font-size: 0.75rem;
+  }
+  .lineup-table th,
+  .lineup-table td {
+    padding: 0.25rem 0.3rem;
+  }
+
+  /* Tighter meet hero on mobile */
+  .detail-hero {
+    padding: 1rem !important;
+  }
+  .meet-opponent {
+    font-size: 1.1rem !important;
+  }
+  .meet-scores .score {
+    font-size: 1.4rem !important;
+  }
+}
