@@ -1883,3 +1883,28 @@ main {
 .quad-tab-result.w { color: #2ecc71; }
 .quad-tab-result.l { color: #e74c3c; }
 .quad-tab.active .quad-tab-result { color: rgba(255,255,255,0.8); }
+
+/* ===== Bio Pills on Profile Header ===== */
+.bio-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  margin: 0.6rem 0 0.4rem;
+}
+.bio-pill {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 20px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.bio-pill-pos {
+  background: rgba(215, 63, 9, 0.15);
+  border-color: var(--orange);
+  color: var(--orange);
+  font-weight: 600;
+  font-family: Oswald, sans-serif;
+  letter-spacing: 0.03em;
+}

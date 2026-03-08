@@ -981,6 +981,17 @@
           ${photos[p.name] ? `<img src="${photos[p.name]}" class="profile-headshot" alt="${p.name}">` : ''}
           <div class="profile-name">${p.name}</div>
           <div style="color:var(--text-muted);margin-top:0.25rem;">${p.totalMeets} competition days • Oregon State</div>
+          ${(()=>{
+            const pb = bios[p.name]||{};
+            const pills = [];
+            if(pb.position) pills.push(`<span class="bio-pill bio-pill-pos">${pb.position}</span>`);
+            if(pb.classYear) pills.push(`<span class="bio-pill">${pb.classYear}</span>`);
+            if(pb.hometown) pills.push(`<span class="bio-pill">📍 ${pb.hometown}</span>`);
+            if(pb.height) pills.push(`<span class="bio-pill">📏 ${pb.height}</span>`);
+            if(pb.major) pills.push(`<span class="bio-pill">🎓 ${pb.major}</span>`);
+            if(pb.highSchool) pills.push(`<span class="bio-pill">🏫 ${pb.highSchool}</span>`);
+            return pills.length ? `<div class="bio-pills">${pills.join('')}</div>` : '';
+          })()}
           <div class="profile-stats-grid">${statsGrid}</div>
         </div>
         ${sparklines}
@@ -1160,6 +1171,41 @@
             items.push(`🗺️ From <strong>${gymnBio.hometown}</strong> — ${diff > 0 ? `performs <strong>${diff.toFixed(3)} better at Gill</strong> than anywhere else. Gill Coliseum feels like home.` : `actually averages <strong>${Math.abs(diff).toFixed(3)} higher on the road</strong>. Visiting Corvallis gets this gymnast fired up.`}`);
           }
         }
+      }
+    }
+
+    // Specialist vs AA insight
+    if(gymnBio && gymnBio.position && gymnBio.position !== 'All-Around') {
+      const specEvents = [];
+      if(/vault/i.test(gymnBio.position)) specEvents.push('vault');
+      if(/bars|uneven/i.test(gymnBio.position)) specEvents.push('bars');
+      if(/beam/i.test(gymnBio.position)) specEvents.push('beam');
+      if(/floor/i.test(gymnBio.position)) specEvents.push('floor');
+      const EVlabel = {vault:'Vault',bars:'Bars',beam:'Beam',floor:'Floor'};
+      const specAvgs = specEvents.map(ev => {
+        const vals = scored.map(s=>s.scores[ev]).filter(v=>v!==undefined&&v>0);
+        return {ev, avg: vals.length ? gmean(vals) : null, n: vals.length};
+      }).filter(x=>x.avg);
+      if(specAvgs.length) {
+        const evStr = specAvgs.map(x=>`${EVlabel[x.ev]}: ${gfmt(x.avg)}`).join(' • ');
+        items.push(`🎯 <strong>Event Specialist</strong> (${gymnBio.position}) — focuses on what she does best. Specialty avg${specAvgs.length>1?'s':''}: ${evStr}`);
+      }
+    } else if (gymnBio && gymnBio.position === 'All-Around') {
+      const evAvgs = ['vault','bars','beam','floor'].map(ev => {
+        const vals = scored.map(s=>s.scores[ev]).filter(v=>v!==undefined&&v>0);
+        return {ev, avg: vals.length ? gmean(vals) : null};
+      }).filter(x=>x.avg).sort((a,b)=>b.avg-a.avg);
+      if(evAvgs.length >= 2) {
+        const EVlabel = {vault:'Vault',bars:'Bars',beam:'Beam',floor:'Floor'};
+        items.push(`🔄 <strong>All-Around competitor</strong> — best event is ${EVlabel[evAvgs[0].ev]} (${gfmt(evAvgs[0].avg)}), toughest is ${EVlabel[evAvgs[evAvgs.length-1].ev]} (${gfmt(evAvgs[evAvgs.length-1].avg)}). Spread: ${(evAvgs[0].avg - evAvgs[evAvgs.length-1].avg).toFixed(3)} pts.`);
+      }
+    }
+
+    // Homeschool insight
+    if(gymnBio && gymnBio.highSchool) {
+      const isHomeschool = /connections academy|acellus|home school|homeschool|online|charter/i.test(gymnBio.highSchool);
+      if(isHomeschool) {
+        items.push(`📚 <strong>Homeschooled to train.</strong> Attended ${gymnBio.highSchool} — the kind of school that lets you spend 40 hours/week in the gym. That dedication shows.`);
       }
     }
 

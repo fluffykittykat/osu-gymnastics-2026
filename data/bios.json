@@ -23,7 +23,8 @@
       "Has one brother, Xander, and one sister, Zoey",
       "Enjoys watching movies and hanging out with friends",
       "Majoring in Animal Science with aspirations to become a veterinarian"
-    ]
+    ],
+    "position": "All-Around"
   },
   "Ellie Weaver": {
     "hometown": "Battle Ground, Wash.",
@@ -45,7 +46,8 @@
       "Member of Naydenov Gymnastics",
       "Daughter of Chad and Renee Weaver"
     ],
-    "personal": []
+    "personal": [],
+    "position": "All-Around"
   },
   "Francesca Caso": {
     "hometown": "Santa Monica, Calif.",
@@ -66,7 +68,8 @@
       "Member of All Olympia Gymnastics Center",
       "Daughter of US National Gymnastics Team member Mark and Beate Cas"
     ],
-    "personal": []
+    "personal": [],
+    "position": "All-Around"
   },
   "Guilianna Fiorillo": {
     "hometown": "San Jos\u00e9, Calif.",
@@ -115,7 +118,8 @@
       "Daughter of Carol McMillan",
       "Born in the Dominican Republic"
     ],
-    "personal": []
+    "personal": [],
+    "position": "All-Around"
   },
   "Katie Rude": {
     "hometown": "Stateline, Nev.",
@@ -142,7 +146,8 @@
       "Mother, Kelley\u00a0competed in swimming and rowing at UCLA",
       "Enjoys cooking",
       "Majoring in Mechanical Engineering with aspirations to pursue product design"
-    ]
+    ],
+    "position": "All-Around"
   },
   "Kaylee Cheek": {
     "hometown": "Spanish Fork, Utah",
@@ -171,7 +176,8 @@
       "Has two brothers, Colby and Caleb, and one sister, Keira",
       "Enjoys trying new food and anything outdoors",
       "Majoring in Kinesiology with aspirations to become a chiropractor"
-    ]
+    ],
+    "position": "All-Around"
   },
   "Kyanna Crabb": {
     "hometown": "Vancouver, Wash.",
@@ -199,7 +205,8 @@
       "Has one brother, Kainoa",
       "Father, Kris, is an Oregon State graduate",
       "Majoring in Business Administration with aspirations to become a gymnastics coach and gym owner"
-    ]
+    ],
+    "position": "All-Around"
   },
   "Lauren Letzsch": {
     "hometown": "Golden, Colo.",
@@ -220,7 +227,8 @@
       "2015 HOPES Championships, Chicago, Ill. - 1st-BB (12-13)",
       "Coached by Kristin Ratzlaff from TIGAR."
     ],
-    "personal": []
+    "personal": [],
+    "position": "Vault/Balance Beam/Floor"
   },
   "Mia Heather": {
     "hometown": "San Francisco, Calif.",
@@ -242,7 +250,8 @@
       "Trained at San Mateo Gymnastics under the direction of coaches Armen Astoian and Oksana Bystrova",
       "Daughter of Tracey and Brendan Heather"
     ],
-    "personal": []
+    "personal": [],
+    "position": "Uneven Bars/Balance Beam"
   },
   "Olivia Buckner": {
     "hometown": "Riverton, Utah",
@@ -266,7 +275,8 @@
       "Daughter of Stephanie and Brandon Buckner",
       "Major:\u00a0 Kinesiology"
     ],
-    "personal": []
+    "personal": [],
+    "position": "All-Around"
   },
   "Paloma Spiridonova": {
     "hometown": "Dallas, Texas",
@@ -293,7 +303,8 @@
       "Daughter of Miglena Spiridonova",
       "Enjoys shopping, getting her nails done\u00a0and sleeping",
       "Majoring in Biology with aspirations to pursue dentistry"
-    ]
+    ],
+    "position": "All-Around"
   },
   "Paulina Vargas": {
     "hometown": "Mexico City, Mexico",
@@ -354,7 +365,8 @@
       "Member of Oakland Gymnastics",
       "Daughter of Ruth Miller and her late father Christopher Miller"
     ],
-    "personal": []
+    "personal": [],
+    "position": "All-Around"
   },
   "Sophia Esposito": {
     "hometown": "Melville, N.Y.",
@@ -376,7 +388,8 @@
       "Competed at the club level for New Image Gymnastics under the direction of coach Tatiana Ambova",
       "Daughter of Christine and Matthew Esposito"
     ],
-    "personal": []
+    "personal": [],
+    "position": "All-Around"
   },
   "Sophia Kaloudis": {
     "hometown": "Huntington, N.Y.",
@@ -424,6 +437,7 @@
       "Competed at the club level for Legacy Elite Gymnastics under the direction of coaches Anna Li, Yuejiu Li and Jiani Wu",
       "Daughter of Beth and John DeVries"
     ],
-    "personal": []
+    "personal": [],
+    "position": "All-Around"
   }
 }
