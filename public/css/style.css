@@ -1337,3 +1337,19 @@ main {
     font-size: 1rem;
   }
 }
+
+/* ===== Clickable inline elements ===== */
+.clickable-name,
+.clickable-meet,
+.clickable-team {
+  color: var(--orange);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s;
+}
+.clickable-name:hover,
+.clickable-meet:hover,
+.clickable-team:hover {
+  text-decoration-color: var(--orange);
+}

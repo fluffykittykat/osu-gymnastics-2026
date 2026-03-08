@@ -486,7 +486,7 @@
             <tbody>
               ${meet.allTeams.map(t => `
                 <tr class="${t.team.toLowerCase().includes('oregon') ? 'osu-row' : ''}">
-                  <td>${t.rank}</td><td>${t.team}</td>
+                  <td>${t.rank}</td><td><span class="clickable-team" data-team="${t.team}">${t.team}</span></td>
                   <td>${t.vault.toFixed(3)}</td><td>${t.bars.toFixed(3)}</td>
                   <td>${t.beam.toFixed(3)}</td><td>${t.floor.toFixed(3)}</td>
                   <td><strong>${t.total.toFixed(3)}</strong></td>
@@ -512,7 +512,7 @@
           return `
             <tr>
               <td style="color:#aaa;font-size:0.75rem;font-family:monospace;width:1.5rem;">${entry.position}</td>
-              <td>${entry.name}</td>
+              <td><span class="clickable-name" data-gymnast="${entry.name}">${entry.name}</span></td>
               <td class="score-cell${isTop ? ' score-top' : ''}">${entry.score.toFixed(3)}</td>
             </tr>`;
         }).join('');
@@ -524,7 +524,7 @@
         rows = eventAthletes.map((a, i) => `
           <tr>
             <td>${i + 1}</td>
-            <td>${a.name}</td>
+            <td><span class="clickable-name" data-gymnast="${a.name}">${a.name}</span></td>
             <td class="score-cell">${a.scores[event].toFixed(3)}</td>
           </tr>`).join('');
       }
@@ -695,7 +695,7 @@
         return `<td class="${isBest ? 'personal-best' : ''}">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</td>`;
       }).join('');
       const aa = m.scores.aa ? `<td>${m.scores.aa.toFixed(3)}</td>` : '<td style="color:var(--text-muted)">—</td>';
-      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent}</td>${cells}${aa}</tr>`;
+      return `<tr><td>${formatDate(m.date)}</td><td><span class="clickable-meet" data-meet-id="${m.meetId}">${m.opponent}</span></td>${cells}${aa}</tr>`;
     }).join('');
 
     detail.innerHTML = `
@@ -749,6 +749,53 @@
     </svg>`;
   }
 
+  // ===== Team Stats =====
+  function showTeamStats(teamName) {
+    const teamMeets = meets.filter(m =>
+      m.opponent.toLowerCase().includes(teamName.toLowerCase()) ||
+      (m.allTeams && m.allTeams.some(t => t.team.toLowerCase() === teamName.toLowerCase()))
+    );
+    if (teamMeets.length === 0) return;
+
+    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    const view = document.getElementById('view-meet');
+    view.style.display = 'block';
+
+    const wins = teamMeets.filter(m => m.result === 'W').length;
+    const losses = teamMeets.filter(m => m.result === 'L').length;
+
+    const rows = teamMeets.map(m => {
+      const teamData = m.allTeams && m.allTeams.find(t => t.team.toLowerCase() === teamName.toLowerCase());
+      const oppScore = teamData ? teamData.total.toFixed(3) : m.opponentScore.toFixed(3);
+      const result = m.result;
+      return `<tr>
+        <td>${formatDateLong(m.date)}</td>
+        <td><span class="clickable-meet" data-meet-id="${m.id}">${m.quadName || m.opponent}</span></td>
+        <td style="color:var(--orange);font-family:Oswald;">${m.osuScore.toFixed(3)}</td>
+        <td>${oppScore}</td>
+        <td><span class="badge badge-${result.toLowerCase()}">${result}</span></td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('meetDetailContent').innerHTML = `
+      <div class="detail-hero">
+        <button class="back-btn" id="backFromTeam">← Back</button>
+        <div class="meet-opponent" style="font-size:1.5rem;margin-top:1rem;">${teamName}</div>
+        <div style="color:var(--text-muted);margin-top:0.25rem;">Season record vs ${teamName}: <strong style="color:var(--orange)">${wins}W – ${losses}L</strong></div>
+      </div>
+      <div class="section-card" style="margin-top:1rem;">
+        <h2 class="section-title">Meets vs ${teamName}</h2>
+        <div style="overflow-x:auto;">
+          <table class="meet-history-table">
+            <thead><tr><th>Date</th><th>Meet</th><th>OSU</th><th>${teamName}</th><th>Result</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
+
+    document.getElementById('backFromTeam').addEventListener('click', () => showView('season'));
+  }
+
   // ===== Leaderboards =====
   function renderLeaderboard(event) {
     document.querySelectorAll('.event-tab').forEach(t => t.classList.toggle('active', t.dataset.event === event));
@@ -781,8 +828,8 @@
       <div class="leaderboard-item">
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
         <div class="lb-info">
-          <div class="lb-name">${s.name}</div>
-          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent}</div>
+          <div class="lb-name"><span class="clickable-name" data-gymnast="${s.name}">${s.name}</span></div>
+          <div class="lb-context">${formatDate(s.meetDate)} vs <span class="clickable-meet" data-meet-id="${s.meetId}">${s.opponent}</span></div>
         </div>
         <div class="lb-score">${s.score.toFixed(3)}</div>
       </div>`).join('');
@@ -844,6 +891,29 @@
     document.getElementById('eventTabs').addEventListener('click', e => {
       const tab = e.target.closest('.event-tab');
       if (tab) renderLeaderboard(tab.dataset.event);
+    });
+
+    // Global click delegation for clickable names, meets, teams
+    document.addEventListener('click', e => {
+      const nameEl = e.target.closest('.clickable-name');
+      if (nameEl) {
+        e.preventDefault();
+        showView('gymnasts');
+        showGymnastProfile(nameEl.dataset.gymnast);
+        return;
+      }
+      const meetEl = e.target.closest('.clickable-meet');
+      if (meetEl) {
+        e.preventDefault();
+        showMeetDetail(meetEl.dataset.meetId);
+        return;
+      }
+      const teamEl = e.target.closest('.clickable-team');
+      if (teamEl) {
+        e.preventDefault();
+        showTeamStats(teamEl.dataset.team);
+        return;
+      }
     });
   });
 })();
