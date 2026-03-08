@@ -1353,3 +1353,12 @@ main {
 .clickable-team:hover {
   text-decoration-color: var(--orange);
 }
+
+/* ===== Score updated flash animation ===== */
+@keyframes scoreFlash {
+  0%   { color: var(--orange); transform: scale(1.1); }
+  100% { color: inherit; transform: scale(1); }
+}
+.score-updated {
+  animation: scoreFlash 1s ease-out;
+}

@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const { execSync } = require('child_process');
+const { exec } = require('child_process');
 
 const app = express();
 
@@ -32,10 +32,15 @@ app.get('/api/meets', (req, res) => {
 
 app.post('/api/refresh', async (req, res) => {
   try {
-    const result = execSync('python3 scripts/refresh_data.py', {
-      cwd: __dirname,
-      timeout: 60000,
-      encoding: 'utf-8',
+    const result = await new Promise((resolve, reject) => {
+      exec('python3 scripts/refresh_data.py', {
+        cwd: __dirname,
+        timeout: 60000,
+        encoding: 'utf-8',
+      }, (err, stdout, stderr) => {
+        if (err) return reject(err);
+        resolve(stdout);
+      });
     });
 
     // Reload meets.json into memory

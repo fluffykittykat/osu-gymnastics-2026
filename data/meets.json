@@ -311,7 +311,8 @@
         "beam": 49.075,
         "floor": 48.675
       }
-    ]
+    ],
+    "status": "final"
   },
   {
     "id": "best-of-west-california-jan-3",
@@ -625,7 +626,8 @@
         "beam": 49.075,
         "floor": 48.675
       }
-    ]
+    ],
+    "status": "final"
   },
   {
     "id": "best-of-west-washington-jan-3",
@@ -939,7 +941,8 @@
         "beam": 49.075,
         "floor": 48.675
       }
-    ]
+    ],
+    "status": "final"
   },
   {
     "id": "byu-jan-9",
@@ -1214,7 +1217,8 @@
         }
       ]
     },
-    "attendance": "4,002"
+    "attendance": "4,002",
+    "status": "final"
   },
   {
     "id": "sac-state-jan-16",
@@ -1478,7 +1482,8 @@
         }
       ]
     },
-    "attendance": "3,310"
+    "attendance": "3,310",
+    "status": "final"
   },
   {
     "id": "utah-state-jan-25",
@@ -1735,7 +1740,8 @@
         }
       ]
     },
-    "attendance": "3,651"
+    "attendance": "3,651",
+    "status": "final"
   },
   {
     "id": "alabama-jan-30",
@@ -1875,7 +1881,8 @@
         }
       }
     ],
-    "imageBasedPdf": true
+    "imageBasedPdf": true,
+    "status": "final"
   },
   {
     "id": "boise-state-quad-san-jose-state-feb-6",
@@ -2178,7 +2185,8 @@
         "floor": 48.55
       }
     ],
-    "attendance": "2,677"
+    "attendance": "2,677",
+    "status": "final"
   },
   {
     "id": "boise-state-quad-boise-state-feb-6",
@@ -2481,7 +2489,8 @@
         "floor": 48.55
       }
     ],
-    "attendance": "2,677"
+    "attendance": "2,677",
+    "status": "final"
   },
   {
     "id": "boise-state-quad-uc-davis-feb-6",
@@ -2784,7 +2793,8 @@
         "floor": 48.55
       }
     ],
-    "attendance": "2,677"
+    "attendance": "2,677",
+    "status": "final"
   },
   {
     "id": "southern-utah-feb-14",
@@ -3048,7 +3058,8 @@
         }
       ]
     },
-    "attendance": "3,954"
+    "attendance": "3,954",
+    "status": "final"
   },
   {
     "id": "twu-quad-twu-feb-22",
@@ -3350,7 +3361,8 @@
         "beam": 48.325,
         "floor": 48.825
       }
-    ]
+    ],
+    "status": "final"
   },
   {
     "id": "twu-quad-arizona-state-feb-22",
@@ -3652,7 +3664,8 @@
         "beam": 48.325,
         "floor": 48.825
       }
-    ]
+    ],
+    "status": "final"
   },
   {
     "id": "twu-quad-kent-state-feb-22",
@@ -3954,7 +3967,8 @@
         "beam": 48.325,
         "floor": 48.825
       }
-    ]
+    ],
+    "status": "final"
   },
   {
     "id": "stanford-feb-27",
@@ -4218,7 +4232,8 @@
         }
       ]
     },
-    "attendance": "3,617"
+    "attendance": "3,617",
+    "status": "final"
   },
   {
     "id": "utah-state-mar-6",
@@ -4350,6 +4365,7 @@
         }
       }
     ],
-    "imageBasedPdf": true
+    "imageBasedPdf": true,
+    "status": "final"
   }
 ]

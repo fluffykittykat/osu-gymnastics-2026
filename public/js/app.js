@@ -259,7 +259,14 @@
 
   function renderScoreTrend() {
     const container = document.getElementById('scoreTrend');
-    const scoredMeets = meets.filter(m => m.osuScore > 0);
+    // Deduplicate quad meets — one point per competition date
+    const seenDates = new Set();
+    const scoredMeets = meets.filter(m => {
+      if (!m.osuScore || m.osuScore <= 0) return false;
+      if (seenDates.has(m.date)) return false;
+      seenDates.add(m.date);
+      return true;
+    });
     if (scoredMeets.length < 2) {
       container.innerHTML = '<p style="color:var(--text-muted);text-align:center;">Not enough data for trend chart</p>';
       return;
@@ -447,7 +454,9 @@
   }
 
   // ===== Meet Detail =====
+  let _meetDetailOrigin = 'season';
   function showMeetDetail(meetId) {
+    _meetDetailOrigin = currentView;
     const meet = meets.find(m => m.id === meetId);
     if (!meet) return;
 
@@ -610,7 +619,7 @@
         }
       });
 
-      p.totalMeets = p.meets.length;
+      p.totalMeets = new Set(p.meets.map(m => m.date)).size;
     });
 
     return Object.values(profiles).sort((a, b) => b.totalMeets - a.totalMeets);
@@ -873,8 +882,8 @@
       if (card) showMeetDetail(card.dataset.meetId);
     });
 
-    // Back button
-    document.getElementById('backToSeason').addEventListener('click', () => showView('season'));
+    // Back button — returns to wherever the user came from
+    document.getElementById('backToSeason').addEventListener('click', () => showView(_meetDetailOrigin));
 
     // Gymnast search
     document.getElementById('gymnastSearch').addEventListener('input', e => {
