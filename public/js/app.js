@@ -1122,6 +1122,23 @@
         items.push(`🎓 ${majorInsight}${asp}`);
       }
 
+      if(gymnBio.whyOSU && gymnBio.whyOSU.length) {
+        const quote = Array.isArray(gymnBio.whyOSU) ? gymnBio.whyOSU[0] : gymnBio.whyOSU;
+        items.push(`🦫 <strong>Why Oregon State?</strong> <em>"${quote.replace(/^[""]|[""]$/g,'').trim()}"</em>`);
+      }
+
+      if(gymnBio.priorHistory && gymnBio.priorHistory.length) {
+        const highlights = gymnBio.priorHistory.filter(b => /national|champion|qualifier|pac-12|award/i.test(b)).slice(0,2);
+        if(highlights.length) {
+          items.push(`🏅 <strong>Pre-OSU highlight${highlights.length>1?'s':''}:</strong> ${highlights.join(' • ')}`);
+        }
+      }
+
+      if(gymnBio.personal && gymnBio.personal.length) {
+        const hobby = gymnBio.personal.find(b => /enjoy|loves|hobby|music|reads|watches|friends|travel/i.test(b));
+        if(hobby) items.push(`🎉 <strong>Off the floor:</strong> ${hobby}`);
+      }
+
       if(gymnBio.height) {
         const heightParts = gymnBio.height.split('-');
         const heightInches = parseInt(heightParts[0])*12 + parseInt(heightParts[1]||0);

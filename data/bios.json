@@ -7,7 +7,23 @@
     "major": "Animal Science",
     "events": null,
     "highSchool": "Hightower HS",
-    "aspiration": "Veterinarian"
+    "aspiration": "Veterinarian",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Trained under Tasha Beale and Nick Cedillo at Pearland Elite",
+      "2021 National Vault Champion",
+      "2022 Winter Cup Qualifier",
+      "Previous college gymnastics experience under UCLA coach Janelle McDonald"
+    ],
+    "personal": [
+      "Daughter of Clara and Sheldon Richardson",
+      "Has one brother, Xander, and one sister, Zoey",
+      "Enjoys watching movies and hanging out with friends",
+      "Majoring in Animal Science with aspirations to become a veterinarian"
+    ]
   },
   "Ellie Weaver": {
     "hometown": "Battle Ground, Wash.",
@@ -16,7 +32,20 @@
     "height": "5-0",
     "major": null,
     "events": null,
-    "highSchool": "Union HS"
+    "highSchool": "Union HS",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Two-time USAG Level 10 National qualifier",
+      "2019 Level 10 National Champion on the beam, while also taking 21st in the all-around",
+      "Swept the Region 2 Championships in 2018",
+      "Claimed the USAG Washington State title on bars in 2019.",
+      "Member of Naydenov Gymnastics",
+      "Daughter of Chad and Renee Weaver"
+    ],
+    "personal": []
   },
   "Francesca Caso": {
     "hometown": "Santa Monica, Calif.",
@@ -25,7 +54,19 @@
     "height": "5-4",
     "major": null,
     "events": null,
-    "highSchool": "Tree Academy"
+    "highSchool": "Tree Academy",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "2021 USAG Level 10 National qualifier",
+      "Finished fifth in the all-around at the Deutsch Pokal Championships \u2013 Jr. division in Grunstadt, Germany in 2017",
+      "Earned top-five finishes in the All-Around at the USAG Region 1 Championships (3rd overall) and at the Parkettes National Elite qualifier (5th overall)",
+      "Member of All Olympia Gymnastics Center",
+      "Daughter of US National Gymnastics Team member Mark and Beate Cas"
+    ],
+    "personal": []
   },
   "Guilianna Fiorillo": {
     "hometown": "San Jos\u00e9, Calif.",
@@ -34,7 +75,24 @@
     "height": "5-4",
     "major": null,
     "events": null,
-    "highSchool": "Saint Francis HS"
+    "highSchool": "Saint Francis HS",
+    "whyOSU": [
+      "\u201cBeing recruited by Michael and Tanya was an experience truly like no other! They made me feel welcome and part of the family, starting from my very first call with them. I also got the privilege of meeting the team on my official visit and loved how incredibly welcoming and warm they all were towards me. We honestly have one of the best facilities I have ever seen for gymnastics, so that was a major bonus. In addition to the outstanding coaching staff and athletes, I appreciated all the resources offered to student-athletes. From the remarkable athletic trainers to the student advisors, I felt that Oregon State had everything and more to help me continue to grow as not only an athlete, but a person as well. For all these reasons and more, I made the decision to live out my lifelong dream of being a collegiate gymnast at Oregon State University.\u201d"
+    ],
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Trained under Mel Ruggiero, Tonya Way, Cleo Washington and Melissa Metcalf at Airborne Gymnastics",
+      "Third on bars, beam, and floor & second all-around at States in 2022",
+      "First on floor & second on bars and all-around at Regionals in 2022",
+      "Sixth beam & Ninth All-Around at Nationals in 2022",
+      "First on vault and floor, second in all-around and fourth on beam at States in 2024",
+      "Third on vault, floor, and all-around at Regionals in 2024",
+      "Second on vault at Nationals in 2024; had three Scores on America's top-100 on vault: 9.900, 9.900, and 9.875",
+      "Personal :"
+    ],
+    "personal": []
   },
   "Jennifer McMillian": {
     "hometown": "Charlotte, N.C.",
@@ -43,7 +101,21 @@
     "height": "5-5",
     "major": null,
     "events": null,
-    "highSchool": "Covenant Day School"
+    "highSchool": "Covenant Day School",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Three-time USAG Level 10 National qualifier",
+      "2021 USAG Level 10 National Uneven Bars Champion",
+      "Won the all-around and bars at the Level 10 Region 8 Championships in 2021",
+      "Finished 10th in the all-around at the Level 10 National Championships",
+      "Member of Southeastern Gymnastics",
+      "Daughter of Carol McMillan",
+      "Born in the Dominican Republic"
+    ],
+    "personal": []
   },
   "Katie Rude": {
     "hometown": "Stateline, Nev.",
@@ -53,7 +125,24 @@
     "major": "Mechanical Engineering",
     "events": null,
     "highSchool": "Acellus Academy",
-    "aspiration": "Product Design"
+    "aspiration": "Product Design",
+    "whyOSU": [
+      "\"I chose Oregon State because I loved the campus and community, the gymnastics team is an amazing program that felt like family, and they have a great engineering program.\""
+    ],
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Trained under Jia Wen and Xiaoping Li at South Coast Gymnastics",
+      "National Qualifier for Floor in 2024",
+      "National Qualifier for Vault in 2025"
+    ],
+    "personal": [
+      "Daughter of Steven Rude and Kelley Welykholowa",
+      "Mother, Kelley\u00a0competed in swimming and rowing at UCLA",
+      "Enjoys cooking",
+      "Majoring in Mechanical Engineering with aspirations to pursue product design"
+    ]
   },
   "Kaylee Cheek": {
     "hometown": "Spanish Fork, Utah",
@@ -63,7 +152,26 @@
     "major": "Kinesiology",
     "events": null,
     "highSchool": "Maple Mountain HS",
-    "aspiration": "Chiropractor"
+    "aspiration": "Chiropractor",
+    "whyOSU": [
+      "\"I chose Oregon State because of the supportive atmosphere within the coaches, staff, and teammates in the gym. The school has a very kind community and all the people here make it feel like home.\""
+    ],
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Trained under Jimmy Pratt at Bold Gymnastics Club",
+      "Competed at Nationals three times",
+      "First place on beam at Nationals in 2023",
+      "Achieved highest bars score of 9.95 at Regionals in 2024",
+      "Participated in the TOPS program during her childhood"
+    ],
+    "personal": [
+      "Daughter of Cate and Kevin Cheek",
+      "Has two brothers, Colby and Caleb, and one sister, Keira",
+      "Enjoys trying new food and anything outdoors",
+      "Majoring in Kinesiology with aspirations to become a chiropractor"
+    ]
   },
   "Kyanna Crabb": {
     "hometown": "Vancouver, Wash.",
@@ -73,7 +181,25 @@
     "major": "Business Administration",
     "events": null,
     "highSchool": "Ridgefield HS",
-    "aspiration": "Gymnastics coach"
+    "aspiration": "Gymnastics coach",
+    "whyOSU": [
+      "\"I chose Oregon State because it offers a great education and academic experience, it\u2019s full of resources, has a great business program, community, and is close to home.\""
+    ],
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Trained under Dimitri and Ericka at Naydenov Gymnastics",
+      "3rd place all-around Level 9 Westerns Champion",
+      "Level 10 3rd place all-around Specialist Champion",
+      "Previously attended Clark College"
+    ],
+    "personal": [
+      "Daughter of Chelsey and Kris Crabb",
+      "Has one brother, Kainoa",
+      "Father, Kris, is an Oregon State graduate",
+      "Majoring in Business Administration with aspirations to become a gymnastics coach and gym owner"
+    ]
   },
   "Lauren Letzsch": {
     "hometown": "Golden, Colo.",
@@ -82,7 +208,19 @@
     "height": "5-2",
     "major": null,
     "events": null,
-    "highSchool": "Colorado Connections Academy"
+    "highSchool": "Colorado Connections Academy",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "2016 P&G Championships, St. Louis, Mo. - 8th-FX (Jr. Div.)",
+      "2016 Secret U.S. Classic, Hartford, Conn. - (Jr. Div.)",
+      "2016 Women's Junior Olympic National Championships, Fort Worth, Texas - 4th-BB(T); 6th-UB(T) (Jr. A)",
+      "2015 HOPES Championships, Chicago, Ill. - 1st-BB (12-13)",
+      "Coached by Kristin Ratzlaff from TIGAR."
+    ],
+    "personal": []
   },
   "Mia Heather": {
     "hometown": "San Francisco, Calif.",
@@ -91,7 +229,20 @@
     "height": "5-2",
     "major": null,
     "events": null,
-    "highSchool": "Independence HS"
+    "highSchool": "Independence HS",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Earned third on beam at the 2023 WOGA Classic",
+      "2022 USAG NorCal Champion on bars",
+      "Took home three titles at the 2019 USAG Region I Championship, winning the all-around, beam and bars",
+      "Finished four on beam at the 2018 USAG DP Level 10 Nationals",
+      "Trained at San Mateo Gymnastics under the direction of coaches Armen Astoian and Oksana Bystrova",
+      "Daughter of Tracey and Brendan Heather"
+    ],
+    "personal": []
   },
   "Olivia Buckner": {
     "hometown": "Riverton, Utah",
@@ -100,7 +251,22 @@
     "height": "5-4",
     "major": "Kinesiology",
     "events": null,
-    "highSchool": "Riverton HS"
+    "highSchool": "Riverton HS",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Three top-10 performances at the 2023\u00a0Development Program National Championships\u00a0in the senior F group, finishing third on vault, sixth on vault and tied for third on floor",
+      "Five-time USAG Utah State Champion",
+      "Captured four USAG Region I titles on vault, floor, bars and all-around",
+      "Finished fourth on vault at the\u00a02022 DP National Championships",
+      "Earned three top-10 finishes finishing fourth on vault and floor, while taking eighth in the all-around at the\u00a02021\u00a0Level 10\u00a0National Championships",
+      "Trained at Olympus Gymnastics under the direction of coaches Ryan Kirkham and Jessica McDonough",
+      "Daughter of Stephanie and Brandon Buckner",
+      "Major:\u00a0 Kinesiology"
+    ],
+    "personal": []
   },
   "Paloma Spiridonova": {
     "hometown": "Dallas, Texas",
@@ -110,7 +276,24 @@
     "major": "Biology",
     "events": null,
     "highSchool": "Connections Academy",
-    "aspiration": "Dentistry"
+    "aspiration": "Dentistry",
+    "whyOSU": [
+      "\"I chose Oregon State because of the amount of support I get from not only coaches and staff but also the professors and the team which makes it automatically feel like home.\""
+    ],
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Trained under Gary Warren at WOGA",
+      "Started TOPS at seven years old and continued elite journey at nine years old",
+      "Competed at classics and winter cups, placing during senior year",
+      "Competed for Bulgaria in her final senior year and made Worlds"
+    ],
+    "personal": [
+      "Daughter of Miglena Spiridonova",
+      "Enjoys shopping, getting her nails done\u00a0and sleeping",
+      "Majoring in Biology with aspirations to pursue dentistry"
+    ]
   },
   "Paulina Vargas": {
     "hometown": "Mexico City, Mexico",
@@ -119,7 +302,22 @@
     "height": "5-0",
     "major": null,
     "events": null,
-    "highSchool": "Anahuac HS"
+    "highSchool": "Anahuac HS",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Trained under coach Antonia Ciapara at Dynasty Gymnastics",
+      "Junior National Team Member",
+      "Pacific Rim Floor Finalist in 2018",
+      "2018 Junior PanAmerican Championships finalist on floor and bars",
+      "2018 all-around, floor and beam champion in Mexico",
+      "Competed at the Youth Olympic games in 2018",
+      "Member of the Mexican Senior National Team for the PanAmerican Championships and was on the Worlds Team in 2022",
+      "2022 National Champion on all-around, and was a finalist on beam and floor"
+    ],
+    "personal": []
   },
   "Reina Marchal": {
     "hometown": "Las Vegas, Nev.",
@@ -128,7 +326,13 @@
     "height": "5-3",
     "major": null,
     "events": null,
-    "highSchool": "Odyssey Charter HS"
+    "highSchool": "Odyssey Charter HS",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [],
+    "personal": []
   },
   "Savannah Miller": {
     "hometown": "Waterford, Mich.",
@@ -137,7 +341,20 @@
     "height": "5-2",
     "major": null,
     "events": null,
-    "highSchool": "Lakeland HS"
+    "highSchool": "Lakeland HS",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Four-time USAG Level 10 National qualifier",
+      "Swept the 2021 Region 5 Championship titles in vault, bars, beam, floor and all-around",
+      "Claimed\u00a0the 2021 State Meet Bars Champion title",
+      "Finished ninth in all-around, ninth on bars, and seventh on floor at 2021 USAG Level 10 Nationals",
+      "Member of Oakland Gymnastics",
+      "Daughter of Ruth Miller and her late father Christopher Miller"
+    ],
+    "personal": []
   },
   "Sophia Esposito": {
     "hometown": "Melville, N.Y.",
@@ -146,7 +363,20 @@
     "height": "5-3",
     "major": null,
     "events": null,
-    "highSchool": "Half Hollow Hills HS East"
+    "highSchool": "Half Hollow Hills HS East",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "2023 Development Program All-Around\u00a0National Champion in the Senior F group",
+      "Brings 15 Level 10\u00a0Region VI Championships to the Beavs, including five-straight regional championships on floor and\u00a0three-straight on vault",
+      "Adds 12\u00a0USAG New York Level 10 State Championships, capturing three-straight titles on vault, beam, floor and the all-around",
+      "Four-time Level 10 National Champion with two titles on vault and one each on beam and in the all-around",
+      "Competed at the club level for New Image Gymnastics under the direction of coach Tatiana Ambova",
+      "Daughter of Christine and Matthew Esposito"
+    ],
+    "personal": []
   },
   "Sophia Kaloudis": {
     "hometown": "Huntington, N.Y.",
@@ -155,7 +385,22 @@
     "height": "5-3",
     "major": null,
     "events": null,
-    "highSchool": "Huntington HS"
+    "highSchool": "Huntington HS",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Trained under Coaches Rob Wing and Amanda Depaola at Apex Athletics",
+      "Three-Time State Champion and Two-time Region Champion",
+      "Placed top seven at JO Nationals (2021-24)",
+      "Invited to DP National Training Camp (2021-24)",
+      "Personal :",
+      "Daughter of Chris and Christina Kaloudis",
+      "Has one sister, Alexis",
+      "Excelled in the classroom and was a member of the National, English, Math, Social Studies, Science and Spanish Honors Society"
+    ],
+    "personal": []
   },
   "Taylor DeVries": {
     "hometown": "Roscoe, Ill.",
@@ -164,6 +409,21 @@
     "height": "5-4",
     "major": null,
     "events": null,
-    "highSchool": "Rockford Christian HS"
+    "highSchool": "Rockford Christian HS",
+    "whyOSU": null,
+    "funFact": null,
+    "favoriteQuote": null,
+    "favoriteEvent": null,
+    "priorHistory": [
+      "Pair of top-10 finishes at the 2023 DP National Championships in the senior D group, finishing tied for ninth on bars and floor",
+      "2022 USAG Region V Champion on beam, bars and all-around, being named to the Region V All-Star Team for the performance",
+      "Five-time Level 10 USAG Development Program National Qualifier",
+      "Finished tenth in the all-around at the\u00a02022 DP National Championships",
+      "Four-time Region V Champion",
+      "Picked up a sixth place (2022) and ninth place finish (2019) on bars at\u00a0Nationals",
+      "Competed at the club level for Legacy Elite Gymnastics under the direction of coaches Anna Li, Yuejiu Li and Jiani Wu",
+      "Daughter of Beth and John DeVries"
+    ],
+    "personal": []
   }
 }
