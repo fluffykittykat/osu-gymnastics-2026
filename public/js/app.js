@@ -1463,8 +1463,9 @@
           ${meet.recapUrl ? `<a href="${meet.recapUrl}" target="_blank" class="recap-link">Full recap on osubeavers.com →</a>` : ''}
         </div>`;
       })() : ''}
-      ${(()=>{try{return renderMeetInsights(meet);}catch(e){return '<div style="color:red;padding:1rem">⚠️ Meet Analysis error: '+e.message+'</div>';}})()}
-      ${(()=>{try{return renderMeetWildStats(meet);}catch(e){return '<div style="color:red;padding:1rem">⚠️ Wild Stats error: '+e.message+'</div>';}})()}
+      <div style="background:#1a1a1a;border:2px solid var(--orange);border-radius:12px;padding:1rem;margin-bottom:1rem;font-size:0.8rem;color:#aaa">🧪 Debug: JS v=a1c0328 running. Meet=${meet.id}. moonPhase=${!!meet.moonPhase}. events=${!!meet.events}.</div>
+      ${(()=>{try{return renderMeetInsights(meet);}catch(e){return '<div style="color:red;padding:1rem;background:#1a0000;border-radius:8px;margin-bottom:1rem">⚠️ Meet Analysis error: '+e.message+'</div>';}})()}
+      ${(()=>{try{return renderMeetWildStats(meet);}catch(e){return '<div style="color:red;padding:1rem;background:#1a0000;border-radius:8px;margin-bottom:1rem">⚠️ Wild Stats error: '+e.message+'</div>';}})()}
       <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
       <div class="detail-event-grid">${eventCards}</div>
     `;
