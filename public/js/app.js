@@ -137,39 +137,24 @@
       return;
     }
 
-    grid.innerHTML = filtered.map(m => {
-      const eventBars = ['vault', 'bars', 'beam', 'floor'].map(e => {
-        const pct = ((m.events[e].osu / 50) * 100).toFixed(1);
-        return `
-          <div class="event-bar-item">
-            <div class="event-bar-label">
-              <span>${EVENT_SHORT[e]}</span>
-              <span>${m.events[e].osu.toFixed(3)}</span>
-            </div>
-            <div class="event-bar-track">
-              <div class="event-bar-fill" style="width: ${pct}%"></div>
-            </div>
-          </div>`;
-      }).join('');
+    // Group quad meets together; non-quad meets appear as-is
+    const rendered = [];
+    const seenQuads = new Set();
 
-      return `
-        <div class="meet-card" data-meet-id="${m.id}">
-          <div class="meet-header">
-            <div>
-              <div class="meet-opponent">${m.opponent}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''}</div>
-              <div class="meet-date">${formatDateLong(m.date)}</div>
-              <div class="meet-location">${m.location}</div>
-            </div>
-            <span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>
-          </div>
-          <div class="meet-scores">
-            <div class="team-score"><div class="team-name">Oregon State</div><div class="score score-osu">${m.osuScore.toFixed(3)}</div></div>
-            <div class="score-vs">vs</div>
-            <div class="team-score"><div class="team-name">Opponent</div><div class="score">${m.opponentScore.toFixed(3)}</div></div>
-          </div>
-          <div class="event-bars">${eventBars}</div>
-        </div>`;
-    }).join('');
+    filtered.forEach(m => {
+      if (m.quadMeet && m.quadName) {
+        if (!seenQuads.has(m.quadName)) {
+          seenQuads.add(m.quadName);
+          // Gather all matchups for this quad
+          const quadMeets = filtered.filter(q => q.quadName === m.quadName);
+          rendered.push(renderQuadGroup(quadMeets));
+        }
+      } else {
+        rendered.push(renderMeetCard(m));
+      }
+    });
+
+    grid.innerHTML = rendered.join('');
 
     // Animate bars after render
     requestAnimationFrame(() => {
@@ -179,6 +164,79 @@
         requestAnimationFrame(() => { bar.style.width = w; });
       });
     });
+  }
+
+  function renderMeetCard(m) {
+    const eventBars = ['vault', 'bars', 'beam', 'floor'].map(e => {
+      const pct = ((m.events[e].osu / 50) * 100).toFixed(1);
+      return `
+        <div class="event-bar-item">
+          <div class="event-bar-label">
+            <span>${EVENT_SHORT[e]}</span>
+            <span>${m.events[e].osu.toFixed(3)}</span>
+          </div>
+          <div class="event-bar-track">
+            <div class="event-bar-fill" style="width: ${pct}%"></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="meet-card" data-meet-id="${m.id}">
+        <div class="meet-header">
+          <div>
+            <div class="meet-opponent">${m.opponent}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''}</div>
+            <div class="meet-date">${formatDateLong(m.date)}</div>
+            <div class="meet-location">${m.location}</div>
+          </div>
+          <span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>
+        </div>
+        <div class="meet-scores">
+          <div class="team-score"><div class="team-name">Oregon State</div><div class="score score-osu">${m.osuScore.toFixed(3)}</div></div>
+          <div class="score-vs">vs</div>
+          <div class="team-score"><div class="team-name">Opponent</div><div class="score">${m.opponentScore.toFixed(3)}</div></div>
+        </div>
+        <div class="event-bars">${eventBars}</div>
+      </div>`;
+  }
+
+  function renderQuadGroup(quadMeets) {
+    const first = quadMeets[0];
+    const wins = quadMeets.filter(m => m.result === 'W').length;
+    const losses = quadMeets.filter(m => m.result === 'L').length;
+
+    const matchupRows = quadMeets.map(m => `
+      <div class="quad-matchup meet-card" data-meet-id="${m.id}" style="margin:0;border-radius:8px;cursor:pointer;">
+        <div class="meet-header">
+          <div>
+            <div class="meet-opponent" style="font-size:1rem;">${m.opponent}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <span style="font-family:Oswald;color:var(--orange);font-size:1rem;">${m.osuScore.toFixed(3)}</span>
+            <span style="color:var(--text-muted);">–</span>
+            <span style="font-size:1rem;">${m.opponentScore.toFixed(3)}</span>
+            <span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>
+          </div>
+        </div>
+      </div>`).join('');
+
+    return `
+      <div class="quad-group" style="border:1px solid #333;border-radius:12px;overflow:hidden;background:var(--card);">
+        <div style="background:#1a1a1a;padding:0.75rem 1rem;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <span style="font-family:Oswald;font-size:1.1rem;color:var(--orange);">${first.quadName}</span>
+            <span class="badge" style="background:#333;color:#aaa;margin-left:0.5rem;font-size:0.7rem;">QUAD</span>
+          </div>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <span style="color:#999;font-size:0.8rem;">${formatDate(first.date)} · ${first.location}</span>
+            <span style="font-family:Oswald;color:var(--orange);">${wins}–${losses}</span>
+          </div>
+        </div>
+        <div style="padding:0.75rem;display:flex;flex-direction:column;gap:0.5rem;">
+          <div style="color:#888;font-size:0.8rem;padding-bottom:0.25rem;">OSU: ${first.osuScore.toFixed(3)}</div>
+          ${matchupRows}
+        </div>
+      </div>`;
   }
 
   // ===== Meet Detail =====
