@@ -236,10 +236,528 @@
 
     if (view === 'season') renderSeason();
     else if (view === 'gymnasts') renderGymnasts();
-    else if (view === 'leaderboards') renderLeaderboard('vault');
+    else if (view === 'leaderboards') { renderHeatMap(); renderLeaderboard('vault'); }
     else if (view === 'insights') renderInsights();
   }
 
+
+  // ===== Mission Control Utilities =====
+  function animateValue(el, start, end, duration, decimals) {
+    if (!el) return;
+    const range = end - start;
+    const startTime = performance.now();
+    function update(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      el.textContent = decimals === 0
+        ? Math.round(start + range * ease)
+        : (start + range * ease).toFixed(decimals);
+      if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+
+  function mcMean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
+  function mcPearson(xs, ys) {
+    const n = xs.length; if (n < 3) return null;
+    const mx = mcMean(xs), my = mcMean(ys);
+    const num = xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
+    const den = Math.sqrt(xs.reduce((s,x)=>s+Math.pow(x-mx,2),0)*ys.reduce((s,y)=>s+Math.pow(y-my,2),0));
+    return den === 0 ? null : num/den;
+  }
+
+  // ===== Mission Control Dashboard =====
+  function renderMissionControl() {
+    const mc = document.getElementById('missionControl');
+    if (!mc) return;
+
+    // Unique competition days
+    const compDays = [];
+    const seenD = new Set();
+    meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m => {
+      if (seenD.has(m.date)) return; seenD.add(m.date);
+      const osu = m.teams?.find(t=>t.team==='Oregon State');
+      if (!osu || !osu.total) return;
+      compDays.push({ date: m.date, total: osu.total, isHome: m.isHome,
+        moonFullness: m.moonPhase?.fullness ?? null,
+        elevFt: m.elevationFt ?? null });
+    });
+
+    const scoredMeets = meets.filter(m => m.result === 'W' || m.result === 'L');
+    const wins = meets.filter(m => m.result === 'W').length;
+    const losses = meets.filter(m => m.result === 'L').length;
+
+    // Unique day wins
+    const dayWins = new Set(), dayLosses = new Set();
+    meets.forEach(m => {
+      if (m.result === 'W') dayWins.add(m.date);
+      else if (m.result === 'L') dayLosses.add(m.date);
+    });
+
+    const allScores = compDays.map(d=>d.total);
+    const homeScores = compDays.filter(d=>d.isHome).map(d=>d.total);
+    const awayScores = compDays.filter(d=>!d.isHome).map(d=>d.total);
+    const teamAvg = mcMean(allScores);
+    const homeAvg = mcMean(homeScores);
+    const awayAvg = mcMean(awayScores);
+    const seasonHigh = allScores.length ? Math.max(...allScores) : null;
+    const homeDiff = homeAvg && teamAvg ? homeAvg - teamAvg : null;
+
+    // Season trajectory — first half vs second half
+    const half = Math.floor(allScores.length / 2);
+    const firstHalf = mcMean(allScores.slice(0, half));
+    const secondHalf = mcMean(allScores.slice(half));
+    const trajectory = firstHalf && secondHalf ? secondHalf - firstHalf : null;
+    const trajArrow = trajectory == null ? '' : trajectory > 0.1 ? '🚀' : trajectory < -0.1 ? '📉' : '→';
+    const trajLabel = trajectory == null ? '' : trajectory > 0.1 ? `Up ${trajectory.toFixed(3)} pts vs early season` : trajectory < -0.1 ? `Down ${Math.abs(trajectory).toFixed(3)} pts vs early season` : 'Flat season trend';
+
+    // Event trends — compare first 5 vs last 5 scored meets
+    const EVS = ['vault','bars','beam','floor'];
+    const EVlabel = {vault:'VAULT',bars:'BARS',beam:'BEAM',floor:'FLOOR'};
+    const EVemoji = {vault:'🤸',bars:'💪',beam:'⚖️',floor:'🔥'};
+
+    function eventTrend(ev) {
+      const dates = [...seenD].slice().sort();
+      const pts = [];
+      dates.forEach(date => {
+        const m = meets.find(m2=>m2.date===date);
+        if (!m) return;
+        const osu = m.athletes.filter(a=>a.team==='Oregon State');
+        const evScores = osu.map(a=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
+        if (evScores.length) pts.push({ date, avg: mcMean(evScores) });
+      });
+      if (pts.length < 4) return { avg: mcMean(pts.map(p=>p.avg)), trend: 0 };
+      const firstAvg = mcMean(pts.slice(0,3).map(p=>p.avg));
+      const lastAvg  = mcMean(pts.slice(-3).map(p=>p.avg));
+      return { avg: mcMean(pts.map(p=>p.avg)), trend: lastAvg - firstAvg, recent: lastAvg };
+    }
+
+    const evData = {};
+    EVS.forEach(ev => { evData[ev] = eventTrend(ev); });
+
+    // Hot/Cold gymnasts — last 3 meets vs season avg
+    function gymnLastN(name, n) {
+      const scored = [];
+      const dates = new Set();
+      meets.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(m => {
+        if (dates.size >= n || dates.has(m.date)) return;
+        const a = m.athletes.find(x=>x.name===name&&x.team==='Oregon State');
+        if (!a) return;
+        const evScores = EVS.map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
+        if (!evScores.length) return;
+        dates.add(m.date);
+        evScores.forEach(s=>scored.push(s));
+      });
+      return mcMean(scored);
+    }
+    function gymnSeasonAvg(name) {
+      const scores = [];
+      const seen = new Set();
+      meets.forEach(m => {
+        if (seen.has(m.date)) return;
+        const a = m.athletes.find(x=>x.name===name&&x.team==='Oregon State');
+        if (!a) return;
+        const evScores = EVS.map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
+        if (!evScores.length) return;
+        seen.add(m.date);
+        evScores.forEach(s=>scores.push(s));
+      });
+      return mcMean(scores);
+    }
+
+    const gymnasts = [...new Set(meets.flatMap(m=>m.athletes.filter(a=>a.team==='Oregon State').map(a=>a.name)))];
+    const gymnForm = gymnasts.map(name => {
+      const recent = gymnLastN(name, 3);
+      const season = gymnSeasonAvg(name);
+      if (!recent || !season) return null;
+      return { name, recent, season, diff: recent - season };
+    }).filter(Boolean).sort((a,b)=>b.diff-a.diff);
+
+    const hot = gymnForm.slice(0,3).filter(g=>g.diff>0.01);
+    const cold = gymnForm.slice(-3).filter(g=>g.diff<-0.01).reverse();
+
+    // Record context
+    const need500 = Math.max(0, losses - wins);
+    const gamesLeft = meets.filter(m=>m.status==='upcoming').length;
+    const recordContext = need500 > 0
+      ? `Need ${need500} more W${need500>1?'s':''} to reach .500 — ${gamesLeft} meets left`
+      : wins > losses ? `${wins-losses} game${wins-losses>1?'s':''} above .500 🔥` : 'Sitting at .500';
+
+    mc.innerHTML = `
+      <div class="mc-header">
+        <div class="mc-title">⚡ OSU BEAVERS — 2026 SEASON WAR ROOM</div>
+        <div class="mc-subtitle">Women's Gymnastics • Live Analytics</div>
+      </div>
+      <div class="mc-stat-row">
+        <div class="mc-stat-card mc-record">
+          <div class="mc-stat-value" id="mcWins">0</div>
+          <div class="mc-stat-sub">—</div>
+          <div class="mc-stat-value" id="mcLosses">0</div>
+          <div class="mc-stat-label">W — L</div>
+          <div class="mc-context">${recordContext}</div>
+        </div>
+        <div class="mc-stat-card">
+          <div class="mc-stat-value" id="mcAvg">0.000</div>
+          <div class="mc-stat-label">Team Avg</div>
+          <div class="mc-context">${trajArrow} ${trajLabel}</div>
+        </div>
+        <div class="mc-stat-card">
+          <div class="mc-stat-value" id="mcHome">0.000</div>
+          <div class="mc-stat-label">Home Avg</div>
+          <div class="mc-context">${homeAvg && teamAvg ? (homeDiff >= 0 ? '+' : '') + homeDiff.toFixed(3) + ' vs away' : ''}</div>
+        </div>
+        <div class="mc-stat-card">
+          <div class="mc-stat-value" id="mcAway">0.000</div>
+          <div class="mc-stat-label">Away Avg</div>
+          <div class="mc-context">${awayScores.length} road meet${awayScores.length!==1?'s':''}</div>
+        </div>
+        <div class="mc-stat-card mc-high">
+          <div class="mc-stat-value" id="mcHigh">0.000</div>
+          <div class="mc-stat-label">Season High 🏆</div>
+          <div class="mc-context">${compDays.find(d=>d.total===seasonHigh)?.date || ''}</div>
+        </div>
+      </div>
+
+      <div class="mc-event-row">
+        ${EVS.map(ev => {
+          const d = evData[ev];
+          const arrow = d.trend > 0.03 ? '▲' : d.trend < -0.03 ? '▼' : '→';
+          const arrowColor = d.trend > 0.03 ? '#2ecc71' : d.trend < -0.03 ? '#e74c3c' : '#aaa';
+          const barPct = Math.round(((d.avg||0) - 9.6) / 0.4 * 100);
+          return `<div class="mc-event-card">
+            <div class="mc-ev-label">${EVemoji[ev]} ${EVlabel[ev]}</div>
+            <div class="mc-ev-avg">${d.avg != null ? d.avg.toFixed(3) : '—'}</div>
+            <div class="mc-ev-trend" style="color:${arrowColor}">${arrow} ${d.trend!=null?((d.trend>=0?'+':'')+d.trend.toFixed(3)+' trend'):'—'}</div>
+            <div class="mc-ev-bar-wrap"><div class="mc-ev-bar" style="width:${Math.max(0,Math.min(100,barPct))}%"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div class="mc-hotcold-row">
+        <div class="mc-hot-card">
+          <div class="mc-hot-title">🔥 Running Hot <span class="mc-hot-sub">(last 3 meets vs season avg)</span></div>
+          ${hot.length ? hot.map(g => `
+            <div class="mc-gymnast-row" data-gymnast="${g.name}">
+              ${photos[g.name] ? `<img src="${photos[g.name]}" class="mc-tiny-photo">` : '<div class="mc-tiny-photo-placeholder"></div>'}
+              <span class="mc-gyname clickable-name" data-gymnast="${g.name}">${g.name}</span>
+              <span class="mc-gystat">${g.recent.toFixed(3)}</span>
+              <span class="mc-gydiff" style="color:#2ecc71">+${g.diff.toFixed(3)}</span>
+            </div>`).join('')
+          : '<div class="mc-empty">No hot streaks detected yet</div>'}
+        </div>
+        <div class="mc-cold-card">
+          <div class="mc-hot-title">🧊 Running Cold <span class="mc-hot-sub">(needs a bounce-back)</span></div>
+          ${cold.length ? cold.map(g => `
+            <div class="mc-gymnast-row" data-gymnast="${g.name}">
+              ${photos[g.name] ? `<img src="${photos[g.name]}" class="mc-tiny-photo">` : '<div class="mc-tiny-photo-placeholder"></div>'}
+              <span class="mc-gyname clickable-name" data-gymnast="${g.name}">${g.name}</span>
+              <span class="mc-gystat">${g.recent.toFixed(3)}</span>
+              <span class="mc-gydiff" style="color:#e74c3c">${g.diff.toFixed(3)}</span>
+            </div>`).join('')
+          : '<div class="mc-empty">No cold streaks — everyone showing up</div>'}
+        </div>
+      </div>`;
+
+    // Animate the numbers
+    setTimeout(() => {
+      animateValue(document.getElementById('mcWins'), 0, wins, 800, 0);
+      animateValue(document.getElementById('mcLosses'), 0, losses, 800, 0);
+      if (teamAvg) animateValue(document.getElementById('mcAvg'), 196, teamAvg, 900, 3);
+      if (homeAvg) animateValue(document.getElementById('mcHome'), 196, homeAvg, 900, 3);
+      if (awayAvg) animateValue(document.getElementById('mcAway'), 196, awayAvg, 900, 3);
+      if (seasonHigh) animateValue(document.getElementById('mcHigh'), 196, seasonHigh, 1000, 3);
+    }, 100);
+  }
+
+  // ===== Hot Takes Generator =====
+  function renderHotTakes() {
+    const takes = [];
+    function mean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
+    function fmt(n, dp=3) { return n!=null ? n.toFixed(dp) : '—'; }
+
+    // Unique competition days
+    const compDays = [];
+    const seenD = new Set();
+    meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m => {
+      if (seenD.has(m.date)) return; seenD.add(m.date);
+      const osu = m.teams?.find(t=>t.team==='Oregon State');
+      if (!osu || !osu.total) return;
+      compDays.push({ date: m.date, total: osu.total, isHome: m.isHome,
+        moonFullness: m.moonPhase?.fullness ?? null, elevFt: m.elevationFt ?? null,
+        tempHigh: m.weather?.tempHighF ?? null });
+    });
+
+    // 1. Record framing
+    const wins = meets.filter(m=>m.result==='W').length;
+    const losses = meets.filter(m=>m.result==='L').length;
+    const dayWins = [...new Set(meets.filter(m=>m.result==='W').map(m=>m.date))].length;
+    const dayTotal = compDays.length;
+    takes.push({
+      icon: '📋', color: '#f39c12',
+      title: 'The Record Is Complicated',
+      body: `The 6-10 W-L is based on individual matchup math from quad meets. By competition day, OSU won <strong>${dayWins} of ${dayTotal}</strong> meets — a <strong>${(dayWins/dayTotal*100).toFixed(0)}%</strong> day-win rate. The headline number isn't the whole story.`
+    });
+
+    // 2. Moon correlation
+    const moonPairs = compDays.filter(d=>d.moonFullness!=null);
+    const moonR = mcPearson(moonPairs.map(d=>d.moonFullness), moonPairs.map(d=>d.total));
+    if (moonR != null) {
+      const absR = Math.abs(moonR);
+      const strength = absR > 0.6 ? 'strong' : absR > 0.4 ? 'moderate' : absR > 0.2 ? 'weak' : 'negligible';
+      const dir = moonR > 0 ? 'fuller the moon, the higher the score' : 'darker the moon, the higher the score';
+      takes.push({
+        icon: '🌙', color: '#9b59b6',
+        title: moonR > 0.4 ? 'The Moon Is Affecting OSU Scores (No, Really)' : moonR < -0.4 ? 'OSU Scores Higher Under a Dark Moon' : 'Moon Phase: Interesting But Not Decisive',
+        body: `Pearson r = <strong>${moonR.toFixed(2)}</strong> between moon fullness and team score. That's a <strong>${strength}</strong> correlation — the ${dir}. ${absR > 0.5 ? 'At this sample size (n=' + moonPairs.length + '), that\'s actually statistically meaningful. 🤯' : 'With only ' + moonPairs.length + ' data points, keep your astrology hat on but don\'t bet your season on it.'}`
+      });
+    }
+
+    // 3. Altitude effect
+    const hiAlt = compDays.filter(d=>d.elevFt!=null&&d.elevFt>2000);
+    const loAlt = compDays.filter(d=>d.elevFt!=null&&d.elevFt<=2000);
+    if (hiAlt.length && loAlt.length) {
+      const hiAvg = mean(hiAlt.map(d=>d.total));
+      const loAvg = mean(loAlt.map(d=>d.total));
+      const diff = hiAvg - loAvg;
+      takes.push({
+        icon: '🏔️', color: '#27ae60',
+        title: diff < -0.1 ? 'Altitude Is Genuinely Hurting OSU' : diff > 0.1 ? 'OSU Somehow Scores Better at Altitude' : 'Altitude Effect: Smaller Than Expected',
+        body: `At high-altitude venues (BYU: 4,549ft, Utah State: 4,780ft), OSU averages <strong>${fmt(hiAvg)}</strong>. At sea-level/low venues: <strong>${fmt(loAvg)}</strong>. That's a <strong>${diff >= 0 ? '+' : ''}${fmt(diff)}</strong> point difference. ${diff < -0.2 ? 'The thin air at Logan and Provo is a real factor — that\'s ~0.X pts per event across 4 events.' : diff > 0 ? 'Counterintuitive — the team may be mentally sharper at big-venue meets.' : 'The gymnasts are adapting better than expected.'}`
+      });
+    }
+
+    // 4. Class year leader
+    const clsGroups = {};
+    meets.forEach(m => {
+      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
+        const cls = bios[a.name]?.classYear; if (!cls) return;
+        const scores = ['vault','bars','beam','floor'].map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
+        if (!scores.length) return;
+        if (!clsGroups[cls]) clsGroups[cls] = {scores:[],names:new Set()};
+        scores.forEach(s=>clsGroups[cls].scores.push(s));
+        clsGroups[cls].names.add(a.name);
+      });
+    });
+    const clsRanked = Object.entries(clsGroups).map(([cls,g])=>({cls, avg: mean(g.scores), n: g.names.size})).filter(x=>x.avg).sort((a,b)=>b.avg-a.avg);
+    if (clsRanked.length >= 2) {
+      const top = clsRanked[0], bottom = clsRanked[clsRanked.length-1];
+      const spread = top.avg - bottom.avg;
+      takes.push({
+        icon: '👩‍🎓', color: '#e67e22',
+        title: `${top.cls}s Are Running This Team`,
+        body: `By class year, <strong>${top.cls}s</strong> lead with a <strong>${fmt(top.avg)}</strong> event avg (${top.n} gymnasts). <strong>${bottom.cls}s</strong> are at the other end at <strong>${fmt(bottom.avg)}</strong> — a <strong>${fmt(spread)}</strong> pt spread per event. ${top.cls==='Freshman'?'The freshmen class came ready to compete.' : top.cls==='Senior'?'The veterans are carrying it home in their final season.' : top.cls==='Junior'?'Junior year is peak performance — the data agrees.' : 'Sophomore spike is real.'}`
+      });
+    }
+
+    // 5. Homeschool stat
+    const hsScores = [], tradScores = [];
+    const hsNames = new Set(), tradNames = new Set();
+    meets.forEach(m => {
+      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
+        const hs = bios[a.name]?.highSchool||'';
+        const isHome = /connections academy|acellus|home school|homeschool|online|odyssey charter/i.test(hs);
+        const scores = ['vault','bars','beam','floor'].map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
+        if (!scores.length) return;
+        if (isHome) { scores.forEach(s=>hsScores.push(s)); hsNames.add(a.name); }
+        else { scores.forEach(s=>tradScores.push(s)); tradNames.add(a.name); }
+      });
+    });
+    if (hsScores.length && tradScores.length) {
+      const hsAvg = mean(hsScores), tradAvg = mean(tradScores);
+      const diff = hsAvg - tradAvg;
+      takes.push({
+        icon: '📚', color: '#3498db',
+        title: diff > 0.02 ? 'Skipping Prom to Train: Still Paying Off' : diff < -0.02 ? 'Traditional School Athletes Have the Edge' : 'Homeschool vs Traditional: Too Close to Call',
+        body: `<strong>${hsNames.size} gymnasts</strong> were homeschooled to train full-time and average <strong>${fmt(hsAvg)}</strong>/event. The <strong>${tradNames.size} traditionally schooled</strong> gymnasts average <strong>${fmt(tradAvg)}</strong>. Difference: <strong>${diff>=0?'+':''}${fmt(diff)}</strong>. ${Math.abs(diff) > 0.05 ? 'Meaningful gap at this sample size.' : 'Statistically, it\'s a wash — both paths work.'}`
+      });
+    }
+
+    // 6. Home vs away — how big is the Gill advantage?
+    const homeScores = compDays.filter(d=>d.isHome).map(d=>d.total);
+    const awayScores2 = compDays.filter(d=>!d.isHome).map(d=>d.total);
+    if (homeScores.length && awayScores2.length) {
+      const hAvg = mean(homeScores), aAvg = mean(awayScores2);
+      const diff = hAvg - aAvg;
+      takes.push({
+        icon: '🏠', color: '#e74c3c',
+        title: diff > 0.2 ? 'Gill Coliseum Is a Genuine Home Court Advantage' : diff > 0 ? 'Home Field Exists But It\'s Subtle' : 'OSU Actually Scores Better on the Road',
+        body: `Gill Coliseum average: <strong>${fmt(hAvg)}</strong>. Road average: <strong>${fmt(aAvg)}</strong>. Home advantage: <strong>${diff>=0?'+':''}${fmt(diff)}</strong> pts per meet. ${diff > 0.3 ? 'That\'s massive — home crowd, familiar chalk, no jet lag.' : diff > 0.1 ? 'A real but modest edge.' : diff > 0 ? 'Minimal — this team travels well.' : 'The road wakes this team up. They\'re actually better away from home. 👀'}`
+      });
+    }
+
+    // 7. Hottest gymnast right now
+    function gymnLastAvg(name, n) {
+      const scores = []; const seen = new Set();
+      meets.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(m => {
+        if (seen.size>=n||seen.has(m.date)) return;
+        const a = m.athletes.find(x=>x.name===name&&x.team==='Oregon State');
+        if (!a) return;
+        const ev = ['vault','bars','beam','floor'].map(e=>a.scores[e]).filter(s=>s!==undefined&&s>0);
+        if (!ev.length) return;
+        seen.add(m.date); ev.forEach(s=>scores.push(s));
+      });
+      return mean(scores);
+    }
+    function gymnSeasonAvg2(name) {
+      const scores = []; const seen = new Set();
+      meets.forEach(m => {
+        if (seen.has(m.date)) return;
+        const a = m.athletes.find(x=>x.name===name&&x.team==='Oregon State');
+        if (!a) return;
+        const ev = ['vault','bars','beam','floor'].map(e=>a.scores[e]).filter(s=>s!==undefined&&s>0);
+        if (!ev.length) return;
+        seen.add(m.date); ev.forEach(s=>scores.push(s));
+      });
+      return mean(scores);
+    }
+    const allNames = [...new Set(meets.flatMap(m=>m.athletes.filter(a=>a.team==='Oregon State').map(a=>a.name)))];
+    const formList = allNames.map(name => {
+      const last = gymnLastAvg(name, 3), season = gymnSeasonAvg2(name);
+      if (!last||!season) return null;
+      return { name, last, season, diff: last-season };
+    }).filter(Boolean).sort((a,b)=>b.diff-a.diff);
+
+    if (formList[0] && formList[0].diff > 0.02) {
+      const h = formList[0];
+      takes.push({
+        icon: '🔥', color: '#e74c3c',
+        title: `${h.name.split(' ')[0]} Is the Hottest Gymnast on the Roster Right Now`,
+        body: `Over her last 3 meets, <strong class="clickable-name" data-gymnast="${h.name}">${h.name}</strong> is averaging <strong>${fmt(h.last)}</strong>/event — that's <strong>+${fmt(h.diff)}</strong> above her <strong>${fmt(h.season)}</strong> season average. Peak season form. If Denver is next, bet on her.`
+      });
+    }
+
+    // 8. Biggest surprise — who's overperforming their billing?
+    const specList = allNames.map(name => {
+      const pos = bios[name]?.position;
+      if (pos === 'All-Around') return null; // they're expected to score everywhere
+      if (!pos) return null;
+      const season = gymnSeasonAvg2(name);
+      return season ? { name, pos, season } : null;
+    }).filter(Boolean).sort((a,b)=>b.season-a.season);
+
+    if (specList.length) {
+      const topSpec = specList[0];
+      takes.push({
+        icon: '🎯', color: '#1abc9c',
+        title: `Best Specialist Performance: ${topSpec.name.split(' ')[0]}`,
+        body: `<strong class="clickable-name" data-gymnast="${topSpec.name}">${topSpec.name}</strong> competes as a <strong>${topSpec.pos}</strong> specialist and is averaging <strong>${fmt(topSpec.season)}</strong>/event — a focused, ruthless approach to doing one or two things at the highest level.`
+      });
+    }
+
+    if (!takes.length) return '';
+
+    return `
+      <div class="takes-section">
+        <h2 class="takes-title">🎙️ Hot Takes — Auto-Generated From The Data</h2>
+        <p class="takes-subtitle">Every sentence below is computed live from the season stats. No humans were harmed in the writing of these takes.</p>
+        <div class="takes-grid">
+          ${takes.map(t => `
+            <div class="take-card" style="border-left-color:${t.color}">
+              <div class="take-icon">${t.icon}</div>
+              <div class="take-body">
+                <div class="take-title">${t.title}</div>
+                <div class="take-text">${t.body}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  // ===== Gymnast Heat Map =====
+  function renderHeatMap() {
+    const ll = document.getElementById('leaderboardList');
+    if (!ll) return;
+
+    const EVS = ['vault','bars','beam','floor'];
+    const EVlabel = {vault:'VAULT',bars:'BARS',beam:'BEAM',floor:'FLOOR'};
+
+    // Per-gymnast, per-event averages
+    const gymnData = {};
+    const seen = new Set();
+    meets.forEach(m => {
+      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
+        if (!gymnData[a.name]) gymnData[a.name] = {vault:[],bars:[],beam:[],floor:[]};
+        EVS.forEach(ev => {
+          const s = a.scores[ev];
+          if (s !== undefined && s > 0) {
+            // Dedup per date
+            const key = `${a.name}|${ev}|${m.date}`;
+            if (!seen.has(key)) { seen.add(key); gymnData[a.name][ev].push(s); }
+          }
+        });
+      });
+    });
+
+    // Team averages per event
+    const teamAvgs = {};
+    EVS.forEach(ev => {
+      const all = Object.values(gymnData).flatMap(g=>g[ev]);
+      teamAvgs[ev] = mcMean(all);
+    });
+
+    // Sort gymnasts by overall avg
+    const gymnList = Object.entries(gymnData).map(([name, evData]) => {
+      const allScores = EVS.flatMap(ev=>evData[ev]);
+      const overallAvg = mcMean(allScores);
+      const evAvgs = {};
+      EVS.forEach(ev => { evAvgs[ev] = mcMean(evData[ev]); });
+      return { name, overallAvg, evAvgs };
+    }).filter(g=>g.overallAvg).sort((a,b)=>b.overallAvg-a.overallAvg);
+
+    function heatColor(val, teamAvg) {
+      if (!val || !teamAvg) return '#1e1e1e';
+      const diff = val - teamAvg;
+      if (diff > 0.15) return 'rgba(46,204,113,0.55)';
+      if (diff > 0.08) return 'rgba(46,204,113,0.35)';
+      if (diff > 0.03) return 'rgba(46,204,113,0.18)';
+      if (diff > -0.03) return 'rgba(255,255,255,0.06)';
+      if (diff > -0.08) return 'rgba(231,76,60,0.2)';
+      if (diff > -0.15) return 'rgba(231,76,60,0.35)';
+      return 'rgba(231,76,60,0.55)';
+    }
+
+    ll.innerHTML = `
+      <div class="heatmap-wrapper">
+        <div class="heatmap-legend">
+          <span>🟥 Below team avg</span>
+          <span style="margin:0 1rem;">⬛ Near avg</span>
+          <span>🟩 Above team avg</span>
+          <span style="margin-left:1rem;color:#555">Team avgs: ${EVS.map(ev=>`${EVlabel[ev].toLowerCase()} ${teamAvgs[ev]!=null?teamAvgs[ev].toFixed(3):'—'}`).join(' • ')}</span>
+        </div>
+        <div class="heatmap-table-wrap">
+          <table class="heatmap-table">
+            <thead>
+              <tr>
+                <th class="hm-name">Gymnast</th>
+                ${EVS.map(ev=>`<th>${EVlabel[ev]}</th>`).join('')}
+                <th>OVERALL</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${gymnList.map((g,i) => `
+                <tr>
+                  <td class="hm-name">
+                    ${photos[g.name]?`<img src="${photos[g.name]}" class="hm-photo">`:''}
+                    <span class="clickable-name" data-gymnast="${g.name}">${g.name}</span>
+                    ${bios[g.name]?.position&&bios[g.name].position!=='All-Around'?`<span class="hm-spec-badge">SPEC</span>`:''}
+                  </td>
+                  ${EVS.map(ev => {
+                    const val = g.evAvgs[ev];
+                    const bg = heatColor(val, teamAvgs[ev]);
+                    const diff = val && teamAvgs[ev] ? val - teamAvgs[ev] : null;
+                    return `<td class="hm-cell" style="background:${bg}" title="${val?val.toFixed(3):'—'} (${diff!=null?(diff>=0?'+':'')+diff.toFixed(3):'no data'} vs team)">
+                      ${val ? val.toFixed(3) : '—'}
+                      ${diff!=null?`<span class="hm-diff" style="color:${diff>=0?'#2ecc71':'#e74c3c'}">${diff>=0?'+':''}${diff.toFixed(3)}</span>`:''}
+                    </td>`;
+                  }).join('')}
+                  <td class="hm-cell hm-overall">${g.overallAvg.toFixed(3)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }
   // ===== Season Overview =====
   function renderSeason() {
     const scoredMeets = meets.filter(m => m.result === 'W' || m.result === 'L');
@@ -252,11 +770,8 @@
       ? Math.max(...scoredMeets.map(m => m.osuScore)).toFixed(3)
       : '—';
 
-    document.getElementById('seasonRecord').innerHTML = `
-      <div class="record-stat"><div class="value">${wins}-${losses}</div><div class="label">Record</div></div>
-      <div class="record-stat"><div class="value">${avgScore}</div><div class="label">Avg Score</div></div>
-      <div class="record-stat"><div class="value">${highScore}</div><div class="label">Season High</div></div>
-    `;
+    document.getElementById('seasonRecord').innerHTML = '';
+    renderMissionControl();
 
     renderScoreTrend();
     renderMeetCards();
@@ -2012,6 +2527,7 @@
         </div>
 
       </div>
+      ${renderHotTakes()}
       ${renderSeasonWildStats()}
     `;
   }
@@ -2392,7 +2908,11 @@
     // Event tabs
     document.getElementById('eventTabs').addEventListener('click', e => {
       const tab = e.target.closest('.event-tab');
-      if (tab) renderLeaderboard(tab.dataset.event);
+      if (!tab) return;
+      document.querySelectorAll('.event-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      if (tab.dataset.event === 'heatmap') renderHeatMap();
+      else renderLeaderboard(tab.dataset.event);
     });
 
     // Global click delegation for clickable names, meets, teams

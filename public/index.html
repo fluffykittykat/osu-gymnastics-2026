@@ -45,9 +45,8 @@
 
     <!-- Season Overview -->
     <section id="view-season" class="view" style="display:none;">
-      <div class="hero">
-        <h1 class="hero-title">2026 OSU BEAVERS</h1>
-        <p class="hero-subtitle">Women's Gymnastics</p>
+      <div id="missionControl" class="mission-control"></div>
+      <div class="hero" style="display:none;">
         <div class="hero-record" id="seasonRecord"></div>
       </div>
 
@@ -88,13 +87,14 @@
 
     <!-- Event Leaderboards -->
     <section id="view-leaderboards" class="view" style="display:none;">
-      <h2 class="section-title">Event Leaderboards</h2>
+      <h2 class="section-title">📊 Rankings & Heat Map</h2>
       <div class="event-tabs" id="eventTabs">
         <button class="event-tab active" data-event="vault">Vault</button>
         <button class="event-tab" data-event="bars">Bars</button>
         <button class="event-tab" data-event="beam">Beam</button>
         <button class="event-tab" data-event="floor">Floor</button>
         <button class="event-tab" data-event="aa">All-Around</button>
+        <button class="event-tab" data-event="heatmap">🔥 Heat Map</button>
       </div>
       <div class="leaderboard-list" id="leaderboardList"></div>
     </section>
@@ -107,12 +107,12 @@
   <!-- Bottom Nav (mobile) -->
   <nav class="bottom-nav" id="bottomNav">
     <a href="#" class="bottom-nav-item active" data-view="season">
-      <span class="nav-icon">🏠</span>
-      <span class="nav-label">Season</span>
+      <span class="nav-icon">⚡</span>
+      <span class="nav-label">War Room</span>
     </a>
     <a href="#" class="bottom-nav-item" data-view="gymnasts">
       <span class="nav-icon">🤸</span>
-      <span class="nav-label">Gymnasts</span>
+      <span class="nav-label">Roster</span>
     </a>
     <a href="#" class="bottom-nav-item" data-view="leaderboards">
       <span class="nav-icon">📊</span>
