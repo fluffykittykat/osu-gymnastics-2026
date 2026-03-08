@@ -1141,10 +1141,10 @@
     // ── Context favorability score ──────────────────────────────────────────
     // Based on season-wide correlations, rate each factor as favorable/neutral/unfavorable for this meet
     const favorability = [];
-    // Moon: positive correlation with score → full moon is good
-    if (moon.fullness > 0.7) favorability.push({ label: 'Moon', rating: 'favorable', why: `${moon.emoji} Full moon (${(moon.fullness*100).toFixed(0)}%) — historically OSU scores higher` });
-    else if (moon.fullness < 0.3) favorability.push({ label: 'Moon', rating: 'unfavorable', why: `${moon.emoji} New moon (${(moon.fullness*100).toFixed(0)}%) — historically lower scoring` });
-    else favorability.push({ label: 'Moon', rating: 'neutral', why: `${moon.emoji} Quarter moon — neutral context` });
+    // Moon: negative correlation with score (r=-0.23) → darker moon = slightly better scores
+    if (moon.fullness < 0.3) favorability.push({ label: 'Moon', rating: 'favorable', why: `${moon.emoji} Dark moon (${(moon.fullness*100).toFixed(0)}%) — OSU trends slightly higher under darker moons (r=−0.23)` });
+    else if (moon.fullness > 0.7) favorability.push({ label: 'Moon', rating: 'unfavorable', why: `${moon.emoji} Full moon (${(moon.fullness*100).toFixed(0)}%) — OSU's worst results have come under bright moons` });
+    else favorability.push({ label: 'Moon', rating: 'neutral', why: `${moon.emoji} Quarter moon (${(moon.fullness*100).toFixed(0)}%) — neutral lunar context` });
     // Elevation: negative correlation → high altitude is bad
     if (elev > 3000) favorability.push({ label: 'Elevation', rating: 'unfavorable', why: `🏔️ High altitude (${elev.toLocaleString()}ft) — thin air hurts OSU scores` });
     else if (elev < 500) favorability.push({ label: 'Elevation', rating: 'favorable', why: `🏙️ Sea level (${elev}ft) — OSU's best conditions` });
@@ -1514,9 +1514,17 @@
 
   function renderGymnasts(searchTerm = '') {
     const profiles = getGymnastProfiles();
+
+    // Also include bio-only gymnasts who didn't appear in meet data (e.g., injured/redshirt)
+    const profileNames = new Set(profiles.map(p => p.name));
+    const bioOnlyCards = Object.keys(bios)
+      .filter(name => !profileNames.has(name))
+      .map(name => ({ name, bioOnly: true }));
+
+    const allCards = [...profiles, ...bioOnlyCards];
     const filtered = searchTerm
-      ? profiles.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      : profiles;
+      ? allCards.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      : allCards;
 
     const detail = document.getElementById('gymnastDetail');
     detail.style.display = 'none';
@@ -1530,16 +1538,31 @@
     }
 
     container.innerHTML = filtered.map(p => {
+      const photo = photos[p.name];
+      const photoHtml = photo
+        ? `<img src="${photo}" class="gymnast-headshot" alt="${p.name}" loading="lazy">`
+        : `<div class="gymnast-headshot-placeholder">${p.name.split(' ').map(n=>n[0]).join('')}</div>`;
+
+      if (p.bioOnly) {
+        const bio = bios[p.name] || {};
+        const pos = bio.position ? `<span class="event-badge" style="background:var(--osu-orange);color:#fff">${bio.position}</span>` : '';
+        const yr = bio.classYear ? `<span class="event-badge">${bio.classYear}</span>` : '';
+        return `
+          <div class="gymnast-card" data-gymnast="${p.name}" style="opacity:0.75">
+            ${photoHtml}
+            <div class="gymnast-name">${p.name}</div>
+            <div class="gymnast-events">${pos}${yr}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem;">Did not compete</div>
+            <div class="gymnast-averages" style="font-size:0.7rem;color:var(--text-muted)">${bio.hometown ? '📍 ' + bio.hometown : ''}</div>
+          </div>`;
+      }
+
       const eventBadges = p.eventsList.map(e => `<span class="event-badge">${EVENT_SHORT[e]}</span>`).join('');
       const avgStats = p.eventsList.map(e => {
         if (!p.averages[e]) return '';
         return `<div class="avg-stat"><div class="avg-value">${p.averages[e].toFixed(3)}</div><div class="avg-label">${EVENT_SHORT[e]}</div></div>`;
       }).join('');
 
-      const photo = photos[p.name];
-      const photoHtml = photo
-        ? `<img src="${photo}" class="gymnast-headshot" alt="${p.name}" loading="lazy">`
-        : `<div class="gymnast-headshot-placeholder">${p.name.split(' ').map(n=>n[0]).join('')}</div>`;
       return `
         <div class="gymnast-card" data-gymnast="${p.name}">
           ${photoHtml}
@@ -1554,6 +1577,37 @@
   function showGymnastProfile(name) {
     const profiles = getGymnastProfiles();
     const p = profiles.find(pr => pr.name === name);
+
+    // Bio-only gymnast (on roster but didn't compete this season)
+    if (!p && bios[name]) {
+      document.getElementById('gymnastCards').style.display = 'none';
+      const detail = document.getElementById('gymnastDetail');
+      detail.style.display = 'block';
+      const bio = bios[name];
+      const photo = photos[name];
+      const photoHtml = photo
+        ? `<img src="${photo}" class="profile-photo" alt="${name}" loading="lazy">`
+        : `<div class="gymnast-headshot-placeholder" style="width:80px;height:80px;font-size:1.5rem;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#333;color:#fff;margin:0 auto 1rem;">${name.split(' ').map(n=>n[0]).join('')}</div>`;
+      const pills = [
+        bio.position ? `<span style="background:var(--osu-orange);color:#fff;padding:0.2rem 0.7rem;border-radius:999px;font-size:0.75rem;font-weight:700">${bio.position}</span>` : '',
+        bio.classYear ? `<span style="background:#333;color:#aaa;padding:0.2rem 0.7rem;border-radius:999px;font-size:0.75rem">${bio.classYear}</span>` : '',
+        bio.hometown ? `<span style="background:#222;color:#aaa;padding:0.2rem 0.7rem;border-radius:999px;font-size:0.75rem">📍 ${bio.hometown}</span>` : '',
+      ].filter(Boolean).join(' ');
+      detail.innerHTML = `
+        <button class="back-btn" onclick="showView('gymnasts')">← Back to Roster</button>
+        <div class="gymnast-profile-header">
+          ${photoHtml}
+          <div>
+            <h2 class="profile-name">${name}</h2>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem">${pills}</div>
+            <div style="margin-top:0.75rem;color:#aaa;font-size:0.85rem">⚠️ Did not appear in 2026 season competition data.</div>
+            ${bio.major ? `<div style="margin-top:0.5rem;color:#999;font-size:0.8rem">🎓 ${bio.major}</div>` : ''}
+            ${bio.aspiration ? `<div style="margin-top:0.5rem;color:#bbb;font-style:italic;font-size:0.85rem">"${bio.aspiration}"</div>` : ''}
+          </div>
+        </div>`;
+      return;
+    }
+
     if (!p) return;
 
     document.getElementById('gymnastCards').style.display = 'none';
