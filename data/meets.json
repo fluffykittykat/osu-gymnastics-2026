@@ -1,378 +1,12 @@
 [
   {
-    "id": "best-of-west-washington-jan-3",
-    "date": "2026-01-03",
-    "opponent": "Washington",
-    "location": "Alaska Airlines Arena, Seattle, WA",
-    "isHome": false,
-    "result": "L",
-    "osuScore": 195.550,
-    "opponentScore": 195.625,
-    "quadMeet": true,
-    "quadName": "Best of the West Quad",
-    "events": {
-      "vault": {
-        "osu": 48.85,
-        "opponent": 48.675
-      },
-      "bars": {
-        "osu": 48.95,
-        "opponent": 48.725
-      },
-      "beam": {
-        "osu": 49.075,
-        "opponent": 49.275
-      },
-      "floor": {
-        "osu": 48.675,
-        "opponent": 48.95
-      }
-    },
-    "athletes": [
-      {
-        "name": "Kyanna Crabb",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.75
-        }
-      },
-      {
-        "name": "Katie Rude",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.375
-        }
-      },
-      {
-        "name": "Savannah Miller",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.725,
-          "bars": 9.75,
-          "floor": 9.7
-        }
-      },
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.675,
-          "beam": 9.7
-        }
-      },
-      {
-        "name": "Sophia Esposito",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.85,
-          "beam": 9.825,
-          "floor": 9.8
-        }
-      },
-      {
-        "name": "Camryn Richardson",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.85,
-          "bars": 9.825
-        }
-      },
-      {
-        "name": "Francesca Caso",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.7
-        }
-      },
-      {
-        "name": "Kaylee Cheek",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 8.4,
-          "beam": 9.85
-        }
-      },
-      {
-        "name": "Ellie Weaver",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.75,
-          "beam": 9.75
-        }
-      },
-      {
-        "name": "Taylor DeVries",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.925
-        }
-      },
-      {
-        "name": "Mia Heather",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.8
-        }
-      },
-      {
-        "name": "Lauren Letzsch",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.85
-        }
-      },
-      {
-        "name": "Sophia Kaloudis",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.775
-        }
-      },
-      {
-        "name": "Paulina Vargas",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.7
-        }
-      },
-      {
-        "name": "Reina Marchal",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.7
-        }
-      }
-    ],
-    "allTeams": [
-      {
-        "team": "UCLA",
-        "rank": 1,
-        "total": 196.975,
-        "vault": 49.15,
-        "bars": 49.225,
-        "beam": 49.525,
-        "floor": 49.075
-      },
-      {
-        "team": "California",
-        "rank": 2,
-        "total": 196.0,
-        "vault": 48.975,
-        "bars": 49.275,
-        "beam": 49.025,
-        "floor": 48.725
-      },
-      {
-        "team": "Washington",
-        "rank": 3,
-        "total": 195.625,
-        "vault": 48.675,
-        "bars": 48.725,
-        "beam": 49.275,
-        "floor": 48.95
-      },
-      {
-        "team": "Oregon State",
-        "rank": 4,
-        "total": 195.55,
-        "vault": 48.85,
-        "bars": 48.95,
-        "beam": 49.075,
-        "floor": 48.675
-      }
-    ]
-  },
-  {
-    "id": "best-of-west-california-jan-3",
-    "date": "2026-01-03",
-    "opponent": "California",
-    "location": "Alaska Airlines Arena, Seattle, WA",
-    "isHome": false,
-    "result": "L",
-    "osuScore": 195.550,
-    "opponentScore": 196.000,
-    "quadMeet": true,
-    "quadName": "Best of the West Quad",
-    "events": {
-      "vault": {
-        "osu": 48.85,
-        "opponent": 48.975
-      },
-      "bars": {
-        "osu": 48.95,
-        "opponent": 49.275
-      },
-      "beam": {
-        "osu": 49.075,
-        "opponent": 49.025
-      },
-      "floor": {
-        "osu": 48.675,
-        "opponent": 48.725
-      }
-    },
-    "athletes": [
-      {
-        "name": "Kyanna Crabb",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.75
-        }
-      },
-      {
-        "name": "Katie Rude",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.375
-        }
-      },
-      {
-        "name": "Savannah Miller",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.725,
-          "bars": 9.75,
-          "floor": 9.7
-        }
-      },
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.675,
-          "beam": 9.7
-        }
-      },
-      {
-        "name": "Sophia Esposito",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.85,
-          "beam": 9.825,
-          "floor": 9.8
-        }
-      },
-      {
-        "name": "Camryn Richardson",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.85,
-          "bars": 9.825
-        }
-      },
-      {
-        "name": "Francesca Caso",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.7
-        }
-      },
-      {
-        "name": "Kaylee Cheek",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 8.4,
-          "beam": 9.85
-        }
-      },
-      {
-        "name": "Ellie Weaver",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.75,
-          "beam": 9.75
-        }
-      },
-      {
-        "name": "Taylor DeVries",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.925
-        }
-      },
-      {
-        "name": "Mia Heather",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.8
-        }
-      },
-      {
-        "name": "Lauren Letzsch",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.85
-        }
-      },
-      {
-        "name": "Sophia Kaloudis",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.775
-        }
-      },
-      {
-        "name": "Paulina Vargas",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.7
-        }
-      },
-      {
-        "name": "Reina Marchal",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.7
-        }
-      }
-    ],
-    "allTeams": [
-      {
-        "team": "UCLA",
-        "rank": 1,
-        "total": 196.975,
-        "vault": 49.15,
-        "bars": 49.225,
-        "beam": 49.525,
-        "floor": 49.075
-      },
-      {
-        "team": "California",
-        "rank": 2,
-        "total": 196.0,
-        "vault": 48.975,
-        "bars": 49.275,
-        "beam": 49.025,
-        "floor": 48.725
-      },
-      {
-        "team": "Washington",
-        "rank": 3,
-        "total": 195.625,
-        "vault": 48.675,
-        "bars": 48.725,
-        "beam": 49.275,
-        "floor": 48.95
-      },
-      {
-        "team": "Oregon State",
-        "rank": 4,
-        "total": 195.55,
-        "vault": 48.85,
-        "bars": 48.95,
-        "beam": 49.075,
-        "floor": 48.675
-      }
-    ]
-  },
-  {
     "id": "best-of-west-ucla-jan-3",
     "date": "2026-01-03",
     "opponent": "UCLA",
     "location": "Alaska Airlines Arena, Seattle, WA",
     "isHome": false,
     "result": "L",
-    "osuScore": 195.550,
+    "osuScore": 195.55,
     "opponentScore": 196.975,
     "quadMeet": true,
     "quadName": "Best of the West Quad",
@@ -502,7 +136,14 @@
         }
       },
       {
-        "name": "Reina Marchal",
+        "name": "Taylor De",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.65
+        }
+      },
+      {
+        "name": "VriesReina Marchal",
         "team": "Oregon State",
         "scores": {
           "floor": 9.7
@@ -546,7 +187,393 @@
         "beam": 49.075,
         "floor": 48.675
       }
-    ]
+    ],
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:15:20Z"
+  },
+  {
+    "id": "best-of-west-california-jan-3",
+    "date": "2026-01-03",
+    "opponent": "California",
+    "location": "Alaska Airlines Arena, Seattle, WA",
+    "isHome": false,
+    "result": "L",
+    "osuScore": 195.55,
+    "opponentScore": 196.0,
+    "quadMeet": true,
+    "quadName": "Best of the West Quad",
+    "events": {
+      "vault": {
+        "osu": 48.85,
+        "opponent": 48.975
+      },
+      "bars": {
+        "osu": 48.95,
+        "opponent": 49.275
+      },
+      "beam": {
+        "osu": 49.075,
+        "opponent": 49.025
+      },
+      "floor": {
+        "osu": 48.675,
+        "opponent": 48.725
+      }
+    },
+    "athletes": [
+      {
+        "name": "Kyanna Crabb",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.75
+        }
+      },
+      {
+        "name": "Katie Rude",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.375
+        }
+      },
+      {
+        "name": "Savannah Miller",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.725,
+          "bars": 9.75,
+          "floor": 9.7
+        }
+      },
+      {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.675,
+          "beam": 9.7
+        }
+      },
+      {
+        "name": "Sophia Esposito",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "beam": 9.825,
+          "floor": 9.8
+        }
+      },
+      {
+        "name": "Camryn Richardson",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "bars": 9.825
+        }
+      },
+      {
+        "name": "Francesca Caso",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.7
+        }
+      },
+      {
+        "name": "Kaylee Cheek",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 8.4,
+          "beam": 9.85
+        }
+      },
+      {
+        "name": "Ellie Weaver",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.75,
+          "beam": 9.75
+        }
+      },
+      {
+        "name": "Taylor DeVries",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.925
+        }
+      },
+      {
+        "name": "Mia Heather",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.8
+        }
+      },
+      {
+        "name": "Lauren Letzsch",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.85
+        }
+      },
+      {
+        "name": "Sophia Kaloudis",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.775
+        }
+      },
+      {
+        "name": "Paulina Vargas",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.7
+        }
+      },
+      {
+        "name": "Taylor De",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.65
+        }
+      },
+      {
+        "name": "VriesReina Marchal",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.7
+        }
+      }
+    ],
+    "allTeams": [
+      {
+        "team": "UCLA",
+        "rank": 1,
+        "total": 196.975,
+        "vault": 49.15,
+        "bars": 49.225,
+        "beam": 49.525,
+        "floor": 49.075
+      },
+      {
+        "team": "California",
+        "rank": 2,
+        "total": 196.0,
+        "vault": 48.975,
+        "bars": 49.275,
+        "beam": 49.025,
+        "floor": 48.725
+      },
+      {
+        "team": "Washington",
+        "rank": 3,
+        "total": 195.625,
+        "vault": 48.675,
+        "bars": 48.725,
+        "beam": 49.275,
+        "floor": 48.95
+      },
+      {
+        "team": "Oregon State",
+        "rank": 4,
+        "total": 195.55,
+        "vault": 48.85,
+        "bars": 48.95,
+        "beam": 49.075,
+        "floor": 48.675
+      }
+    ],
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:15:20Z"
+  },
+  {
+    "id": "best-of-west-washington-jan-3",
+    "date": "2026-01-03",
+    "opponent": "Washington",
+    "location": "Alaska Airlines Arena, Seattle, WA",
+    "isHome": false,
+    "result": "L",
+    "osuScore": 195.55,
+    "opponentScore": 195.625,
+    "quadMeet": true,
+    "quadName": "Best of the West Quad",
+    "events": {
+      "vault": {
+        "osu": 48.85,
+        "opponent": 48.675
+      },
+      "bars": {
+        "osu": 48.95,
+        "opponent": 48.725
+      },
+      "beam": {
+        "osu": 49.075,
+        "opponent": 49.275
+      },
+      "floor": {
+        "osu": 48.675,
+        "opponent": 48.95
+      }
+    },
+    "athletes": [
+      {
+        "name": "Kyanna Crabb",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.75
+        }
+      },
+      {
+        "name": "Katie Rude",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.375
+        }
+      },
+      {
+        "name": "Savannah Miller",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.725,
+          "bars": 9.75,
+          "floor": 9.7
+        }
+      },
+      {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.675,
+          "beam": 9.7
+        }
+      },
+      {
+        "name": "Sophia Esposito",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "beam": 9.825,
+          "floor": 9.8
+        }
+      },
+      {
+        "name": "Camryn Richardson",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "bars": 9.825
+        }
+      },
+      {
+        "name": "Francesca Caso",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.7
+        }
+      },
+      {
+        "name": "Kaylee Cheek",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 8.4,
+          "beam": 9.85
+        }
+      },
+      {
+        "name": "Ellie Weaver",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.75,
+          "beam": 9.75
+        }
+      },
+      {
+        "name": "Taylor DeVries",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.925
+        }
+      },
+      {
+        "name": "Mia Heather",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.8
+        }
+      },
+      {
+        "name": "Lauren Letzsch",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.85
+        }
+      },
+      {
+        "name": "Sophia Kaloudis",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.775
+        }
+      },
+      {
+        "name": "Paulina Vargas",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.7
+        }
+      },
+      {
+        "name": "Taylor De",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.65
+        }
+      },
+      {
+        "name": "VriesReina Marchal",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.7
+        }
+      }
+    ],
+    "allTeams": [
+      {
+        "team": "UCLA",
+        "rank": 1,
+        "total": 196.975,
+        "vault": 49.15,
+        "bars": 49.225,
+        "beam": 49.525,
+        "floor": 49.075
+      },
+      {
+        "team": "California",
+        "rank": 2,
+        "total": 196.0,
+        "vault": 48.975,
+        "bars": 49.275,
+        "beam": 49.025,
+        "floor": 48.725
+      },
+      {
+        "team": "Washington",
+        "rank": 3,
+        "total": 195.625,
+        "vault": 48.675,
+        "bars": 48.725,
+        "beam": 49.275,
+        "floor": 48.95
+      },
+      {
+        "team": "Oregon State",
+        "rank": 4,
+        "total": 195.55,
+        "vault": 48.85,
+        "bars": 48.95,
+        "beam": 49.075,
+        "floor": 48.675
+      }
+    ],
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:15:20Z"
   },
   {
     "id": "byu-jan-9",
@@ -691,6 +718,8 @@
         }
       }
     ],
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:15:26Z",
     "attendance": "4,002"
   },
   {
@@ -825,6 +854,8 @@
         }
       }
     ],
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:15:39Z",
     "attendance": "3,310"
   },
   {
@@ -834,7 +865,7 @@
     "location": "Gill Coliseum, Corvallis, OR",
     "isHome": true,
     "result": "W",
-    "osuScore": 196.600,
+    "osuScore": 196.6,
     "opponentScore": 196.075,
     "events": {
       "vault": {
@@ -952,6 +983,8 @@
         }
       }
     ],
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:15:47Z",
     "attendance": "3,651"
   },
   {
@@ -962,7 +995,7 @@
     "isHome": false,
     "result": "L",
     "osuScore": 195.825,
-    "opponentScore": 197.450,
+    "opponentScore": 197.45,
     "events": {
       "vault": {
         "osu": 49.175,
@@ -1091,523 +1124,9 @@
           "beam": 9.7
         }
       }
-    ]
-  },
-  {
-    "id": "boise-state-quad-boise-feb-6",
-    "date": "2026-02-06",
-    "opponent": "Boise State",
-    "location": "ExtraMile Arena, Boise, ID",
-    "isHome": false,
-    "result": "W",
-    "osuScore": 195.450,
-    "opponentScore": 195.350,
-    "quadMeet": true,
-    "quadName": "Boise State Quad",
-    "events": {
-      "vault": {
-        "osu": 49.025,
-        "opponent": 48.85
-      },
-      "bars": {
-        "osu": 49.1,
-        "opponent": 48.975
-      },
-      "beam": {
-        "osu": 48.45,
-        "opponent": 48.625
-      },
-      "floor": {
-        "osu": 48.875,
-        "opponent": 48.9
-      }
-    },
-    "athletes": [
-      {
-        "name": "Kyanna Crabb",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.85,
-          "floor": 8.475
-        }
-      },
-      {
-        "name": "Reina Marchal",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.7,
-          "floor": 9.825
-        }
-      },
-      {
-        "name": "Savannah Miller",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.8,
-          "bars": 9.725
-        }
-      },
-      {
-        "name": "Camryn Richardson",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.775,
-          "bars": 9.825
-        }
-      },
-      {
-        "name": "Sophia Esposito",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.825,
-          "bars": 9.725,
-          "beam": 9.775,
-          "floor": 9.9
-        }
-      },
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.775,
-          "beam": 9.675
-        }
-      },
-      {
-        "name": "Francesca Caso",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.825
-        }
-      },
-      {
-        "name": "Kaylee Cheek",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.85,
-          "beam": 9.525
-        }
-      },
-      {
-        "name": "Ellie Weaver",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.875,
-          "beam": 9.5
-        }
-      },
-      {
-        "name": "Mia Heather",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.65
-        }
-      },
-      {
-        "name": "Lauren Letzsch",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.825
-        }
-      },
-      {
-        "name": "Paulina Vargas",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.675
-        }
-      },
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.775
-        }
-      }
     ],
-    "attendance": "2,677",
-    "allTeams": [
-      {
-        "team": "San Jose State",
-        "rank": 1,
-        "total": 195.475,
-        "vault": 49.2,
-        "bars": 48.975,
-        "beam": 48.75,
-        "floor": 48.55
-      },
-      {
-        "team": "Oregon State",
-        "rank": 2,
-        "total": 195.45,
-        "vault": 49.025,
-        "bars": 49.1,
-        "beam": 48.45,
-        "floor": 48.875
-      },
-      {
-        "team": "Boise State",
-        "rank": 3,
-        "total": 195.35,
-        "vault": 48.85,
-        "bars": 48.975,
-        "beam": 48.625,
-        "floor": 48.9
-      },
-      {
-        "team": "UC Davis",
-        "rank": 4,
-        "total": 193.025,
-        "vault": 48.075,
-        "bars": 48.65,
-        "beam": 47.75,
-        "floor": 48.55
-      }
-    ]
-  },
-  {
-    "id": "boise-state-quad-sjsu-feb-6",
-    "date": "2026-02-06",
-    "opponent": "San José State",
-    "location": "ExtraMile Arena, Boise, ID",
-    "isHome": false,
-    "result": "L",
-    "osuScore": 195.450,
-    "opponentScore": 195.475,
-    "quadMeet": true,
-    "quadName": "Boise State Quad",
-    "events": {
-      "vault": {
-        "osu": 49.025,
-        "opponent": 49.2
-      },
-      "bars": {
-        "osu": 49.1,
-        "opponent": 48.975
-      },
-      "beam": {
-        "osu": 48.45,
-        "opponent": 48.75
-      },
-      "floor": {
-        "osu": 48.875,
-        "opponent": 48.55
-      }
-    },
-    "athletes": [
-      {
-        "name": "Kyanna Crabb",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.85,
-          "floor": 8.475
-        }
-      },
-      {
-        "name": "Reina Marchal",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.7,
-          "floor": 9.825
-        }
-      },
-      {
-        "name": "Savannah Miller",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.8,
-          "bars": 9.725
-        }
-      },
-      {
-        "name": "Camryn Richardson",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.775,
-          "bars": 9.825
-        }
-      },
-      {
-        "name": "Sophia Esposito",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.825,
-          "bars": 9.725,
-          "beam": 9.775,
-          "floor": 9.9
-        }
-      },
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.775,
-          "beam": 9.675
-        }
-      },
-      {
-        "name": "Francesca Caso",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.825
-        }
-      },
-      {
-        "name": "Kaylee Cheek",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.85,
-          "beam": 9.525
-        }
-      },
-      {
-        "name": "Ellie Weaver",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.875,
-          "beam": 9.5
-        }
-      },
-      {
-        "name": "Mia Heather",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.65
-        }
-      },
-      {
-        "name": "Lauren Letzsch",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.825
-        }
-      },
-      {
-        "name": "Paulina Vargas",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.675
-        }
-      },
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.775
-        }
-      }
-    ],
-    "attendance": "2,677",
-    "allTeams": [
-      {
-        "team": "San Jose State",
-        "rank": 1,
-        "total": 195.475,
-        "vault": 49.2,
-        "bars": 48.975,
-        "beam": 48.75,
-        "floor": 48.55
-      },
-      {
-        "team": "Oregon State",
-        "rank": 2,
-        "total": 195.45,
-        "vault": 49.025,
-        "bars": 49.1,
-        "beam": 48.45,
-        "floor": 48.875
-      },
-      {
-        "team": "Boise State",
-        "rank": 3,
-        "total": 195.35,
-        "vault": 48.85,
-        "bars": 48.975,
-        "beam": 48.625,
-        "floor": 48.9
-      },
-      {
-        "team": "UC Davis",
-        "rank": 4,
-        "total": 193.025,
-        "vault": 48.075,
-        "bars": 48.65,
-        "beam": 47.75,
-        "floor": 48.55
-      }
-    ]
-  },
-  {
-    "id": "boise-state-quad-ucdavis-feb-6",
-    "date": "2026-02-06",
-    "opponent": "UC Davis",
-    "location": "ExtraMile Arena, Boise, ID",
-    "isHome": false,
-    "result": "W",
-    "osuScore": 195.450,
-    "opponentScore": 193.025,
-    "quadMeet": true,
-    "quadName": "Boise State Quad",
-    "events": {
-      "vault": {
-        "osu": 49.025,
-        "opponent": 48.075
-      },
-      "bars": {
-        "osu": 49.1,
-        "opponent": 48.65
-      },
-      "beam": {
-        "osu": 48.45,
-        "opponent": 47.75
-      },
-      "floor": {
-        "osu": 48.875,
-        "opponent": 48.55
-      }
-    },
-    "athletes": [
-      {
-        "name": "Kyanna Crabb",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.85,
-          "floor": 8.475
-        }
-      },
-      {
-        "name": "Reina Marchal",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.7,
-          "floor": 9.825
-        }
-      },
-      {
-        "name": "Savannah Miller",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.8,
-          "bars": 9.725
-        }
-      },
-      {
-        "name": "Camryn Richardson",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.775,
-          "bars": 9.825
-        }
-      },
-      {
-        "name": "Sophia Esposito",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.825,
-          "bars": 9.725,
-          "beam": 9.775,
-          "floor": 9.9
-        }
-      },
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.775,
-          "beam": 9.675
-        }
-      },
-      {
-        "name": "Francesca Caso",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.825
-        }
-      },
-      {
-        "name": "Kaylee Cheek",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.85,
-          "beam": 9.525
-        }
-      },
-      {
-        "name": "Ellie Weaver",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.875,
-          "beam": 9.5
-        }
-      },
-      {
-        "name": "Mia Heather",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.65
-        }
-      },
-      {
-        "name": "Lauren Letzsch",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.825
-        }
-      },
-      {
-        "name": "Paulina Vargas",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.675
-        }
-      },
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.775
-        }
-      }
-    ],
-    "attendance": "2,677",
-    "allTeams": [
-      {
-        "team": "San Jose State",
-        "rank": 1,
-        "total": 195.475,
-        "vault": 49.2,
-        "bars": 48.975,
-        "beam": 48.75,
-        "floor": 48.55
-      },
-      {
-        "team": "Oregon State",
-        "rank": 2,
-        "total": 195.45,
-        "vault": 49.025,
-        "bars": 49.1,
-        "beam": 48.45,
-        "floor": 48.875
-      },
-      {
-        "team": "Boise State",
-        "rank": 3,
-        "total": 195.35,
-        "vault": 48.85,
-        "bars": 48.975,
-        "beam": 48.625,
-        "floor": 48.9
-      },
-      {
-        "team": "UC Davis",
-        "rank": 4,
-        "total": 193.025,
-        "vault": 48.075,
-        "bars": 48.65,
-        "beam": 47.75,
-        "floor": 48.55
-      }
-    ]
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:14:43Z"
   },
   {
     "id": "southern-utah-feb-14",
@@ -1616,7 +1135,7 @@
     "location": "Gill Coliseum, Corvallis, OR",
     "isHome": true,
     "result": "L",
-    "osuScore": 196.300,
+    "osuScore": 196.3,
     "opponentScore": 196.825,
     "events": {
       "vault": {
@@ -1741,10 +1260,372 @@
         }
       }
     ],
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:16:10Z",
     "attendance": "3,954"
   },
   {
-    "id": "twu-quad-kent-feb-22",
+    "id": "twu-quad-twu-feb-22",
+    "date": "2026-02-22",
+    "opponent": "TWU",
+    "location": "Kitty Magee Arena, Denton, TX",
+    "isHome": false,
+    "result": "L",
+    "osuScore": 195.775,
+    "opponentScore": 195.975,
+    "quadMeet": true,
+    "quadName": "TWU Quad",
+    "events": {
+      "vault": {
+        "osu": 48.975,
+        "opponent": 48.925
+      },
+      "bars": {
+        "osu": 48.9,
+        "opponent": 48.95
+      },
+      "beam": {
+        "osu": 48.9,
+        "opponent": 49.025
+      },
+      "floor": {
+        "osu": 49.0,
+        "opponent": 49.075
+      }
+    },
+    "athletes": [
+      {
+        "name": "Kyanna Crabb",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.725
+        }
+      },
+      {
+        "name": "Reina Marchal",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.75,
+          "floor": 9.85
+        }
+      },
+      {
+        "name": "Savannah Miller",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.775,
+          "bars": 9.775,
+          "floor": 9.825
+        }
+      },
+      {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "beam": 9.775
+        }
+      },
+      {
+        "name": "Camryn Richardson",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.775,
+          "bars": 9.85
+        }
+      },
+      {
+        "name": "Sophia Esposito",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.825,
+          "bars": 9.825,
+          "beam": 9.7,
+          "floor": 9.875
+        }
+      },
+      {
+        "name": "Francesca Caso",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.55
+        }
+      },
+      {
+        "name": "Kaylee Cheek",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 8.0,
+          "beam": 9.825
+        }
+      },
+      {
+        "name": "Ellie Weaver",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.9,
+          "beam": 9.225
+        }
+      },
+      {
+        "name": "Mia Heather",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.75
+        }
+      },
+      {
+        "name": "Lauren Letzsch",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.85
+        }
+      },
+      {
+        "name": "Paulina Vargas",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.6
+        }
+      },
+      {
+        "name": "Taylor De",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.675
+        }
+      },
+      {
+        "name": "VriesOlivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.775
+        }
+      }
+    ],
+    "allTeams": [
+      {
+        "team": "TWU",
+        "rank": 1,
+        "total": 195.975,
+        "vault": 48.925,
+        "bars": 48.95,
+        "beam": 49.025,
+        "floor": 49.075
+      },
+      {
+        "team": "Oregon State",
+        "rank": 2,
+        "total": 195.775,
+        "vault": 48.975,
+        "bars": 48.9,
+        "beam": 48.9,
+        "floor": 49.0
+      },
+      {
+        "team": "Arizona State",
+        "rank": 3,
+        "total": 195.55,
+        "vault": 49.05,
+        "bars": 48.475,
+        "beam": 48.9,
+        "floor": 49.125
+      },
+      {
+        "team": "Kent State",
+        "rank": 4,
+        "total": 195.075,
+        "vault": 48.925,
+        "bars": 49.0,
+        "beam": 48.325,
+        "floor": 48.825
+      }
+    ],
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:16:20Z"
+  },
+  {
+    "id": "twu-quad-arizona-state-feb-22",
+    "date": "2026-02-22",
+    "opponent": "Arizona State",
+    "location": "Kitty Magee Arena, Denton, TX",
+    "isHome": false,
+    "result": "W",
+    "osuScore": 195.775,
+    "opponentScore": 195.55,
+    "quadMeet": true,
+    "quadName": "TWU Quad",
+    "events": {
+      "vault": {
+        "osu": 48.975,
+        "opponent": 49.05
+      },
+      "bars": {
+        "osu": 48.9,
+        "opponent": 48.475
+      },
+      "beam": {
+        "osu": 48.9,
+        "opponent": 48.9
+      },
+      "floor": {
+        "osu": 49.0,
+        "opponent": 49.125
+      }
+    },
+    "athletes": [
+      {
+        "name": "Kyanna Crabb",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.725
+        }
+      },
+      {
+        "name": "Reina Marchal",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.75,
+          "floor": 9.85
+        }
+      },
+      {
+        "name": "Savannah Miller",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.775,
+          "bars": 9.775,
+          "floor": 9.825
+        }
+      },
+      {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.85,
+          "beam": 9.775
+        }
+      },
+      {
+        "name": "Camryn Richardson",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.775,
+          "bars": 9.85
+        }
+      },
+      {
+        "name": "Sophia Esposito",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.825,
+          "bars": 9.825,
+          "beam": 9.7,
+          "floor": 9.875
+        }
+      },
+      {
+        "name": "Francesca Caso",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.55
+        }
+      },
+      {
+        "name": "Kaylee Cheek",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 8.0,
+          "beam": 9.825
+        }
+      },
+      {
+        "name": "Ellie Weaver",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.9,
+          "beam": 9.225
+        }
+      },
+      {
+        "name": "Mia Heather",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.75
+        }
+      },
+      {
+        "name": "Lauren Letzsch",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.85
+        }
+      },
+      {
+        "name": "Paulina Vargas",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.6
+        }
+      },
+      {
+        "name": "Taylor De",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.675
+        }
+      },
+      {
+        "name": "VriesOlivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.775
+        }
+      }
+    ],
+    "allTeams": [
+      {
+        "team": "TWU",
+        "rank": 1,
+        "total": 195.975,
+        "vault": 48.925,
+        "bars": 48.95,
+        "beam": 49.025,
+        "floor": 49.075
+      },
+      {
+        "team": "Oregon State",
+        "rank": 2,
+        "total": 195.775,
+        "vault": 48.975,
+        "bars": 48.9,
+        "beam": 48.9,
+        "floor": 49.0
+      },
+      {
+        "team": "Arizona State",
+        "rank": 3,
+        "total": 195.55,
+        "vault": 49.05,
+        "bars": 48.475,
+        "beam": 48.9,
+        "floor": 49.125
+      },
+      {
+        "team": "Kent State",
+        "rank": 4,
+        "total": 195.075,
+        "vault": 48.925,
+        "bars": 49.0,
+        "beam": 48.325,
+        "floor": 48.825
+      }
+    ],
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:16:20Z"
+  },
+  {
+    "id": "twu-quad-kent-state-feb-22",
     "date": "2026-02-22",
     "opponent": "Kent State",
     "location": "Kitty Magee Arena, Denton, TX",
@@ -1868,7 +1749,14 @@
         }
       },
       {
-        "name": "Olivia Buckner",
+        "name": "Taylor De",
+        "team": "Oregon State",
+        "scores": {
+          "floor": 9.675
+        }
+      },
+      {
+        "name": "VriesOlivia Buckner",
         "team": "Oregon State",
         "scores": {
           "floor": 9.775
@@ -1912,349 +1800,9 @@
         "beam": 48.325,
         "floor": 48.825
       }
-    ]
-  },
-  {
-    "id": "twu-quad-asu-feb-22",
-    "date": "2026-02-22",
-    "opponent": "Arizona State",
-    "location": "Kitty Magee Arena, Denton, TX",
-    "isHome": false,
-    "result": "W",
-    "osuScore": 195.775,
-    "opponentScore": 195.550,
-    "quadMeet": true,
-    "quadName": "TWU Quad",
-    "events": {
-      "vault": {
-        "osu": 48.975,
-        "opponent": 49.05
-      },
-      "bars": {
-        "osu": 48.9,
-        "opponent": 48.475
-      },
-      "beam": {
-        "osu": 48.9,
-        "opponent": 48.9
-      },
-      "floor": {
-        "osu": 49.0,
-        "opponent": 49.125
-      }
-    },
-    "athletes": [
-      {
-        "name": "Kyanna Crabb",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.725
-        }
-      },
-      {
-        "name": "Reina Marchal",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.75,
-          "floor": 9.85
-        }
-      },
-      {
-        "name": "Savannah Miller",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.775,
-          "bars": 9.775,
-          "floor": 9.825
-        }
-      },
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.85,
-          "beam": 9.775
-        }
-      },
-      {
-        "name": "Camryn Richardson",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.775,
-          "bars": 9.85
-        }
-      },
-      {
-        "name": "Sophia Esposito",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.825,
-          "bars": 9.825,
-          "beam": 9.7,
-          "floor": 9.875
-        }
-      },
-      {
-        "name": "Francesca Caso",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.55
-        }
-      },
-      {
-        "name": "Kaylee Cheek",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 8.0,
-          "beam": 9.825
-        }
-      },
-      {
-        "name": "Ellie Weaver",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.9,
-          "beam": 9.225
-        }
-      },
-      {
-        "name": "Mia Heather",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.75
-        }
-      },
-      {
-        "name": "Lauren Letzsch",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.85
-        }
-      },
-      {
-        "name": "Paulina Vargas",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.6
-        }
-      },
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.775
-        }
-      }
     ],
-    "allTeams": [
-      {
-        "team": "TWU",
-        "rank": 1,
-        "total": 195.975,
-        "vault": 48.925,
-        "bars": 48.95,
-        "beam": 49.025,
-        "floor": 49.075
-      },
-      {
-        "team": "Oregon State",
-        "rank": 2,
-        "total": 195.775,
-        "vault": 48.975,
-        "bars": 48.9,
-        "beam": 48.9,
-        "floor": 49.0
-      },
-      {
-        "team": "Arizona State",
-        "rank": 3,
-        "total": 195.55,
-        "vault": 49.05,
-        "bars": 48.475,
-        "beam": 48.9,
-        "floor": 49.125
-      },
-      {
-        "team": "Kent State",
-        "rank": 4,
-        "total": 195.075,
-        "vault": 48.925,
-        "bars": 49.0,
-        "beam": 48.325,
-        "floor": 48.825
-      }
-    ]
-  },
-  {
-    "id": "twu-quad-twu-feb-22",
-    "date": "2026-02-22",
-    "opponent": "Texas Woman's",
-    "location": "Kitty Magee Arena, Denton, TX",
-    "isHome": false,
-    "result": "L",
-    "osuScore": 195.775,
-    "opponentScore": 195.975,
-    "quadMeet": true,
-    "quadName": "TWU Quad",
-    "events": {
-      "vault": {
-        "osu": 48.975,
-        "opponent": 48.925
-      },
-      "bars": {
-        "osu": 48.9,
-        "opponent": 48.95
-      },
-      "beam": {
-        "osu": 48.9,
-        "opponent": 49.025
-      },
-      "floor": {
-        "osu": 49.0,
-        "opponent": 49.075
-      }
-    },
-    "athletes": [
-      {
-        "name": "Kyanna Crabb",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.725
-        }
-      },
-      {
-        "name": "Reina Marchal",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.75,
-          "floor": 9.85
-        }
-      },
-      {
-        "name": "Savannah Miller",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.775,
-          "bars": 9.775,
-          "floor": 9.825
-        }
-      },
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.85,
-          "beam": 9.775
-        }
-      },
-      {
-        "name": "Camryn Richardson",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.775,
-          "bars": 9.85
-        }
-      },
-      {
-        "name": "Sophia Esposito",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.825,
-          "bars": 9.825,
-          "beam": 9.7,
-          "floor": 9.875
-        }
-      },
-      {
-        "name": "Francesca Caso",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.55
-        }
-      },
-      {
-        "name": "Kaylee Cheek",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 8.0,
-          "beam": 9.825
-        }
-      },
-      {
-        "name": "Ellie Weaver",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.9,
-          "beam": 9.225
-        }
-      },
-      {
-        "name": "Mia Heather",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.75
-        }
-      },
-      {
-        "name": "Lauren Letzsch",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.85
-        }
-      },
-      {
-        "name": "Paulina Vargas",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.6
-        }
-      },
-      {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "floor": 9.775
-        }
-      }
-    ],
-    "allTeams": [
-      {
-        "team": "TWU",
-        "rank": 1,
-        "total": 195.975,
-        "vault": 48.925,
-        "bars": 48.95,
-        "beam": 49.025,
-        "floor": 49.075
-      },
-      {
-        "team": "Oregon State",
-        "rank": 2,
-        "total": 195.775,
-        "vault": 48.975,
-        "bars": 48.9,
-        "beam": 48.9,
-        "floor": 49.0
-      },
-      {
-        "team": "Arizona State",
-        "rank": 3,
-        "total": 195.55,
-        "vault": 49.05,
-        "bars": 48.475,
-        "beam": 48.9,
-        "floor": 49.125
-      },
-      {
-        "team": "Kent State",
-        "rank": 4,
-        "total": 195.075,
-        "vault": 48.925,
-        "bars": 49.0,
-        "beam": 48.325,
-        "floor": 48.825
-      }
-    ]
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:16:20Z"
   },
   {
     "id": "stanford-feb-27",
@@ -2263,8 +1811,8 @@
     "location": "Gill Coliseum, Corvallis, OR",
     "isHome": true,
     "result": "L",
-    "osuScore": 197.250,
-    "opponentScore": 198.150,
+    "osuScore": 197.25,
+    "opponentScore": 198.15,
     "events": {
       "vault": {
         "osu": 49.3,
@@ -2341,11 +1889,18 @@
         }
       },
       {
-        "name": "Taylor DeVries",
+        "name": "Taylor De",
         "team": "Oregon State",
         "scores": {
           "bars": 9.825,
           "floor": 9.775
+        }
+      },
+      {
+        "name": "VriesSophia Esposito",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.9
         }
       },
       {
@@ -2386,13 +1941,15 @@
         }
       },
       {
-        "name": "Olivia Buckner",
+        "name": "VriesOlivia Buckner",
         "team": "Oregon State",
         "scores": {
           "floor": 9.875
         }
       }
     ],
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:16:30Z",
     "attendance": "3,617"
   },
   {
@@ -2402,8 +1959,8 @@
     "location": "Dee Glen Smith Spectrum, Logan, UT",
     "isHome": false,
     "result": "L",
-    "osuScore": 196.150,
-    "opponentScore": 196.950,
+    "osuScore": 196.15,
+    "opponentScore": 196.95,
     "events": {
       "vault": {
         "osu": 48.975,
@@ -2524,6 +2081,8 @@
           "beam": 9.8
         }
       }
-    ]
+    ],
+    "status": "final",
+    "lastRefreshed": "2026-03-08T04:14:43Z"
   }
 ]

@@ -865,3 +865,189 @@ main {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Refresh Button ===== */
+.nav-actions {
+  margin-left: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.refresh-btn {
+  background: rgba(215, 63, 9, 0.15);
+  border: 1px solid rgba(215, 63, 9, 0.4);
+  color: var(--orange);
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: rgba(215, 63, 9, 0.3);
+  border-color: var(--orange);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.refresh-btn.spinning .refresh-icon {
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ===== Last Updated Bar ===== */
+.last-updated-bar {
+  background: var(--black);
+  border-bottom: 1px solid var(--border);
+  padding: 0.3rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.auto-refresh-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.auto-refresh-toggle input[type="checkbox"] {
+  accent-color: var(--orange);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+/* ===== Toast Notifications ===== */
+.toast-container {
+  position: fixed;
+  bottom: 5rem;
+  right: 1rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .toast-container {
+    bottom: 1.5rem;
+  }
+}
+
+.toast {
+  background: #2a2a2a;
+  border-left: 4px solid var(--orange);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 240px;
+  max-width: 360px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  animation: toastSlideIn 0.3s ease;
+  pointer-events: auto;
+}
+
+.toast.toast-success {
+  border-left-color: var(--green);
+}
+
+.toast.toast-error {
+  border-left-color: var(--red);
+}
+
+.toast.toast-live {
+  border-left-color: #ff4444;
+}
+
+.toast.toast-out {
+  animation: toastSlideOut 0.3s ease forwards;
+}
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toastSlideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(100%); }
+}
+
+/* ===== Live / In-Progress Badge ===== */
+.badge-live {
+  background: #ff1a1a;
+  color: white;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  animation: livePulse 1.4s ease-in-out infinite;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255, 26, 26, 0.4); }
+  50% { opacity: 0.85; box-shadow: 0 0 0 6px rgba(255, 26, 26, 0); }
+}
+
+/* ===== In-Progress Meet Banner ===== */
+.in-progress-banner {
+  background: rgba(255, 26, 26, 0.1);
+  border: 1px solid rgba(255, 26, 26, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ===== Score flash animation (live update) ===== */
+@keyframes scoreFlash {
+  0% { background-color: transparent; }
+  20% { background-color: rgba(255, 140, 0, 0.35); }
+  100% { background-color: transparent; }
+}
+
+.score-updated {
+  animation: scoreFlash 1.2s ease;
+  border-radius: 4px;
+}
+
+/* ===== Upcoming meet card ===== */
+.meet-card.upcoming {
+  opacity: 0.65;
+  border-left-color: var(--border);
+}
+
+.badge-upcoming {
+  background: var(--border);
+  color: var(--text-muted);
+}

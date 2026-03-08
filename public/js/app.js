@@ -6,6 +6,10 @@
   let meets = [];
   let currentFilter = 'all';
   let currentView = 'season';
+  let lastRefreshedTime = null;
+  let autoRefreshInterval = null;
+  let autoRefreshEnabled = false;
+  let previousScores = {}; // meetId → osuScore, for flash detection
 
   const EVENT_NAMES = {
     vault: 'Vault', bars: 'Bars', beam: 'Beam', floor: 'Floor', aa: 'All-Around'
@@ -26,13 +30,170 @@
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
   }
 
+  function timeSinceRefresh() {
+    if (!lastRefreshedTime) return null;
+    const diffMs = Date.now() - lastRefreshedTime;
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'just now';
+    if (diffMin === 1) return '1 minute ago';
+    if (diffMin < 60) return `${diffMin} minutes ago`;
+    const diffH = Math.floor(diffMin / 60);
+    return `${diffH}h ago`;
+  }
+
+  function hasLiveMeets() {
+    return meets.some(m => m.status === 'in_progress');
+  }
+
+  // ===== Toast =====
+  function showToast(message, type = 'default', duration = 4000) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('toast-out');
+      setTimeout(() => toast.remove(), 350);
+    }, duration);
+  }
+
+  // ===== Last Updated Bar =====
+  function updateLastUpdatedBar() {
+    const bar = document.getElementById('lastUpdatedBar');
+    const txt = document.getElementById('lastUpdatedText');
+    const autoToggle = document.getElementById('autoRefreshToggle');
+
+    const since = timeSinceRefresh();
+    if (since) {
+      bar.style.display = 'flex';
+      txt.textContent = `Last updated: ${since}`;
+    }
+
+    if (hasLiveMeets()) {
+      autoToggle.style.display = 'flex';
+    } else {
+      autoToggle.style.display = 'none';
+      // Turn off auto-refresh if no live meets
+      if (autoRefreshEnabled) {
+        stopAutoRefresh();
+        document.getElementById('autoRefreshCheck').checked = false;
+      }
+    }
+  }
+
+  // ===== Auto-Refresh =====
+  function startAutoRefresh() {
+    autoRefreshEnabled = true;
+    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+    autoRefreshInterval = setInterval(() => {
+      if (autoRefreshEnabled && hasLiveMeets()) {
+        doRefresh(true);
+      } else {
+        stopAutoRefresh();
+      }
+    }, 60000);
+  }
+
+  function stopAutoRefresh() {
+    autoRefreshEnabled = false;
+    if (autoRefreshInterval) {
+      clearInterval(autoRefreshInterval);
+      autoRefreshInterval = null;
+    }
+  }
+
+  // ===== Score snapshot for flash detection =====
+  function snapshotScores() {
+    previousScores = {};
+    meets.forEach(m => {
+      previousScores[m.id] = m.osuScore;
+    });
+  }
+
+  function flashChangedScores() {
+    meets.forEach(m => {
+      if (previousScores[m.id] !== undefined && previousScores[m.id] !== m.osuScore) {
+        // Flash all score elements for this meet
+        document.querySelectorAll(`[data-meet-id="${m.id}"] .score-osu`).forEach(el => {
+          el.classList.remove('score-updated');
+          void el.offsetWidth; // reflow
+          el.classList.add('score-updated');
+          el.addEventListener('animationend', () => el.classList.remove('score-updated'), { once: true });
+        });
+      }
+    });
+  }
+
+  // ===== Refresh =====
+  async function doRefresh(silent = false) {
+    const btn = document.getElementById('refreshBtn');
+    const mobileBtn = document.getElementById('mobileRefreshBtn');
+
+    // Set loading state
+    btn.disabled = true;
+    btn.classList.add('spinning');
+    btn.querySelector('.refresh-label').textContent = 'Refreshing...';
+
+    snapshotScores();
+
+    try {
+      const res = await fetch('/api/refresh', { method: 'POST' });
+      const data = await res.json();
+
+      if (data.success) {
+        // Reload meets data
+        const meetsRes = await fetch('/api/meets');
+        const newMeets = await meetsRes.json();
+        meets = newMeets;
+
+        lastRefreshedTime = Date.now();
+        updateLastUpdatedBar();
+
+        // Re-render current view
+        if (currentView === 'season') renderSeason();
+        else if (currentView === 'gymnasts') renderGymnasts();
+        else if (currentView === 'leaderboards') renderLeaderboard(document.querySelector('.event-tab.active')?.dataset.event || 'vault');
+
+        flashChangedScores();
+
+        if (!silent) {
+          const s = data.summary || {};
+          const live = s.meetsInProgress > 0;
+          if (live) {
+            showToast(`⚡ Live meet in progress — scores updating`, 'live');
+          } else if (s.meetsUpdated > 0) {
+            showToast(`✅ Updated — ${s.meetsUpdated} meet${s.meetsUpdated !== 1 ? 's' : ''} refreshed`, 'success');
+          } else {
+            showToast('✅ Data is up to date', 'success');
+          }
+        }
+      } else {
+        if (!silent) showToast('❌ Refresh failed — check connection', 'error');
+        console.error('Refresh failed:', data.error);
+      }
+    } catch (err) {
+      if (!silent) showToast('❌ Refresh failed — check connection', 'error');
+      console.error('Refresh error:', err);
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('spinning');
+      btn.querySelector('.refresh-label').textContent = 'Refresh';
+    }
+  }
+
   // ===== Data Loading =====
   async function loadData() {
     try {
       const res = await fetch('/api/meets');
       meets = await res.json();
+      lastRefreshedTime = Date.now();
       document.getElementById('loading').style.display = 'none';
       showView('season');
+      updateLastUpdatedBar();
+      // Update "last updated" display every minute
+      setInterval(updateLastUpdatedBar, 60000);
     } catch (err) {
       document.getElementById('loading').innerHTML =
         '<div class="empty-state"><div class="empty-icon">😕</div><p class="empty-text">Failed to load data. Is the server running?</p></div>';
@@ -61,10 +222,18 @@
 
   // ===== Season Overview =====
   function renderSeason() {
-    const wins = meets.filter(m => m.result === 'W').length;
-    const losses = meets.filter(m => m.result === 'L').length;
-    const avgScore = (meets.reduce((s, m) => s + m.osuScore, 0) / meets.length).toFixed(3);
-    const highScore = Math.max(...meets.map(m => m.osuScore)).toFixed(3);
+    const finishedMeets = meets.filter(m => m.result !== null && m.status !== 'upcoming');
+    if (finishedMeets.length === 0) {
+      document.getElementById('seasonRecord').innerHTML = '<div class="record-stat"><div class="value">—</div><div class="label">No data yet</div></div>';
+      renderScoreTrend();
+      renderMeetCards();
+      return;
+    }
+
+    const wins = finishedMeets.filter(m => m.result === 'W').length;
+    const losses = finishedMeets.filter(m => m.result === 'L').length;
+    const avgScore = (finishedMeets.reduce((s, m) => s + m.osuScore, 0) / finishedMeets.length).toFixed(3);
+    const highScore = Math.max(...finishedMeets.map(m => m.osuScore)).toFixed(3);
 
     document.getElementById('seasonRecord').innerHTML = `
       <div class="record-stat"><div class="value">${wins}-${losses}</div><div class="label">Record</div></div>
@@ -78,9 +247,15 @@
 
   function renderScoreTrend() {
     const container = document.getElementById('scoreTrend');
+    const scoredMeets = meets.filter(m => m.osuScore > 0 && m.status !== 'upcoming');
+    if (scoredMeets.length === 0) {
+      container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem;">No scored meets yet.</p>';
+      return;
+    }
+
     const w = 700, h = 180;
     const pad = { top: 20, right: 20, bottom: 35, left: 50 };
-    const scores = meets.map(m => m.osuScore);
+    const scores = scoredMeets.map(m => m.osuScore);
     const min = Math.min(...scores) - 0.5;
     const max = Math.max(...scores) + 0.5;
     const xScale = i => pad.left + (i / (scores.length - 1)) * (w - pad.left - pad.right);
@@ -89,13 +264,13 @@
     let pathD = scores.map((s, i) => `${i === 0 ? 'M' : 'L'}${xScale(i).toFixed(1)},${yScale(s).toFixed(1)}`).join(' ');
 
     let dots = scores.map((s, i) => {
-      const color = meets[i].result === 'W' ? '#2ecc71' : '#e74c3c';
+      const m = scoredMeets[i];
+      const color = m.status === 'in_progress' ? '#ff4444' : (m.result === 'W' ? '#2ecc71' : '#e74c3c');
       return `<circle cx="${xScale(i).toFixed(1)}" cy="${yScale(s).toFixed(1)}" r="5" fill="${color}" stroke="var(--dark)" stroke-width="2">
-        <title>${formatDate(meets[i].date)}: ${s.toFixed(3)} (${meets[i].result})</title>
+        <title>${formatDate(m.date)}: ${s.toFixed(3)} (${m.status === 'in_progress' ? 'IN PROGRESS' : m.result})</title>
       </circle>`;
     }).join('');
 
-    // Y-axis labels
     const yTicks = 5;
     let yLabels = '';
     let yGridLines = '';
@@ -106,8 +281,7 @@
       yGridLines += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="#333" stroke-width="0.5"/>`;
     }
 
-    // X-axis labels
-    let xLabels = meets.map((m, i) => {
+    let xLabels = scoredMeets.map((m, i) => {
       const x = xScale(i);
       return `<text x="${x}" y="${h - 5}" text-anchor="middle" fill="#999" font-size="9" font-family="Inter">${formatDate(m.date)}</text>`;
     }).join('');
@@ -137,7 +311,6 @@
       return;
     }
 
-    // Group quad meets together; non-quad meets appear as-is
     const rendered = [];
     const seenQuads = new Set();
 
@@ -145,7 +318,6 @@
       if (m.quadMeet && m.quadName) {
         if (!seenQuads.has(m.quadName)) {
           seenQuads.add(m.quadName);
-          // Gather all matchups for this quad
           const quadMeets = filtered.filter(q => q.quadName === m.quadName);
           rendered.push(renderQuadGroup(quadMeets));
         }
@@ -156,7 +328,6 @@
 
     grid.innerHTML = rendered.join('');
 
-    // Animate bars after render
     requestAnimationFrame(() => {
       grid.querySelectorAll('.event-bar-fill').forEach(bar => {
         const w = bar.style.width;
@@ -167,36 +338,55 @@
   }
 
   function renderMeetCard(m) {
-    const eventBars = ['vault', 'bars', 'beam', 'floor'].map(e => {
-      const pct = ((m.events[e].osu / 50) * 100).toFixed(1);
+    const isLive = m.status === 'in_progress';
+    const isUpcoming = m.status === 'upcoming';
+
+    const liveBadge = isLive
+      ? `<span class="badge badge-live">🔴 LIVE</span>`
+      : '';
+
+    let resultBadge = '';
+    if (isUpcoming) {
+      resultBadge = `<span class="badge badge-upcoming">UPCOMING</span>`;
+    } else if (m.result) {
+      resultBadge = `<span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>`;
+    }
+
+    const eventBars = !isUpcoming ? ['vault', 'bars', 'beam', 'floor'].map(e => {
+      const val = m.events[e]?.osu || 0;
+      const pct = ((val / 50) * 100).toFixed(1);
       return `
         <div class="event-bar-item">
           <div class="event-bar-label">
             <span>${EVENT_SHORT[e]}</span>
-            <span>${m.events[e].osu.toFixed(3)}</span>
+            <span>${val > 0 ? val.toFixed(3) : '—'}</span>
           </div>
           <div class="event-bar-track">
             <div class="event-bar-fill" style="width: ${pct}%"></div>
           </div>
         </div>`;
-    }).join('');
+    }).join('') : '';
+
+    const scoreSection = !isUpcoming ? `
+      <div class="meet-scores">
+        <div class="team-score"><div class="team-name">Oregon State</div><div class="score score-osu">${m.osuScore > 0 ? m.osuScore.toFixed(3) : '—'}</div></div>
+        <div class="score-vs">vs</div>
+        <div class="team-score"><div class="team-name">Opponent</div><div class="score">${m.opponentScore > 0 ? m.opponentScore.toFixed(3) : '—'}</div></div>
+      </div>
+      <div class="event-bars">${eventBars}</div>
+    ` : `<div style="color:var(--text-muted);font-size:0.85rem;margin-top:0.5rem;">Scores not yet available</div>`;
 
     return `
-      <div class="meet-card" data-meet-id="${m.id}">
+      <div class="meet-card${isUpcoming ? ' upcoming' : ''}" data-meet-id="${m.id}">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent">${m.opponent}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''}</div>
+            <div class="meet-opponent">${m.opponent || 'TBD'}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''} ${liveBadge}</div>
             <div class="meet-date">${formatDateLong(m.date)}</div>
             <div class="meet-location">${m.location}</div>
           </div>
-          <span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>
+          ${resultBadge}
         </div>
-        <div class="meet-scores">
-          <div class="team-score"><div class="team-name">Oregon State</div><div class="score score-osu">${m.osuScore.toFixed(3)}</div></div>
-          <div class="score-vs">vs</div>
-          <div class="team-score"><div class="team-name">Opponent</div><div class="score">${m.opponentScore.toFixed(3)}</div></div>
-        </div>
-        <div class="event-bars">${eventBars}</div>
+        ${scoreSection}
       </div>`;
   }
 
@@ -204,18 +394,19 @@
     const first = quadMeets[0];
     const wins = quadMeets.filter(m => m.result === 'W').length;
     const losses = quadMeets.filter(m => m.result === 'L').length;
+    const hasLive = quadMeets.some(m => m.status === 'in_progress');
 
     const matchupRows = quadMeets.map(m => `
       <div class="quad-matchup meet-card" data-meet-id="${m.id}" style="margin:0;border-radius:8px;cursor:pointer;">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent" style="font-size:1rem;">${m.opponent}</div>
+            <div class="meet-opponent" style="font-size:1rem;">${m.opponent} ${m.status === 'in_progress' ? '<span class="badge badge-live">🔴 LIVE</span>' : ''}</div>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem;">
-            <span style="font-family:Oswald;color:var(--orange);font-size:1rem;">${m.osuScore.toFixed(3)}</span>
+            <span style="font-family:Oswald;color:var(--orange);font-size:1rem;">${m.osuScore > 0 ? m.osuScore.toFixed(3) : '—'}</span>
             <span style="color:var(--text-muted);">–</span>
-            <span style="font-size:1rem;">${m.opponentScore.toFixed(3)}</span>
-            <span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>
+            <span style="font-size:1rem;">${m.opponentScore > 0 ? m.opponentScore.toFixed(3) : '—'}</span>
+            ${m.result ? `<span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>` : ''}
           </div>
         </div>
       </div>`).join('');
@@ -226,6 +417,7 @@
           <div>
             <span style="font-family:Oswald;font-size:1.1rem;color:var(--orange);">${first.quadName}</span>
             <span class="badge" style="background:#333;color:#aaa;margin-left:0.5rem;font-size:0.7rem;">QUAD</span>
+            ${hasLive ? '<span class="badge badge-live" style="margin-left:0.4rem;">🔴 LIVE</span>' : ''}
           </div>
           <div style="display:flex;gap:0.5rem;align-items:center;">
             <span style="color:#999;font-size:0.8rem;">${formatDate(first.date)} · ${first.location}</span>
@@ -233,7 +425,7 @@
           </div>
         </div>
         <div style="padding:0.75rem;display:flex;flex-direction:column;gap:0.5rem;">
-          <div style="color:#888;font-size:0.8rem;padding-bottom:0.25rem;">OSU: ${first.osuScore.toFixed(3)}</div>
+          <div style="color:#888;font-size:0.8rem;padding-bottom:0.25rem;">OSU: ${first.osuScore > 0 ? first.osuScore.toFixed(3) : '—'}</div>
           ${matchupRows}
         </div>
       </div>`;
@@ -249,10 +441,32 @@
     view.style.display = 'block';
 
     const content = document.getElementById('meetDetailContent');
+    const isLive = meet.status === 'in_progress';
+    const isUpcoming = meet.status === 'upcoming';
+
+    // In-progress banner
+    let liveBanner = '';
+    if (isLive) {
+      const lastUpdated = meet.lastRefreshed
+        ? (() => {
+            const diffMs = Date.now() - new Date(meet.lastRefreshed).getTime();
+            const diffMin = Math.floor(diffMs / 60000);
+            return diffMin < 1 ? 'just now' : `${diffMin} min ago`;
+          })()
+        : 'unknown';
+      const completedEvts = meet.completedEvents
+        ? `Completed: ${meet.completedEvents.map(e => EVENT_SHORT[e] || e).join(', ')}`
+        : '';
+      liveBanner = `
+        <div class="in-progress-banner">
+          🔴 Meet in progress — scores may be partial. Last updated: ${lastUpdated}.
+          ${completedEvts ? `<span style="margin-left:0.5rem;opacity:0.8;">${completedEvts}</span>` : ''}
+        </div>`;
+    }
 
     // Quad meet teams table
     let teamsTable = '';
-    if (meet.allTeams) {
+    if (meet.allTeams && meet.allTeams.length > 0) {
       teamsTable = `
         <div class="section-card">
           <h2 class="section-title">Full Standings</h2>
@@ -271,59 +485,74 @@
         </div>`;
     }
 
-    // Event detail cards with athlete lineups
-    const eventCards = ['vault', 'bars', 'beam', 'floor'].map(event => {
-      const eventAthletes = meet.athletes
-        .filter(a => a.scores[event] !== undefined)
-        .sort((a, b) => b.scores[event] - a.scores[event]);
+    // Event detail cards
+    let eventSection = '';
+    if (!isUpcoming && meet.athletes && meet.athletes.length > 0) {
+      const eventCards = ['vault', 'bars', 'beam', 'floor'].map(event => {
+        const eventAthletes = meet.athletes
+          .filter(a => a.scores[event] !== undefined)
+          .sort((a, b) => b.scores[event] - a.scores[event]);
 
-      const rows = eventAthletes.map((a, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${a.name}</td>
-          <td class="score-cell">${a.scores[event].toFixed(3)}</td>
-        </tr>`).join('');
+        const rows = eventAthletes.map((a, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${a.name}</td>
+            <td class="score-cell">${a.scores[event].toFixed(3)}</td>
+          </tr>`).join('');
 
-      const osuScore = meet.events[event].osu;
-      const oppScore = meet.events[event].opponent;
-      const barPct = ((osuScore / 50) * 100).toFixed(1);
+        const osuScore = meet.events[event]?.osu || 0;
+        const oppScore = meet.events[event]?.opponent || 0;
+        const barPct = ((osuScore / 50) * 100).toFixed(1);
 
-      return `
-        <div class="detail-event-card">
-          <div class="detail-event-title">${EVENT_NAMES[event]}</div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
-            <span style="color:var(--orange);font-family:Oswald;font-weight:600;">${osuScore.toFixed(3)}</span>
-            <span style="color:var(--text-muted);font-size:0.85rem;">vs ${oppScore.toFixed(3)}</span>
-          </div>
-          <div class="event-bar-track" style="margin-bottom:0.75rem;">
-            <div class="event-bar-fill" style="width:${barPct}%"></div>
-          </div>
-          <table class="lineup-table">
-            <thead><tr><th>#</th><th>Athlete</th><th style="text-align:right">Score</th></tr></thead>
-            <tbody>${rows || '<tr><td colspan="3" style="color:var(--text-muted)">No data</td></tr>'}</tbody>
-          </table>
-        </div>`;
-    }).join('');
+        return `
+          <div class="detail-event-card">
+            <div class="detail-event-title">${EVENT_NAMES[event]}</div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
+              <span style="color:var(--orange);font-family:Oswald;font-weight:600;">${osuScore > 0 ? osuScore.toFixed(3) : '—'}</span>
+              <span style="color:var(--text-muted);font-size:0.85rem;">vs ${oppScore > 0 ? oppScore.toFixed(3) : '—'}</span>
+            </div>
+            <div class="event-bar-track" style="margin-bottom:0.75rem;">
+              <div class="event-bar-fill" style="width:${barPct}%"></div>
+            </div>
+            <table class="lineup-table">
+              <thead><tr><th>#</th><th>Athlete</th><th style="text-align:right">Score</th></tr></thead>
+              <tbody>${rows || '<tr><td colspan="3" style="color:var(--text-muted)">No data</td></tr>'}</tbody>
+            </table>
+          </div>`;
+      }).join('');
+
+      eventSection = `
+        <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
+        <div class="detail-event-grid">${eventCards}</div>
+      `;
+    }
+
+    const resultBadge = isUpcoming
+      ? `<span class="badge badge-upcoming">UPCOMING</span>`
+      : (meet.result ? `<span class="badge badge-${meet.result.toLowerCase()}" style="font-size:1rem;padding:0.3rem 0.8rem;">${meet.result}</span>` : '');
+
+    const liveBadgeInline = isLive ? `<span class="badge badge-live" style="margin-left:0.5rem;">🔴 LIVE</span>` : '';
 
     content.innerHTML = `
+      ${liveBanner}
       <div class="detail-hero">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent}</div>
+            <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent || 'TBD'}${liveBadgeInline}</div>
             <div class="meet-date">${formatDateLong(meet.date)}</div>
             <div class="meet-location">${meet.location}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
           </div>
-          <span class="badge badge-${meet.result.toLowerCase()}" style="font-size:1rem;padding:0.3rem 0.8rem;">${meet.result}</span>
+          ${resultBadge}
         </div>
+        ${!isUpcoming ? `
         <div class="meet-scores" style="margin-top:1rem;">
-          <div class="team-score"><div class="team-name">Oregon State</div><div class="score score-osu" style="font-size:2rem;">${meet.osuScore.toFixed(3)}</div></div>
+          <div class="team-score"><div class="team-name">Oregon State</div><div class="score score-osu" style="font-size:2rem;">${meet.osuScore > 0 ? meet.osuScore.toFixed(3) : '—'}</div></div>
           <div class="score-vs">vs</div>
-          <div class="team-score"><div class="team-name">Opponent</div><div class="score" style="font-size:2rem;">${meet.opponentScore.toFixed(3)}</div></div>
-        </div>
+          <div class="team-score"><div class="team-name">Opponent</div><div class="score" style="font-size:2rem;">${meet.opponentScore > 0 ? meet.opponentScore.toFixed(3) : '—'}</div></div>
+        </div>` : `<div style="color:var(--text-muted);margin-top:1rem;">Scores not yet available</div>`}
       </div>
       ${teamsTable}
-      <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
-      <div class="detail-event-grid">${eventCards}</div>
+      ${eventSection}
     `;
   }
 
@@ -331,6 +560,7 @@
   function getGymnastProfiles() {
     const profiles = {};
     meets.forEach(meet => {
+      if (!meet.athletes) return;
       meet.athletes.forEach(a => {
         if (!profiles[a.name]) {
           profiles[a.name] = { name: a.name, meets: [], events: new Set() };
@@ -343,7 +573,6 @@
       });
     });
 
-    // Compute averages and bests
     Object.values(profiles).forEach(p => {
       p.averages = {};
       p.bests = {};
@@ -408,7 +637,6 @@
     const detail = document.getElementById('gymnastDetail');
     detail.style.display = 'block';
 
-    // Stats grid
     const statsGrid = ['vault', 'bars', 'beam', 'floor'].map(event => {
       if (!p.averages[event]) return '';
       return `
@@ -422,7 +650,6 @@
         </div>`;
     }).join('');
 
-    // Sparklines per event
     const sparklines = ['vault', 'bars', 'beam', 'floor'].map(event => {
       const eventMeets = p.meets.filter(m => m.scores[event] !== undefined);
       if (eventMeets.length < 2) return '';
@@ -435,7 +662,6 @@
         </div>`;
     }).join('');
 
-    // Meet history table
     const historyRows = p.meets.map(m => {
       const cells = ['vault', 'bars', 'beam', 'floor'].map(e => {
         if (m.scores[e] === undefined) return '<td style="color:var(--text-muted)">—</td>';
@@ -443,7 +669,7 @@
         return `<td class="${isBest ? 'personal-best' : ''}">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</td>`;
       }).join('');
       const aa = m.scores.aa ? `<td>${m.scores.aa.toFixed(3)}</td>` : '<td style="color:var(--text-muted)">—</td>';
-      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent}</td>${cells}${aa}</tr>`;
+      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent || '—'}</td>${cells}${aa}</tr>`;
     }).join('');
 
     detail.innerHTML = `
@@ -503,6 +729,7 @@
 
     const allScores = [];
     meets.forEach(meet => {
+      if (!meet.athletes) return;
       meet.athletes.forEach(a => {
         if (a.scores[event] !== undefined) {
           allScores.push({
@@ -530,7 +757,7 @@
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
         <div class="lb-info">
           <div class="lb-name">${s.name}</div>
-          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent}</div>
+          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent || '—'}</div>
         </div>
         <div class="lb-score">${s.score.toFixed(3)}</div>
       </div>`).join('');
@@ -544,7 +771,8 @@
     document.querySelectorAll('[data-view]').forEach(link => {
       link.addEventListener('click', e => {
         e.preventDefault();
-        showView(link.dataset.view);
+        const view = link.dataset.view;
+        if (view) showView(view);
       });
     });
 
@@ -582,6 +810,26 @@
     document.getElementById('eventTabs').addEventListener('click', e => {
       const tab = e.target.closest('.event-tab');
       if (tab) renderLeaderboard(tab.dataset.event);
+    });
+
+    // Refresh button (desktop)
+    document.getElementById('refreshBtn').addEventListener('click', () => doRefresh(false));
+
+    // Refresh button (mobile)
+    document.getElementById('mobileRefreshBtn').addEventListener('click', e => {
+      e.preventDefault();
+      doRefresh(false);
+    });
+
+    // Auto-refresh toggle
+    document.getElementById('autoRefreshCheck').addEventListener('change', e => {
+      if (e.target.checked) {
+        startAutoRefresh();
+        showToast('⚡ Auto-refresh enabled — updating every 60s', 'live', 3000);
+      } else {
+        stopAutoRefresh();
+        showToast('Auto-refresh disabled', 'default', 2000);
+      }
     });
   });
 })();

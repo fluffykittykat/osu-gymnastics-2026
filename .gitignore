@@ -1,2 +1,4 @@
 node_modules/
 data/pdfs/
+data/pdf_cache/
+__pycache__/
