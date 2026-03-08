@@ -18,6 +18,13 @@
     vault: 'VT', bars: 'UB', beam: 'BB', floor: 'FX', aa: 'AA'
   };
 
+  // ===== Home/Away Badge =====
+  function homeAwayBadge(isHome) {
+    return isHome
+      ? '<span class="badge-home">H</span>'
+      : '<span class="badge-away">A</span>';
+  }
+
   // ===== Utility =====
   function formatDate(dateStr) {
     const d = new Date(dateStr + 'T12:00:00');
@@ -389,7 +396,7 @@
       <div class="meet-card${m.status === 'in_progress' ? ' meet-card-live' : ''}" data-meet-id="${m.id}">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent">${m.opponent}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''} ${statusBadge}</div>
+            <div class="meet-opponent"><span class="inline-link" style="cursor:pointer">${m.opponent}</span> ${homeAwayBadge(m.isHome)} ${statusBadge}</div>
             <div class="meet-date">${formatDateLong(m.date)}</div>
             <div class="meet-location">${m.location}</div>
           </div>
@@ -505,7 +512,7 @@
       const rows = eventAthletes.map((a, i) => `
         <tr>
           <td>${i + 1}</td>
-          <td>${a.name}</td>
+          <td><a class="inline-link" style="cursor:pointer" onclick="showGymnastProfile('${a.name.replace(/'/g, "\\'")}')">${a.name}</a></td>
           <td class="score-cell">${a.scores[event].toFixed(3)}</td>
         </tr>`).join('');
 
@@ -539,7 +546,7 @@
       <div class="detail-hero">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent}</div>
+            <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent} ${homeAwayBadge(meet.isHome)}</div>
             <div class="meet-date">${formatDateLong(meet.date)}</div>
             <div class="meet-location">${meet.location}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
           </div>
@@ -679,7 +686,12 @@
         return `<td class="${isBest ? 'personal-best' : ''}">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</td>`;
       }).join('');
       const aa = m.scores.aa ? `<td>${m.scores.aa.toFixed(3)}</td>` : '<td style="color:var(--text-muted)">—</td>';
-      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent}</td>${cells}${aa}</tr>`;
+      const meetObj = meets.find(mt => mt.id === m.meetId);
+      const badge = meetObj ? homeAwayBadge(meetObj.isHome) : '';
+      const oppLink = m.meetId
+        ? `<a class="inline-link" style="cursor:pointer" onclick="showMeetDetail('${m.meetId}')">${m.opponent}</a> ${badge}`
+        : `${m.opponent} ${badge}`;
+      return `<tr><td>${formatDate(m.date)}</td><td>${oppLink}</td>${cells}${aa}</tr>`;
     }).join('');
 
     detail.innerHTML = `
@@ -761,15 +773,19 @@
       return;
     }
 
-    list.innerHTML = top.map((s, i) => `
+    list.innerHTML = top.map((s, i) => {
+      const meet = meets.find(m => m.id === s.meetId);
+      const badge = meet ? homeAwayBadge(meet.isHome) : '';
+      return `
       <div class="leaderboard-item">
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
         <div class="lb-info">
-          <div class="lb-name">${s.name}</div>
-          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent}</div>
+          <div class="lb-name"><a class="inline-link" style="cursor:pointer" onclick="showGymnastProfile('${s.name.replace(/'/g, "\\'")}')">${s.name}</a></div>
+          <div class="lb-context">${formatDate(s.meetDate)} vs <a class="inline-link" style="cursor:pointer" onclick="showMeetDetail('${s.meetId}')">${s.opponent}</a> ${badge}</div>
         </div>
         <div class="lb-score">${s.score.toFixed(3)}</div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   // ===== Event Listeners =====

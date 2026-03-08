@@ -353,20 +353,20 @@ main {
 
 .badge-home {
   background: #D73F09;
-  color: white;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  margin-left: 0.5rem;
-  border-radius: 4px;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
 }
 
 .badge-away {
   background: #3a3a3a;
   color: #aaa;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  margin-left: 0.5rem;
-  border-radius: 4px;
+  font-size: 0.7rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
 }
 
 .badge-home-short {
