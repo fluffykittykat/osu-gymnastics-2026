@@ -458,6 +458,131 @@
 
   // ===== Meet Detail =====
   let _meetDetailOrigin = 'season';
+  function renderMeetInsights(meet) {
+    if (!meet.events || meet.status === 'upcoming') return '';
+    const EVS = ['vault','bars','beam','floor'];
+    const EV_LBL = {vault:'Vault',bars:'Bars',beam:'Beam',floor:'Floor'};
+    function mmean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
+    function mfmt(n) { return typeof n==='number'&&!isNaN(n)?n.toFixed(3):'—'; }
+    function mdiff(n) { if(typeof n!=='number'||isNaN(n)) return '—'; return (n>=0?'+':'')+n.toFixed(3); }
+
+    // Other meets (excluding this one) for baseline averages
+    const otherMeets = meets.filter(m => m.id !== meet.id && m.date !== meet.date);
+
+    // Team event season avg (other meets)
+    const teamSeasonAvg = {};
+    EVS.forEach(ev => {
+      const vals = otherMeets.filter(m=>m.events&&m.events[ev]).map(m=>m.events[ev].osu);
+      teamSeasonAvg[ev] = vals.length ? mmean(vals) : null;
+    });
+
+    // Per-gymnast season avg (other meets, per event)
+    const gymnSeasonAvg = {};
+    meet.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
+      gymnSeasonAvg[a.name] = {};
+      EVS.forEach(ev => {
+        const vals = [];
+        otherMeets.forEach(om => {
+          const oa = om.athletes.find(x=>x.name===a.name);
+          if(oa&&oa.scores[ev]!==undefined) vals.push(oa.scores[ev]);
+        });
+        gymnSeasonAvg[a.name][ev] = vals.length ? mmean(vals) : null;
+      });
+    });
+
+    // Event performance vs season avg
+    const evPerf = EVS.map(ev => {
+      const today = meet.events[ev]?.osu;
+      const avg = teamSeasonAvg[ev];
+      const opp = meet.events[ev]?.opponent;
+      if(today===undefined) return null;
+      return {ev, today, avg, diff: avg!==null?today-avg:null, wonRot: today>opp, opp};
+    }).filter(Boolean);
+
+    // Game changers — gymnast delta vs their season avg in this meet
+    const gameChangers = [];
+    meet.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
+      EVS.forEach(ev => {
+        const today = a.scores[ev];
+        const avg = gymnSeasonAvg[a.name]?.[ev];
+        if(today!==undefined && avg!==null && avg!==undefined) {
+          gameChangers.push({name:a.name, ev, today, avg, delta:today-avg});
+        }
+      });
+    });
+    gameChangers.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
+
+    // Standout performer (highest delta above avg)
+    const heroes = gameChangers.filter(g=>g.delta>0).slice(0,3);
+    const struggles = gameChangers.filter(g=>g.delta<0).slice(0,2);
+
+    // "What if" — if OSU had hit season avg on worst event, would they have won?
+    const worstEv = evPerf.filter(e=>e.diff!==null).sort((a,b)=>a.diff-b.diff)[0];
+    const bestEv = evPerf.filter(e=>e.diff!==null).sort((a,b)=>b.diff-a.diff)[0];
+    const worstWhatIf = worstEv && worstEv.diff < -0.05 ?
+      (meet.osuScore - worstEv.today + worstEv.avg) - meet.opponentScore : null;
+
+    // Events won/lost
+    const evWon = evPerf.filter(e=>e.wonRot).length;
+    const evLost = evPerf.filter(e=>!e.wonRot).length;
+
+    // Headlines
+    const aboveAvg = evPerf.filter(e=>e.diff!==null&&e.diff>0).length;
+    const headlines = [
+      aboveAvg > 0 ? `<div class="insight-headline">📊 OSU scored above their season avg in <strong>${aboveAvg} of ${evPerf.length}</strong> events</div>` : '',
+      heroes[0] ? `<div class="insight-headline">🔥 <strong>${heroes[0].name}</strong> was the standout — <strong>${mdiff(heroes[0].delta)}</strong> above their ${EV_LBL[heroes[0].ev]} avg</div>` : '',
+      `<div class="insight-headline">${evWon > evLost ? '✅' : '❌'} OSU <strong>won ${evWon}</strong> rotation${evWon!==1?'s':''}, lost <strong>${evLost}</strong></div>`,
+      worstWhatIf!==null ? `<div class="insight-headline">🤔 If <strong>${EV_LBL[worstEv.ev]}</strong> had hit season avg, OSU would've ${worstWhatIf>0?`<strong>won by ${Math.abs(worstWhatIf).toFixed(3)}</strong>`:`still lost by ${Math.abs(worstWhatIf).toFixed(3)}`}</div>` : '',
+    ].filter(Boolean).join('');
+
+    // Event vs season avg bars
+    const RANGE = 1.0; // ±range around 49.0
+    const evRows = evPerf.map(e => {
+      const diffColor = e.diff===null?'#aaa':e.diff>0?'#2ecc71':'#e74c3c';
+      const rotBadge = e.wonRot
+        ? '<span style="color:#2ecc71;font-size:0.7rem;font-weight:700">WON</span>'
+        : '<span style="color:#e74c3c;font-size:0.7rem;font-weight:700">LOST</span>';
+      const barFill = e.avg!==null ? Math.round(Math.min(100,Math.max(0,((e.today-e.avg)/RANGE+0.5)*100))) : 50;
+      return `
+        <div class="mi-ev-row">
+          <div class="mi-ev-label"><span style="font-family:Oswald;color:var(--orange)">${EV_LBL[e.ev]}</span>${rotBadge}</div>
+          <div class="mi-ev-scores">
+            <span style="font-family:Oswald;font-weight:700;font-size:1.1rem">${mfmt(e.today)}</span>
+            <span style="color:${diffColor};font-size:0.8rem;font-weight:600">${e.diff!==null?mdiff(e.diff):'no baseline'} vs avg</span>
+            <span style="color:var(--text-muted);font-size:0.75rem">opp: ${mfmt(e.opp)}</span>
+          </div>
+          ${e.avg!==null?`<div class="mi-bar-wrap"><div class="mi-bar-center"></div><div class="mi-bar-fill" style="width:${Math.abs(barFill-50)*2}%;left:${barFill<50?barFill+'%':'50%'};background:${e.diff>0?'#2ecc71':'#e74c3c'}"></div></div>`:''}
+        </div>`;
+    }).join('');
+
+    // Game changers table
+    const gcRows = gameChangers.slice(0,8).map(g => `
+      <div class="mi-gc-row">
+        <span class="clickable-name" data-gymnast="${g.name}">${g.name}</span>
+        <span style="font-size:0.75rem;color:var(--text-muted)">${EV_LBL[g.ev]}</span>
+        <span style="font-family:Oswald">${mfmt(g.today)}</span>
+        <span style="color:${g.delta>0.02?'#2ecc71':g.delta<-0.02?'#e74c3c':'#aaa'};font-weight:600">${mdiff(g.delta)}</span>
+      </div>`).join('');
+
+    return `
+      <div class="section-card meet-insights-card">
+        <h2 class="section-title">📊 Meet Analysis</h2>
+        <div class="mi-headlines">${headlines}</div>
+
+        <div class="mi-two-col">
+          <div>
+            <div class="mi-subtitle">Event Performance vs Season Avg</div>
+            <div class="mi-ev-list">${evRows}</div>
+          </div>
+          <div>
+            <div class="mi-subtitle">Game Changers (vs personal avg)</div>
+            <div class="mi-gc-header"><span>Gymnast</span><span>Event</span><span>Score</span><span>Δ</span></div>
+            ${gcRows}
+          </div>
+        </div>
+      </div>`;
+  }
+
   function showMeetDetail(meetId) {
     _meetDetailOrigin = currentView;
     const meet = meets.find(m => m.id === meetId);
@@ -594,6 +719,7 @@
           ${meet.recapUrl ? `<a href="${meet.recapUrl}" target="_blank" class="recap-link">Full recap on osubeavers.com →</a>` : ''}
         </div>`;
       })() : ''}
+      ${renderMeetInsights(meet)}
       <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
       <div class="detail-event-grid">${eventCards}</div>
     `;
