@@ -5,6 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:restart": "pm2 restart osu-gymnastics",
+    "pm2:stop": "pm2 stop osu-gymnastics",
+    "pm2:logs": "pm2 logs osu-gymnastics",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
