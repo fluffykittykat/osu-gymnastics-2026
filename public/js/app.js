@@ -785,8 +785,26 @@
       ? '<span class="badge badge-upcoming" style="font-size:1rem;padding:0.3rem 0.8rem;">UPCOMING</span>'
       : `<span class="badge badge-${meet.result.toLowerCase()}" style="font-size:1rem;padding:0.3rem 0.8rem;">${meet.result}</span>`;
 
+    // Quad meet sibling navigation
+    let quadNav = '';
+    if (meet.quadMeet && meet.quadName) {
+      const siblings = meets.filter(m => m.quadMeet && m.quadName === meet.quadName && m.date === meet.date);
+      if (siblings.length > 1) {
+        const tabs = siblings.map(s => {
+          const active = s.id === meet.id;
+          return `<button class="quad-tab${active?' active':''}" data-meet-id="${s.id}">${active?'▶ ':''} vs ${s.opponent} <span class="quad-tab-result ${s.result?.toLowerCase()}">${s.result||''}</span></button>`;
+        });
+        quadNav = `
+          <div class="quad-nav">
+            <div class="quad-nav-label">🏆 ${meet.quadName}</div>
+            <div class="quad-nav-tabs">${tabs.join('')}</div>
+          </div>`;
+      }
+    }
+
     content.innerHTML = `
       ${liveBanner}
+      ${quadNav}
       <div class="detail-hero">
         <div class="meet-header">
           <div>
@@ -1084,19 +1102,48 @@
       if(gymnBio.classYear) {
         const classEmoji = {Freshman:'🐣',Sophomore:'📚',Junior:'🎯',Senior:'👑',Graduate:'🎓'}[gymnBio.classYear]||'🎓';
         const classInsight = {
-          Freshman: 'Still figuring it all out — but the data suggests they\'re already contributing.',
-          Sophomore: 'The sophomore slump is a myth — at least for this one.',
-          Junior: 'Peak experience without senior nerves. Prime gymnastics years.',
-          Senior: 'This is it — final season, full experience, nothing to lose.',
+          Freshman: 'First-year contributor — the pressure is already on.',
+          Sophomore: 'Sophomore slump? The numbers say otherwise.',
+          Junior: 'Peak experience without senior pressure. Prime years.',
+          Senior: 'Final season. Full experience. Nothing to lose.',
         }[gymnBio.classYear] || '';
         items.push(`${classEmoji} <strong>${gymnBio.classYear}</strong> from ${gymnBio.hometown||'unknown'}. ${classInsight}`);
       }
 
-      // Home state proximity effect
-      const homeStateMeets = scored.filter(s => {
-        const venueStateMap = {'OR':true}; // simplistic — home meets are OR
-        return s.isHome && gymnBio.homeState === 'OR' || (!s.isHome && gymnBio.homeState !== 'OR');
-      });
+      if(gymnBio.major) {
+        const majorInsight = {
+          'Kinesiology': 'Studies Kinesiology — literally the science of movement. Knows exactly what their body is doing mid-rotation.',
+          'Animal Science': 'Animal Science major — used to handling high-pressure situations (livestock). Beam nerves? Nothing compared to that.',
+          'Mechanical Engineering': 'Mechanical Engineering brain — treats gymnastics like a physics problem. Force = mass × acceleration.',
+          'Business Administration': 'Business mind — calculates ROI on every training hour. Efficiency is the goal.',
+          'Biology': 'Biology major — understands muscle fiber mechanics at a cellular level.',
+        }[gymnBio.major] || `Studies <strong>${gymnBio.major}</strong>.`;
+        const asp = gymnBio.aspiration ? ` Aspiring ${gymnBio.aspiration}.` : '';
+        items.push(`🎓 ${majorInsight}${asp}`);
+      }
+
+      if(gymnBio.height) {
+        const heightParts = gymnBio.height.split('-');
+        const heightInches = parseInt(heightParts[0])*12 + parseInt(heightParts[1]||0);
+        const heightNote = heightInches <= 61
+          ? `At ${gymnBio.height}, one of the shorter gymnasts on the team — lower center of gravity is a beam specialist's best friend.`
+          : heightInches >= 64
+          ? `At ${gymnBio.height}, among the taller gymnasts — more reach on bars, longer lines on floor.`
+          : `At ${gymnBio.height}, right in the middle of the team height range.`;
+        items.push(`📏 ${heightNote}`);
+      }
+
+      // Home state proximity: score at home vs away for gymnasts from non-OR states
+      if(gymnBio.homeState && gymnBio.homeState !== 'OR') {
+        const homeScores = scored.filter(s=>s.isHome).map(s=>s.avg).filter(Boolean);
+        const awayScores = scored.filter(s=>!s.isHome).map(s=>s.avg).filter(Boolean);
+        if(homeScores.length && awayScores.length) {
+          const diff = gmean(homeScores) - gmean(awayScores);
+          if(Math.abs(diff) > 0.03) {
+            items.push(`🗺️ From <strong>${gymnBio.hometown}</strong> — ${diff > 0 ? `performs <strong>${diff.toFixed(3)} better at Gill</strong> than anywhere else. Gill Coliseum feels like home.` : `actually averages <strong>${Math.abs(diff).toFixed(3)} higher on the road</strong>. Visiting Corvallis gets this gymnast fired up.`}`);
+          }
+        }
+      }
     }
 
     // Best and worst weather for this gymnast
@@ -1898,6 +1945,12 @@
       if (teamEl) {
         e.preventDefault();
         showTeamStats(teamEl.dataset.team);
+        return;
+      }
+      const quadTab = e.target.closest('.quad-tab');
+      if (quadTab && quadTab.dataset.meetId) {
+        e.preventDefault();
+        showMeetDetail(quadTab.dataset.meetId);
         return;
       }
       const recapToggle = e.target.closest('.recap-toggle');

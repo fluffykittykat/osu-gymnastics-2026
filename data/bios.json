@@ -3,108 +3,167 @@
     "hometown": "Pearland, Texas",
     "homeState": "TX",
     "classYear": "Freshman",
-    "height": "5-3"
+    "height": "5-3",
+    "major": "Animal Science",
+    "events": null,
+    "highSchool": "Hightower HS",
+    "aspiration": "Veterinarian"
   },
   "Ellie Weaver": {
     "hometown": "Battle Ground, Wash.",
     "homeState": "WA",
     "classYear": "Senior",
-    "height": "5-0"
+    "height": "5-0",
+    "major": null,
+    "events": null,
+    "highSchool": "Union HS"
   },
   "Francesca Caso": {
     "hometown": "Santa Monica, Calif.",
     "homeState": "CA",
     "classYear": "Senior",
-    "height": "5-4"
+    "height": "5-4",
+    "major": null,
+    "events": null,
+    "highSchool": "Tree Academy"
   },
   "Guilianna Fiorillo": {
     "hometown": "San Jos\u00e9, Calif.",
     "homeState": "CA",
     "classYear": "Sophomore",
-    "height": "5-4"
+    "height": "5-4",
+    "major": null,
+    "events": null,
+    "highSchool": "Saint Francis HS"
   },
   "Jennifer McMillian": {
     "hometown": "Charlotte, N.C.",
     "homeState": "NC",
     "classYear": "Senior",
-    "height": "5-5"
+    "height": "5-5",
+    "major": null,
+    "events": null,
+    "highSchool": "Covenant Day School"
   },
   "Katie Rude": {
     "hometown": "Stateline, Nev.",
     "homeState": "NV",
     "classYear": "Freshman",
-    "height": "5-1"
+    "height": "5-1",
+    "major": "Mechanical Engineering",
+    "events": null,
+    "highSchool": "Acellus Academy",
+    "aspiration": "Product Design"
   },
   "Kaylee Cheek": {
     "hometown": "Spanish Fork, Utah",
     "homeState": "UT",
     "classYear": "Freshman",
-    "height": "5-5"
+    "height": "5-5",
+    "major": "Kinesiology",
+    "events": null,
+    "highSchool": "Maple Mountain HS",
+    "aspiration": "Chiropractor"
   },
   "Kyanna Crabb": {
     "hometown": "Vancouver, Wash.",
     "homeState": "WA",
     "classYear": "Sophomore",
-    "height": "5-1"
+    "height": "5-1",
+    "major": "Business Administration",
+    "events": null,
+    "highSchool": "Ridgefield HS",
+    "aspiration": "Gymnastics coach"
   },
   "Lauren Letzsch": {
     "hometown": "Golden, Colo.",
     "homeState": "CO",
     "classYear": "Senior",
-    "height": "5-2"
+    "height": "5-2",
+    "major": null,
+    "events": null,
+    "highSchool": "Colorado Connections Academy"
   },
   "Mia Heather": {
     "hometown": "San Francisco, Calif.",
     "homeState": "CA",
     "classYear": "Junior",
-    "height": "5-2"
+    "height": "5-2",
+    "major": null,
+    "events": null,
+    "highSchool": "Independence HS"
   },
   "Olivia Buckner": {
     "hometown": "Riverton, Utah",
     "homeState": "UT",
     "classYear": "Junior",
-    "height": "5-4"
+    "height": "5-4",
+    "major": "Kinesiology",
+    "events": null,
+    "highSchool": "Riverton HS"
   },
   "Paloma Spiridonova": {
     "hometown": "Dallas, Texas",
     "homeState": "TX",
     "classYear": "Freshman",
-    "height": "5-3"
+    "height": "5-3",
+    "major": "Biology",
+    "events": null,
+    "highSchool": "Connections Academy",
+    "aspiration": "Dentistry"
   },
   "Paulina Vargas": {
     "hometown": "Mexico City, Mexico",
     "homeState": "INTL",
     "classYear": "Sophomore",
-    "height": "5-0"
+    "height": "5-0",
+    "major": null,
+    "events": null,
+    "highSchool": "Anahuac HS"
   },
   "Reina Marchal": {
     "hometown": "Las Vegas, Nev.",
     "homeState": "NV",
     "classYear": "Sophomore",
-    "height": "5-3"
+    "height": "5-3",
+    "major": null,
+    "events": null,
+    "highSchool": "Odyssey Charter HS"
   },
   "Savannah Miller": {
     "hometown": "Waterford, Mich.",
     "homeState": "MI",
     "classYear": "Senior",
-    "height": "5-2"
+    "height": "5-2",
+    "major": null,
+    "events": null,
+    "highSchool": "Lakeland HS"
   },
   "Sophia Esposito": {
     "hometown": "Melville, N.Y.",
     "homeState": "NY",
     "classYear": "Junior",
-    "height": "5-3"
+    "height": "5-3",
+    "major": null,
+    "events": null,
+    "highSchool": "Half Hollow Hills HS East"
   },
   "Sophia Kaloudis": {
     "hometown": "Huntington, N.Y.",
     "homeState": "NY",
     "classYear": "Sophomore",
-    "height": "5-3"
+    "height": "5-3",
+    "major": null,
+    "events": null,
+    "highSchool": "Huntington HS"
   },
   "Taylor DeVries": {
     "hometown": "Roscoe, Ill.",
     "homeState": "IL",
     "classYear": "Junior",
-    "height": "5-4"
+    "height": "5-4",
+    "major": null,
+    "events": null,
+    "highSchool": "Rockford Christian HS"
   }
 }
