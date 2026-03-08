@@ -832,39 +832,55 @@
   function renderLeaderboard(event) {
     document.querySelectorAll('.event-tab').forEach(t => t.classList.toggle('active', t.dataset.event === event));
 
-    const allScores = [];
-    meets.forEach(meet => {
+    // Group scores by gymnast
+    const byGymnast = {};
+    const sortedMeets = meets.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    sortedMeets.forEach(meet => {
       meet.athletes.forEach(a => {
         if (a.scores[event] !== undefined) {
-          allScores.push({
-            name: a.name,
-            score: a.scores[event],
-            meetDate: meet.date,
-            opponent: meet.opponent,
-            meetId: meet.id,
-          });
+          if (!byGymnast[a.name]) byGymnast[a.name] = [];
+          byGymnast[a.name].push({ score: a.scores[event], meetDate: meet.date, opponent: meet.opponent, meetId: meet.id });
         }
       });
     });
 
-    allScores.sort((a, b) => b.score - a.score);
-    const top = allScores.slice(0, 25);
+    // Build per-gymnast stats
+    const gymnasts = Object.entries(byGymnast).map(([name, entries]) => {
+      const scores = entries.map(e => e.score);
+      const best = entries.reduce((a, b) => a.score > b.score ? a : b);
+      const avg = scores.reduce((s, v) => s + v, 0) / scores.length;
+      const recent = entries[entries.length - 1];
+      return { name, best, avg, recent, count: scores.length };
+    });
+
+    gymnasts.sort((a, b) => b.best.score - a.best.score);
 
     const list = document.getElementById('leaderboardList');
-    if (top.length === 0) {
+    if (gymnasts.length === 0) {
       list.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><p class="empty-text">No scores available for this event.</p></div>';
       return;
     }
 
-    list.innerHTML = top.map((s, i) => `
+    list.innerHTML = gymnasts.map((g, i) => {
+      const photo = photos[g.name];
+      const avatar = photo
+        ? `<img src="${photo}" class="lb-avatar" alt="${g.name}">`
+        : `<div class="lb-avatar lb-avatar-initials">${g.name.split(' ').map(n => n[0]).join('')}</div>`;
+      return `
       <div class="leaderboard-item">
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
+        ${avatar}
         <div class="lb-info">
-          <div class="lb-name"><span class="clickable-name" data-gymnast="${s.name}">${s.name}</span></div>
-          <div class="lb-context">${formatDate(s.meetDate)} vs <span class="clickable-meet" data-meet-id="${s.meetId}">${s.opponent}</span></div>
+          <div class="lb-name"><span class="clickable-name" data-gymnast="${g.name}">${g.name}</span></div>
+          <div class="lb-context">Best: <span class="clickable-meet" data-meet-id="${g.best.meetId}">${formatDate(g.best.meetDate)} vs ${g.best.opponent}</span></div>
         </div>
-        <div class="lb-score">${s.score.toFixed(3)}</div>
-      </div>`).join('');
+        <div class="lb-stats">
+          <div class="lb-stat"><span class="lb-stat-label">HIGH</span><span class="lb-stat-val">${g.best.score.toFixed(3)}</span></div>
+          <div class="lb-stat"><span class="lb-stat-label">AVG</span><span class="lb-stat-val">${g.avg.toFixed(3)}</span></div>
+          <div class="lb-stat"><span class="lb-stat-label">LAST</span><span class="lb-stat-val">${g.recent.score.toFixed(3)}</span></div>
+        </div>
+      </div>`;
+    }).join('');
   }
 
   // ===== Event Listeners =====

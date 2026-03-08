@@ -1523,3 +1523,49 @@ main {
   display: block;
 }
 .recap-toggle:hover { text-decoration: underline; }
+
+/* ===== Leaderboard stats ===== */
+.leaderboard-item { align-items: center; gap: 0.75rem; }
+.lb-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+  border: 2px solid var(--orange);
+  flex-shrink: 0;
+}
+.lb-avatar-initials {
+  background: #2a2a2a;
+  border: 2px solid #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Oswald;
+  font-size: 0.8rem;
+  color: var(--orange);
+  flex-shrink: 0;
+}
+.lb-stats {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.lb-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 48px;
+}
+.lb-stat-label {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  font-family: Oswald;
+}
+.lb-stat-val {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.lb-stat:first-child .lb-stat-val { color: var(--orange); }
