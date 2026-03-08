@@ -26,13 +26,63 @@
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
   }
 
+  function slugify(name) {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+
+  function getMonth(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.toLocaleDateString('en-US', { month: 'long' }).toLowerCase();
+  }
+
+  // ===== Hash Routing =====
+  function navigate(hash, replace) {
+    if (replace) {
+      history.replaceState(null, '', '#' + hash);
+    } else {
+      history.pushState(null, '', '#' + hash);
+    }
+    routeFromHash();
+  }
+
+  function routeFromHash() {
+    const hash = location.hash.slice(1) || 'season';
+    const [path, queryStr] = hash.split('?');
+    const params = new URLSearchParams(queryStr || '');
+
+    if (path === 'season') {
+      const filter = params.get('filter');
+      if (filter) currentFilter = filter;
+      showView('season', true);
+    } else if (path.startsWith('meet/')) {
+      const meetId = path.slice(5);
+      showMeetDetail(meetId, true);
+    } else if (path.startsWith('gymnast/')) {
+      const slug = path.slice(8);
+      showGymnastProfileBySlug(slug, true);
+    } else if (path.startsWith('leaderboard/')) {
+      const event = path.slice(12);
+      showView('leaderboards', true);
+      renderLeaderboard(event);
+    } else if (path === 'gymnasts') {
+      showView('gymnasts', true);
+    } else if (path === 'leaderboards') {
+      showView('leaderboards', true);
+    } else if (path.startsWith('opponent/')) {
+      const oppSlug = path.slice(9);
+      showOpponentMeets(oppSlug, true);
+    } else {
+      showView('season', true);
+    }
+  }
+
   // ===== Data Loading =====
   async function loadData() {
     try {
       const res = await fetch('/api/meets');
       meets = await res.json();
       document.getElementById('loading').style.display = 'none';
-      showView('season');
+      routeFromHash();
     } catch (err) {
       document.getElementById('loading').innerHTML =
         '<div class="empty-state"><div class="empty-icon">😕</div><p class="empty-text">Failed to load data. Is the server running?</p></div>';
@@ -40,7 +90,7 @@
   }
 
   // ===== Navigation =====
-  function showView(view) {
+  function showView(view, fromRoute) {
     currentView = view;
     document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
     document.querySelectorAll('.nav-link, .bottom-nav-item').forEach(l => l.classList.remove('active'));
@@ -50,13 +100,25 @@
     if (el) {
       el.style.display = 'block';
       el.style.animation = 'none';
-      el.offsetHeight; // trigger reflow
+      el.offsetHeight;
       el.style.animation = '';
     }
 
     if (view === 'season') renderSeason();
     else if (view === 'gymnasts') renderGymnasts();
     else if (view === 'leaderboards') renderLeaderboard('vault');
+
+    if (!fromRoute) {
+      navigate(view);
+    }
+  }
+
+  // ===== Breadcrumbs =====
+  function renderBreadcrumbs(crumbs) {
+    return `<nav class="breadcrumbs">${crumbs.map((c, i) => {
+      if (i === crumbs.length - 1) return `<span class="breadcrumb-current">${c.label}</span>`;
+      return `<a href="#${c.hash}" class="breadcrumb-link">${c.label}</a>`;
+    }).join('<span class="breadcrumb-sep">›</span>')}</nav>`;
   }
 
   // ===== Season Overview =====
@@ -78,9 +140,18 @@
 
   function renderScoreTrend() {
     const container = document.getElementById('scoreTrend');
+    // Deduplicate by date for trend (quad meets share a date/score)
+    const seen = new Set();
+    const uniqueMeets = meets.filter(m => {
+      const key = m.date;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     const w = 700, h = 180;
     const pad = { top: 20, right: 20, bottom: 35, left: 50 };
-    const scores = meets.map(m => m.osuScore);
+    const scores = uniqueMeets.map(m => m.osuScore);
     const min = Math.min(...scores) - 0.5;
     const max = Math.max(...scores) + 0.5;
     const xScale = i => pad.left + (i / (scores.length - 1)) * (w - pad.left - pad.right);
@@ -89,16 +160,13 @@
     let pathD = scores.map((s, i) => `${i === 0 ? 'M' : 'L'}${xScale(i).toFixed(1)},${yScale(s).toFixed(1)}`).join(' ');
 
     let dots = scores.map((s, i) => {
-      const color = meets[i].result === 'W' ? '#2ecc71' : '#e74c3c';
-      return `<circle cx="${xScale(i).toFixed(1)}" cy="${yScale(s).toFixed(1)}" r="5" fill="${color}" stroke="var(--dark)" stroke-width="2">
-        <title>${formatDate(meets[i].date)}: ${s.toFixed(3)} (${meets[i].result})</title>
+      const color = uniqueMeets[i].result === 'W' ? '#2ecc71' : '#e74c3c';
+      return `<circle cx="${xScale(i).toFixed(1)}" cy="${yScale(s).toFixed(1)}" r="5" fill="${color}" stroke="var(--dark)" stroke-width="2" style="cursor:pointer" data-meet-id="${uniqueMeets[i].id}">
+        <title>${formatDate(uniqueMeets[i].date)}: ${s.toFixed(3)} (${uniqueMeets[i].result})</title>
       </circle>`;
     }).join('');
 
-    // Y-axis labels
-    const yTicks = 5;
-    let yLabels = '';
-    let yGridLines = '';
+    let yTicks = 5, yLabels = '', yGridLines = '';
     for (let i = 0; i <= yTicks; i++) {
       const v = min + (i / yTicks) * (max - min);
       const y = yScale(v);
@@ -106,8 +174,7 @@
       yGridLines += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="#333" stroke-width="0.5"/>`;
     }
 
-    // X-axis labels
-    let xLabels = meets.map((m, i) => {
+    let xLabels = uniqueMeets.map((m, i) => {
       const x = xScale(i);
       return `<text x="${x}" y="${h - 5}" text-anchor="middle" fill="#999" font-size="9" font-family="Inter">${formatDate(m.date)}</text>`;
     }).join('');
@@ -132,12 +199,16 @@
       return m.result === currentFilter;
     });
 
+    // Update filter button active state
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.filter === currentFilter);
+    });
+
     if (filtered.length === 0) {
       grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><p class="empty-text">No meets match this filter.</p></div>';
       return;
     }
 
-    // Group quad meets together; non-quad meets appear as-is
     const rendered = [];
     const seenQuads = new Set();
 
@@ -145,7 +216,6 @@
       if (m.quadMeet && m.quadName) {
         if (!seenQuads.has(m.quadName)) {
           seenQuads.add(m.quadName);
-          // Gather all matchups for this quad
           const quadMeets = filtered.filter(q => q.quadName === m.quadName);
           rendered.push(renderQuadGroup(quadMeets));
         }
@@ -156,7 +226,6 @@
 
     grid.innerHTML = rendered.join('');
 
-    // Animate bars after render
     requestAnimationFrame(() => {
       grid.querySelectorAll('.event-bar-fill').forEach(bar => {
         const w = bar.style.width;
@@ -172,7 +241,7 @@
       return `
         <div class="event-bar-item">
           <div class="event-bar-label">
-            <span>${EVENT_SHORT[e]}</span>
+            <span class="event-bar-name clickable" data-event="${e}">${EVENT_SHORT[e]}</span>
             <span>${m.events[e].osu.toFixed(3)}</span>
           </div>
           <div class="event-bar-track">
@@ -186,8 +255,8 @@
         <div class="meet-header">
           <div>
             <div class="meet-opponent">${m.opponent}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''}</div>
-            <div class="meet-date">${formatDateLong(m.date)}</div>
-            <div class="meet-location">${m.location}</div>
+            <div class="meet-date clickable" data-date="${m.date}">${formatDateLong(m.date)}</div>
+            <div class="meet-location clickable" data-location="${m.isHome ? 'home' : 'away'}">${m.location}</div>
           </div>
           <span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>
         </div>
@@ -240,15 +309,25 @@
   }
 
   // ===== Meet Detail =====
-  function showMeetDetail(meetId) {
+  function showMeetDetail(meetId, fromRoute) {
     const meet = meets.find(m => m.id === meetId);
     if (!meet) return;
 
+    currentView = 'meet';
     document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    document.querySelectorAll('.nav-link, .bottom-nav-item').forEach(l => l.classList.remove('active'));
     const view = document.getElementById('view-meet');
     view.style.display = 'block';
 
+    if (!fromRoute) navigate('meet/' + meetId);
+
     const content = document.getElementById('meetDetailContent');
+
+    // Breadcrumbs
+    const breadcrumbs = renderBreadcrumbs([
+      { label: 'Season', hash: 'season' },
+      { label: `${meet.opponent} ${formatDate(meet.date)}`, hash: 'meet/' + meetId }
+    ]);
 
     // Quad meet teams table
     let teamsTable = '';
@@ -271,7 +350,32 @@
         </div>`;
     }
 
-    // Event detail cards with athlete lineups
+    // Recap section
+    let recapSection = '';
+    if (meet.recap) {
+      const paragraphs = meet.recap.split('\n\n').filter(p => p.trim());
+      const firstPara = paragraphs[0] || '';
+      const restParas = paragraphs.slice(1);
+      const hasMore = restParas.length > 2;
+
+      recapSection = `
+        <div class="section-card recap-card">
+          <h2 class="section-title">📰 Meet Recap</h2>
+          <div class="recap-body">
+            <p class="recap-lede">${firstPara}</p>
+            ${restParas.slice(0, 2).map(p => `<p class="recap-text">${p}</p>`).join('')}
+            ${hasMore ? `
+              <div class="recap-collapsed" id="recapMore" style="display:none;">
+                ${restParas.slice(2).map(p => `<p class="recap-text">${p}</p>`).join('')}
+              </div>
+              <button class="recap-toggle" id="recapToggle">Read more ▾</button>
+            ` : ''}
+          </div>
+          ${meet.recapUrl ? `<div class="recap-attribution"><a href="${meet.recapUrl}" target="_blank" rel="noopener">Source: Oregon State Athletics ↗</a></div>` : ''}
+        </div>`;
+    }
+
+    // Event detail cards with clickable athlete names and event names
     const eventCards = ['vault', 'bars', 'beam', 'floor'].map(event => {
       const eventAthletes = meet.athletes
         .filter(a => a.scores[event] !== undefined)
@@ -280,7 +384,7 @@
       const rows = eventAthletes.map((a, i) => `
         <tr>
           <td>${i + 1}</td>
-          <td>${a.name}</td>
+          <td><a href="#gymnast/${slugify(a.name)}" class="athlete-link">${a.name}</a></td>
           <td class="score-cell">${a.scores[event].toFixed(3)}</td>
         </tr>`).join('');
 
@@ -290,9 +394,9 @@
 
       return `
         <div class="detail-event-card">
-          <div class="detail-event-title">${EVENT_NAMES[event]}</div>
+          <div class="detail-event-title"><a href="#leaderboard/${event}" class="event-title-link">${EVENT_NAMES[event]}</a></div>
           <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
-            <span style="color:var(--orange);font-family:Oswald;font-weight:600;">${osuScore.toFixed(3)}</span>
+            <a href="#leaderboard/${event}" class="score-link" style="color:var(--orange);font-family:Oswald;font-weight:600;">${osuScore.toFixed(3)}</a>
             <span style="color:var(--text-muted);font-size:0.85rem;">vs ${oppScore.toFixed(3)}</span>
           </div>
           <div class="event-bar-track" style="margin-bottom:0.75rem;">
@@ -305,11 +409,15 @@
         </div>`;
     }).join('');
 
+    // Opponent link
+    const opponentSlug = slugify(meet.opponent);
+
     content.innerHTML = `
+      ${breadcrumbs}
       <div class="detail-hero">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent}</div>
+            <div class="meet-opponent" style="font-size:1.5rem;">vs <a href="#opponent/${opponentSlug}" class="opponent-link">${meet.opponent}</a></div>
             <div class="meet-date">${formatDateLong(meet.date)}</div>
             <div class="meet-location">${meet.location}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
           </div>
@@ -318,12 +426,55 @@
         <div class="meet-scores" style="margin-top:1rem;">
           <div class="team-score"><div class="team-name">Oregon State</div><div class="score score-osu" style="font-size:2rem;">${meet.osuScore.toFixed(3)}</div></div>
           <div class="score-vs">vs</div>
-          <div class="team-score"><div class="team-name">Opponent</div><div class="score" style="font-size:2rem;">${meet.opponentScore.toFixed(3)}</div></div>
+          <div class="team-score"><div class="team-name"><a href="#opponent/${opponentSlug}" class="opponent-link">${meet.opponent}</a></div><div class="score" style="font-size:2rem;">${meet.opponentScore.toFixed(3)}</div></div>
         </div>
       </div>
       ${teamsTable}
+      ${recapSection}
       <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
       <div class="detail-event-grid">${eventCards}</div>
+    `;
+
+    // Recap toggle
+    const toggleBtn = document.getElementById('recapToggle');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        const more = document.getElementById('recapMore');
+        const expanded = more.style.display !== 'none';
+        more.style.display = expanded ? 'none' : 'block';
+        toggleBtn.textContent = expanded ? 'Read more ▾' : 'Show less ▴';
+      });
+    }
+  }
+
+  // ===== Opponent Meets View =====
+  function showOpponentMeets(oppSlug, fromRoute) {
+    const oppMeets = meets.filter(m => slugify(m.opponent) === oppSlug);
+    if (oppMeets.length === 0) { navigate('season'); return; }
+
+    currentView = 'opponent';
+    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    document.querySelectorAll('.nav-link, .bottom-nav-item').forEach(l => l.classList.remove('active'));
+    const view = document.getElementById('view-meet');
+    view.style.display = 'block';
+
+    if (!fromRoute) navigate('opponent/' + oppSlug);
+
+    const oppName = oppMeets[0].opponent;
+    const breadcrumbs = renderBreadcrumbs([
+      { label: 'Season', hash: 'season' },
+      { label: `vs ${oppName}`, hash: 'opponent/' + oppSlug }
+    ]);
+
+    const cards = oppMeets.map(m => renderMeetCard(m)).join('');
+
+    document.getElementById('meetDetailContent').innerHTML = `
+      ${breadcrumbs}
+      <div class="section-card" style="margin-bottom:1.5rem;">
+        <h2 class="section-title">All Meets vs ${oppName}</h2>
+        <p style="color:var(--text-muted);font-size:0.9rem;">${oppMeets.length} meet${oppMeets.length > 1 ? 's' : ''} this season</p>
+      </div>
+      <div class="meets-grid">${cards}</div>
     `;
   }
 
@@ -333,7 +484,7 @@
     meets.forEach(meet => {
       meet.athletes.forEach(a => {
         if (!profiles[a.name]) {
-          profiles[a.name] = { name: a.name, meets: [], events: new Set() };
+          profiles[a.name] = { name: a.name, slug: slugify(a.name), meets: [], events: new Set() };
         }
         const entry = { meetId: meet.id, date: meet.date, opponent: meet.opponent, scores: { ...a.scores } };
         profiles[a.name].meets.push(entry);
@@ -343,19 +494,20 @@
       });
     });
 
-    // Compute averages and bests
     Object.values(profiles).forEach(p => {
       p.averages = {};
       p.bests = {};
+      p.bestMeets = {};
       p.eventsList = Array.from(p.events);
 
       ['vault', 'bars', 'beam', 'floor', 'aa'].forEach(event => {
-        const scores = p.meets
-          .filter(m => m.scores[event] !== undefined)
-          .map(m => m.scores[event]);
+        const entries = p.meets.filter(m => m.scores[event] !== undefined);
+        const scores = entries.map(m => m.scores[event]);
         if (scores.length > 0) {
           p.averages[event] = scores.reduce((a, b) => a + b, 0) / scores.length;
           p.bests[event] = Math.max(...scores);
+          const bestIdx = scores.indexOf(p.bests[event]);
+          p.bestMeets[event] = entries[bestIdx].meetId;
         }
       });
 
@@ -390,7 +542,7 @@
       }).join('');
 
       return `
-        <div class="gymnast-card" data-gymnast="${p.name}">
+        <div class="gymnast-card" data-gymnast="${p.name}" data-slug="${p.slug}">
           <div class="gymnast-name">${p.name}</div>
           <div class="gymnast-events">${eventBadges}</div>
           <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem;">${p.totalMeets} meets</div>
@@ -399,30 +551,54 @@
     }).join('');
   }
 
-  function showGymnastProfile(name) {
+  function showGymnastProfileBySlug(slug, fromRoute) {
+    const profiles = getGymnastProfiles();
+    const p = profiles.find(pr => pr.slug === slug);
+    if (!p) return;
+    showGymnastProfile(p.name, fromRoute);
+  }
+
+  function showGymnastProfile(name, fromRoute) {
     const profiles = getGymnastProfiles();
     const p = profiles.find(pr => pr.name === name);
     if (!p) return;
+
+    currentView = 'gymnast';
+
+    if (!fromRoute) navigate('gymnast/' + p.slug);
+
+    // Hide cards, show gymnasts view
+    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    document.querySelectorAll('.nav-link, .bottom-nav-item').forEach(l => l.classList.remove('active'));
+    document.querySelectorAll('[data-view="gymnasts"]').forEach(l => l.classList.add('active'));
+    document.getElementById('view-gymnasts').style.display = 'block';
 
     document.getElementById('gymnastCards').style.display = 'none';
     const detail = document.getElementById('gymnastDetail');
     detail.style.display = 'block';
 
+    // Breadcrumbs
+    const breadcrumbs = renderBreadcrumbs([
+      { label: 'Gymnasts', hash: 'gymnasts' },
+      { label: p.name, hash: 'gymnast/' + p.slug }
+    ]);
+
     // Stats grid
     const statsGrid = ['vault', 'bars', 'beam', 'floor'].map(event => {
       if (!p.averages[event]) return '';
+      const bestMeetId = p.bestMeets[event];
       return `
         <div class="profile-stat">
           <div class="stat-value" style="color:var(--orange)">${p.averages[event].toFixed(3)}</div>
           <div class="stat-label">${EVENT_NAMES[event]} Avg</div>
         </div>
         <div class="profile-stat">
-          <div class="stat-value">${p.bests[event].toFixed(3)}</div>
+          <a href="#meet/${bestMeetId}" class="pb-link"><div class="stat-value">${p.bests[event].toFixed(3)} ★</div></a>
           <div class="stat-label">${EVENT_NAMES[event]} Best</div>
         </div>`;
     }).join('');
 
-    // Sparklines per event
+    // Sparklines
     const sparklines = ['vault', 'bars', 'beam', 'floor'].map(event => {
       const eventMeets = p.meets.filter(m => m.scores[event] !== undefined);
       if (eventMeets.length < 2) return '';
@@ -435,20 +611,20 @@
         </div>`;
     }).join('');
 
-    // Meet history table
+    // Meet history table with clickable scores and meet links
     const historyRows = p.meets.map(m => {
       const cells = ['vault', 'bars', 'beam', 'floor'].map(e => {
         if (m.scores[e] === undefined) return '<td style="color:var(--text-muted)">—</td>';
         const isBest = p.bests[e] === m.scores[e];
-        return `<td class="${isBest ? 'personal-best' : ''}">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</td>`;
+        return `<td class="${isBest ? 'personal-best' : ''}"><a href="#meet/${m.meetId}" class="score-history-link">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</a></td>`;
       }).join('');
-      const aa = m.scores.aa ? `<td>${m.scores.aa.toFixed(3)}</td>` : '<td style="color:var(--text-muted)">—</td>';
-      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent}</td>${cells}${aa}</tr>`;
+      const aa = m.scores.aa ? `<td><a href="#meet/${m.meetId}" class="score-history-link">${m.scores.aa.toFixed(3)}</a></td>` : '<td style="color:var(--text-muted)">—</td>';
+      return `<tr><td><a href="#meet/${m.meetId}" class="score-history-link">${formatDate(m.date)}</a></td><td><a href="#meet/${m.meetId}" class="score-history-link">${m.opponent}</a></td>${cells}${aa}</tr>`;
     }).join('');
 
     detail.innerHTML = `
       <div class="gymnast-profile">
-        <button class="back-btn" id="backToGymnasts">← Back to Gymnasts</button>
+        ${breadcrumbs}
         <div class="profile-header">
           <div class="profile-name">${p.name}</div>
           <div style="color:var(--text-muted);margin-top:0.25rem;">${p.totalMeets} meets competed • Oregon State</div>
@@ -465,11 +641,6 @@
           </div>
         </div>
       </div>`;
-
-    document.getElementById('backToGymnasts').addEventListener('click', () => {
-      detail.style.display = 'none';
-      document.getElementById('gymnastCards').style.display = 'grid';
-    });
   }
 
   function createSparkline(scores, labels) {
@@ -507,6 +678,7 @@
         if (a.scores[event] !== undefined) {
           allScores.push({
             name: a.name,
+            slug: slugify(a.name),
             score: a.scores[event],
             meetDate: meet.date,
             opponent: meet.opponent,
@@ -529,8 +701,8 @@
       <div class="leaderboard-item">
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
         <div class="lb-info">
-          <div class="lb-name">${s.name}</div>
-          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent}</div>
+          <a href="#gymnast/${s.slug}" class="lb-name athlete-link">${s.name}</a>
+          <a href="#meet/${s.meetId}" class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent}</a>
         </div>
         <div class="lb-score">${s.score.toFixed(3)}</div>
       </div>`).join('');
@@ -540,11 +712,16 @@
   document.addEventListener('DOMContentLoaded', () => {
     loadData();
 
-    // Navigation
+    // Hash navigation
+    window.addEventListener('popstate', routeFromHash);
+
+    // Navigation links
     document.querySelectorAll('[data-view]').forEach(link => {
       link.addEventListener('click', e => {
         e.preventDefault();
-        showView(link.dataset.view);
+        const view = link.dataset.view;
+        currentFilter = 'all';
+        navigate(view);
       });
     });
 
@@ -554,18 +731,38 @@
         currentFilter = btn.dataset.filter;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        if (currentFilter === 'all') {
+          navigate('season', true);
+        } else {
+          navigate('season?filter=' + currentFilter, true);
+        }
         renderMeetCards();
       });
     });
 
-    // Meet card click
+    // Meet card click (delegated)
     document.getElementById('meetsGrid').addEventListener('click', e => {
+      // Handle event name clicks on cards
+      const eventName = e.target.closest('.event-bar-name');
+      if (eventName) {
+        e.stopPropagation();
+        navigate('leaderboard/' + eventName.dataset.event);
+        return;
+      }
+
       const card = e.target.closest('.meet-card');
-      if (card) showMeetDetail(card.dataset.meetId);
+      if (card) navigate('meet/' + card.dataset.meetId);
     });
 
-    // Back button
-    document.getElementById('backToSeason').addEventListener('click', () => showView('season'));
+    // Score trend chart click
+    document.getElementById('scoreTrend').addEventListener('click', e => {
+      if (e.target.tagName === 'circle' && e.target.dataset.meetId) {
+        navigate('meet/' + e.target.dataset.meetId);
+      }
+    });
+
+    // Back to season
+    document.getElementById('backToSeason').addEventListener('click', () => navigate('season'));
 
     // Gymnast search
     document.getElementById('gymnastSearch').addEventListener('input', e => {
@@ -575,13 +772,17 @@
     // Gymnast card click
     document.getElementById('gymnastCards').addEventListener('click', e => {
       const card = e.target.closest('.gymnast-card');
-      if (card) showGymnastProfile(card.dataset.gymnast);
+      if (card) navigate('gymnast/' + card.dataset.slug);
     });
 
     // Event tabs
     document.getElementById('eventTabs').addEventListener('click', e => {
       const tab = e.target.closest('.event-tab');
-      if (tab) renderLeaderboard(tab.dataset.event);
+      if (tab) {
+        const event = tab.dataset.event;
+        navigate('leaderboard/' + event, true);
+        renderLeaderboard(event);
+      }
     });
   });
 })();
