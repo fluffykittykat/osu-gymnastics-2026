@@ -60,6 +60,15 @@ app.get('/api/photos', (req, res) => {
   }
 });
 
+app.get('/api/meet-photos', (req, res) => {
+  try {
+    const meetPhotos = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/meet_photos.json'), 'utf8'));
+    res.json(meetPhotos);
+  } catch (e) {
+    res.json({});
+  }
+});
+
 app.get('/api/meets', (req, res) => {
   if (meetsData) {
     res.json(meetsData);

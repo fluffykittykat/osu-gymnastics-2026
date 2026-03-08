@@ -6,6 +6,7 @@
   let meets = [];
   let photos = {};
   let bios = {};
+  let meetPhotos = {};
   let currentFilter = 'all';
   let currentView = 'season';
   let lastRefreshedTime = null;
@@ -170,10 +171,11 @@
   // ===== Data Loading =====
   async function loadData() {
     try {
-      const [meetsRes, photosRes, biosRes] = await Promise.all([fetch('/api/meets'), fetch('/api/photos'), fetch('/api/bios')]);
+      const [meetsRes, photosRes, biosRes, meetPhotosRes] = await Promise.all([fetch('/api/meets'), fetch('/api/photos'), fetch('/api/bios'), fetch('/api/meet-photos')]);
       meets = await meetsRes.json();
       photos = await photosRes.json();
       bios = await biosRes.json();
+      meetPhotos = await meetPhotosRes.json();
 
       // Set initial lastRefreshed from meet data
       const refreshed = meets.find(m => m.lastRefreshed);
@@ -910,8 +912,17 @@
         </div>`;
     }).join('');
 
+    // Meet card thumbnail from photos
+    const mpThumb = meetPhotos[m.date]?.heroImage;
+    const thumbHtml = mpThumb ? `
+      <div class="meet-card-thumb" style="position:relative;height:110px;overflow:hidden;border-radius:8px 8px 0 0;margin:-1rem -1rem 0.75rem -1rem;">
+        <img src="${mpThumb}" alt="${m.opponent}" style="width:100%;height:100%;object-fit:cover;object-position:center 30%;" loading="lazy" onerror="this.parentElement.style.display='none'">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(26,26,26,0.95) 0%,rgba(26,26,26,0.1) 60%,transparent 100%)"></div>
+      </div>` : '';
+
     return `
-      <div class="meet-card${m.status === 'in_progress' ? ' meet-card-live' : ''}" data-meet-id="${m.id}">
+      <div class="meet-card${m.status === 'in_progress' ? ' meet-card-live' : ''}" data-meet-id="${m.id}" style="overflow:hidden;">
+        ${thumbHtml}
         <div class="meet-header">
           <div>
             <div class="meet-opponent">${m.opponent}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''} ${statusBadge}</div>
@@ -951,8 +962,16 @@
         </div>
       </div>`).join('');
 
+    // Quad card photo banner
+    const qThumb = meetPhotos[first.date]?.heroImage;
+    const qThumbHtml = qThumb ? `<div style="height:90px;overflow:hidden;position:relative;">
+      <img src="${qThumb}" alt="${first.quadName}" style="width:100%;height:100%;object-fit:cover;object-position:center 30%;" loading="lazy" onerror="this.parentElement.style.display='none'">
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,var(--card))"></div>
+    </div>` : '';
+
     return `
       <div class="quad-group" style="border:1px solid ${isLive ? 'rgba(255,68,68,0.5)' : '#333'};border-radius:12px;overflow:hidden;background:var(--card);">
+        ${qThumbHtml}
         <div style="background:#1a1a1a;padding:0.75rem 1rem;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;">
           <div>
             <span style="font-family:Oswald;font-size:1.1rem;color:var(--orange);">${first.quadName}</span>
@@ -1427,9 +1446,23 @@
       }
     }
 
+    // Meet hero photo
+    const mpData = meetPhotos[meet.date];
+    const heroImg = mpData?.heroImage;
+    const heroHtml = heroImg ? `
+      <div class="meet-hero-photo" style="position:relative;width:100%;height:220px;overflow:hidden;border-radius:12px;margin-bottom:1rem;">
+        <img src="${heroImg}" alt="${meet.opponent} meet" style="width:100%;height:100%;object-fit:cover;object-position:center top;" loading="lazy" onerror="this.parentElement.style.display='none'">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 50%)"></div>
+        <div style="position:absolute;bottom:0.75rem;left:1rem;right:1rem;display:flex;justify-content:space-between;align-items:flex-end;">
+          <span style="color:#fff;font-family:Oswald;font-size:1.1rem;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.8)">vs ${meet.opponent}</span>
+          ${mpData?.recapUrl ? `<a href="${mpData.recapUrl}" target="_blank" style="color:rgba(255,255,255,0.75);font-size:0.72rem;text-decoration:none;background:rgba(0,0,0,0.4);padding:0.2rem 0.5rem;border-radius:4px">📸 osubeavers.com →</a>` : ''}
+        </div>
+      </div>` : '';
+
     content.innerHTML = `
       ${liveBanner}
       ${quadNav}
+      ${heroHtml}
       <div class="detail-hero">
         <div class="meet-header">
           <div>
@@ -1653,19 +1686,38 @@
       return `<tr><td>${formatDate(m.date)}</td><td><span class="clickable-meet" data-meet-id="${m.meetId}">${m.opponent}</span>${haBadge}</td>${cells}${aa}</tr>`;
     }).join('');
 
+    // Gymnast banner photo — large hero style
+    const gymnPhoto = photos[p.name];
+    const gymnBannerHtml = gymnPhoto ? `
+      <div class="gymnast-photo-banner" style="position:relative;width:100%;height:260px;overflow:hidden;border-radius:12px 12px 0 0;margin-bottom:0;">
+        <img src="${gymnPhoto}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;" loading="lazy">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(13,13,13,1) 0%,rgba(13,13,13,0.3) 50%,transparent 80%)"></div>
+        <div style="position:absolute;bottom:1rem;left:1rem;right:1rem;">
+          <div style="font-family:Oswald;font-size:1.8rem;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.9);line-height:1.1">${p.name}</div>
+          ${(()=>{
+            const pb = bios[p.name]||{};
+            const chips = [];
+            if(pb.position) chips.push(`<span style="background:var(--osu-orange);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.7rem;font-weight:700">${pb.position}</span>`);
+            if(pb.classYear) chips.push(`<span style="background:rgba(255,255,255,0.15);color:#ddd;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.7rem">${pb.classYear}</span>`);
+            if(pb.hometown) chips.push(`<span style="color:rgba(255,255,255,0.7);font-size:0.7rem">📍 ${pb.hometown}</span>`);
+            return chips.length ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.4rem;align-items:center">${chips.join('')}</div>` : '';
+          })()}
+        </div>
+      </div>` : '';
+
     detail.innerHTML = `
       <div class="gymnast-profile">
         <button class="back-btn" id="backToGymnasts">← Back to Gymnasts</button>
-        <div class="profile-header">
-          ${photos[p.name] ? `<img src="${photos[p.name]}" class="profile-headshot" alt="${p.name}">` : ''}
-          <div class="profile-name">${p.name}</div>
+        ${gymnBannerHtml}
+        <div class="profile-header" style="${gymnPhoto ? 'border-radius:0 0 12px 12px;margin-top:0;padding-top:0.75rem' : ''}">
+          ${!gymnPhoto ? `<div class="profile-name">${p.name}</div>` : ''}
           <div style="color:var(--text-muted);margin-top:0.25rem;">${p.totalMeets} competition days • Oregon State</div>
           ${(()=>{
             const pb = bios[p.name]||{};
             const pills = [];
-            if(pb.position) pills.push(`<span class="bio-pill bio-pill-pos">${pb.position}</span>`);
-            if(pb.classYear) pills.push(`<span class="bio-pill">${pb.classYear}</span>`);
-            if(pb.hometown) pills.push(`<span class="bio-pill">📍 ${pb.hometown}</span>`);
+            if(!gymnPhoto && pb.position) pills.push(`<span class="bio-pill bio-pill-pos">${pb.position}</span>`);
+            if(!gymnPhoto && pb.classYear) pills.push(`<span class="bio-pill">${pb.classYear}</span>`);
+            if(!gymnPhoto && pb.hometown) pills.push(`<span class="bio-pill">📍 ${pb.hometown}</span>`);
             if(pb.height) pills.push(`<span class="bio-pill">📏 ${pb.height}</span>`);
             if(pb.major) pills.push(`<span class="bio-pill">🎓 ${pb.major}</span>`);
             if(pb.highSchool) pills.push(`<span class="bio-pill">🏫 ${pb.highSchool}</span>`);
