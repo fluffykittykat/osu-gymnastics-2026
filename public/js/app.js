@@ -498,20 +498,36 @@
 
     // Event detail cards with athlete lineups
     const eventCards = ['vault', 'bars', 'beam', 'floor'].map(event => {
-      const eventAthletes = meet.athletes
-        .filter(a => a.scores[event] !== undefined)
-        .sort((a, b) => b.scores[event] - a.scores[event]);
-
-      const rows = eventAthletes.map((a, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${a.name}</td>
-          <td class="score-cell">${a.scores[event].toFixed(3)}</td>
-        </tr>`).join('');
-
       const osuScore = meet.events[event].osu;
       const oppScore = meet.events[event].opponent;
       const barPct = ((osuScore / 50) * 100).toFixed(1);
+
+      let rows;
+      if (meet.lineups && meet.lineups[event] && meet.lineups[event].length > 0) {
+        // Render in competition order using lineup data
+        const lineup = meet.lineups[event];
+        const topScore = Math.max(...lineup.map(e => e.score));
+        rows = lineup.map(entry => {
+          const isTop = entry.score === topScore;
+          return `
+            <tr>
+              <td style="color:#aaa;font-size:0.75rem;font-family:monospace;width:1.5rem;">${entry.position}</td>
+              <td>${entry.name}</td>
+              <td class="score-cell${isTop ? ' score-top' : ''}">${entry.score.toFixed(3)}</td>
+            </tr>`;
+        }).join('');
+      } else {
+        // Fallback: sort by score descending (legacy behaviour)
+        const eventAthletes = meet.athletes
+          .filter(a => a.scores[event] !== undefined)
+          .sort((a, b) => b.scores[event] - a.scores[event]);
+        rows = eventAthletes.map((a, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${a.name}</td>
+            <td class="score-cell">${a.scores[event].toFixed(3)}</td>
+          </tr>`).join('');
+      }
 
       return `
         <div class="detail-event-card">

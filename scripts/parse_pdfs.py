@@ -181,36 +181,39 @@ def parse_osu_athletes(pages_text):
     """
     Parse OSU athlete scores from NCAA score sheet pages.
     Handles both spaced (one name per line) and compact (concatenated names) formats.
+    Returns (athletes_list, lineups_dict) where lineups_dict maps event -> ordered list
+    of {position, name, score} dicts reflecting competition order.
     """
     athletes = {}
-    
+    lineups = {}  # event -> [(name, score), ...] in competition order (raw, pre-name-fix)
+
     for text in pages_text:
         if "Team: Oregon State" not in text and "Team:Oregon State" not in text:
             continue
-        
+
         lines = text.split("\n")
         current_event = None
         current_scores = []
         collecting_names = False
         names_text = ""
-        
+
         i = 0
         while i < len(lines):
             line = lines[i]
             stripped = line.strip()
-            
+
             # Detect event headers: "V\nT" or "VT" on a line
             next_stripped = lines[i + 1].strip() if i + 1 < len(lines) else ""
-            
+
             def _start_event(event_name, advance):
                 nonlocal current_event, current_scores, collecting_names, names_text
-                _flush_event(athletes, current_event, current_scores, names_text)
+                _flush_event(athletes, lineups, current_event, current_scores, names_text)
                 current_event = event_name
                 current_scores = []
                 collecting_names = False
                 names_text = ""
                 return advance
-            
+
             if (stripped == "V" and next_stripped == "T") or stripped == "VT":
                 skip = _start_event("vault", 2 if stripped == "V" else 1)
                 i += skip; continue
@@ -226,11 +229,11 @@ def parse_osu_athletes(pages_text):
             elif (stripped == "F" and next_stripped == "X") or stripped == "FX":
                 skip = _start_event("floor", 2 if stripped == "F" else 1)
                 i += skip; continue
-            
+
             if current_event is None:
                 i += 1
                 continue
-            
+
             # Score lines: individual "1 9.95 9.85 9.95 9.90 9.875" OR
             # compact "#Name SV1 J1...1 9.959.75... 9.7502 10.00..."
             if not collecting_names:
@@ -245,28 +248,28 @@ def parse_osu_athletes(pages_text):
                         nums = re.findall(r"[\d]+\.[\d]+", stripped)
                         if nums:
                             current_scores.append(float(nums[-1]))
-            
+
             # Event total triggers name collection
             if re.match(r"(VT|UB|BB|FX)\s+Score:", stripped):
                 collecting_names = True
                 names_text = ""
                 i += 1
                 continue
-            
+
             # Collecting names until we hit # or Judge or empty or next event
             if collecting_names:
                 if stripped.startswith("#") or "Judge" in stripped or stripped == "\xa0" or stripped == "":
-                    _flush_event(athletes, current_event, current_scores, names_text)
+                    _flush_event(athletes, lineups, current_event, current_scores, names_text)
                     collecting_names = False
                     names_text = ""
                 elif re.search(r"[A-Za-z]", stripped) and "Score" not in stripped and "©" not in stripped and "Running" not in stripped:
                     names_text += stripped
-            
+
             i += 1
-        
+
         # Flush last event
-        _flush_event(athletes, current_event, current_scores, names_text)
-        
+        _flush_event(athletes, lineups, current_event, current_scores, names_text)
+
         # Parse AA from Final Score section
         final_idx = text.find("Final Score:")
         if final_idx >= 0:
@@ -288,20 +291,25 @@ def parse_osu_athletes(pages_text):
                                 athletes[name]["scores"]["aa"] = aa_scores[4]
                             break
                     break
-    
-    return fix_name_splits(list(athletes.values()))
+
+    fixed_athletes = fix_name_splits(list(athletes.values()))
+    fixed_lineups = fix_lineup_names(lineups)
+    return fixed_athletes, fixed_lineups
 
 
-def _flush_event(athletes, event, scores, names_text):
-    """Assign scores to athletes for a given event."""
+def _flush_event(athletes, lineups, event, scores, names_text):
+    """Assign scores to athletes for a given event and record competition-order lineup."""
     if not event or not scores or not names_text:
         return
     names = split_concatenated_names(names_text)
+    if event not in lineups:
+        lineups[event] = []
     for j, name in enumerate(names):
         if j < len(scores):
             if name not in athletes:
                 athletes[name] = {"name": name, "team": "Oregon State", "scores": {}}
             athletes[name]["scores"][event] = scores[j]
+            lineups[event].append({"position": j + 1, "name": name, "score": scores[j]})
 
 
 def fix_name_splits(athletes):
@@ -345,6 +353,25 @@ def fix_name_splits(athletes):
             }
 
     return list(merged.values())
+
+
+def fix_lineup_names(lineups):
+    """
+    Apply the same name-fix logic used in fix_name_splits to the lineup dicts.
+    Ensures lineup athlete names match the corrected athlete names.
+    """
+    fixed = {}
+    for event, entries in lineups.items():
+        fixed_entries = []
+        for entry in entries:
+            name = entry["name"]
+            if name == "Taylor De":
+                name = "Taylor DeVries"
+            elif name.startswith("Vries") and len(name) > 5:
+                name = name[5:].strip()
+            fixed_entries.append({"position": entry["position"], "name": name, "score": entry["score"]})
+        fixed[event] = fixed_entries
+    return fixed
 
 
 def parse_meet_pdf(meet_info):
@@ -394,8 +421,8 @@ def parse_meet_pdf(meet_info):
     osu = team_scores[osu_key]
     is_quad = meet_info.get("isQuad", False)
     
-    athletes = parse_osu_athletes(score_sheet_pages)
-    
+    athletes, lineups = parse_osu_athletes(score_sheet_pages)
+
     attendance = meet_info.get("attendance", "")
     if not attendance:
         for t in all_text:
@@ -447,6 +474,7 @@ def parse_meet_pdf(meet_info):
                     "floor": {"osu": osu["floor"], "opponent": opp_data["floor"]},
                 },
                 "athletes": athletes,
+                "lineups": lineups,
                 "allTeams": all_teams,
             }
             if attendance:
@@ -475,6 +503,7 @@ def parse_meet_pdf(meet_info):
                 "floor": {"osu": osu["floor"], "opponent": opp_events["floor"]},
             },
             "athletes": athletes,
+            "lineups": lineups,
         }
         if attendance:
             meet_data["attendance"] = attendance

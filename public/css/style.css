@@ -531,6 +531,11 @@ main {
   text-align: right;
 }
 
+.lineup-table .score-cell.score-top {
+  color: var(--orange);
+  font-weight: 700;
+}
+
 /* ===== Gymnast Search ===== */
 .search-container {
   margin-bottom: 1.5rem;
