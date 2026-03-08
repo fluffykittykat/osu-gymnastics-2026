@@ -26,6 +26,19 @@
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
   }
 
+  /**
+   * Returns a home/away pill HTML string.
+   * @param {boolean} isHome
+   * @param {'short'|'full'} size  - 'short' → "H"/"A", 'full' → "🏠 Home"/"✈️ Away"
+   */
+  function haPill(isHome, size = 'full') {
+    const cls = `ha-pill ha-pill-${isHome ? 'home' : 'away'} ha-pill-${size}`;
+    if (size === 'short') {
+      return `<span class="${cls}">${isHome ? 'H' : 'A'}</span>`;
+    }
+    return `<span class="${cls}">${isHome ? '🏠 Home' : '✈️ Away'}</span>`;
+  }
+
   // ===== Data Loading =====
   async function loadData() {
     try {
@@ -156,7 +169,7 @@
         <div class="meet-card" data-meet-id="${m.id}">
           <div class="meet-header">
             <div>
-              <div class="meet-opponent">${m.opponent}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''}</div>
+              <div class="meet-opponent">${m.opponent}${haPill(m.isHome, 'full')}</div>
               <div class="meet-date">${formatDateLong(m.date)}</div>
               <div class="meet-location">${m.location}</div>
             </div>
@@ -253,7 +266,7 @@
           <div>
             <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent}</div>
             <div class="meet-date">${formatDateLong(meet.date)}</div>
-            <div class="meet-location">${meet.location}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
+            <div class="meet-location" style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">${haPill(meet.isHome, 'full')} · ${meet.location}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
           </div>
           <span class="badge badge-${meet.result.toLowerCase()}" style="font-size:1rem;padding:0.3rem 0.8rem;">${meet.result}</span>
         </div>
@@ -379,13 +392,16 @@
 
     // Meet history table
     const historyRows = p.meets.map(m => {
+      const meetData = meets.find(meet => meet.id === m.meetId);
+      const isHome = meetData ? meetData.isHome : null;
       const cells = ['vault', 'bars', 'beam', 'floor'].map(e => {
         if (m.scores[e] === undefined) return '<td style="color:var(--text-muted)">—</td>';
         const isBest = p.bests[e] === m.scores[e];
         return `<td class="${isBest ? 'personal-best' : ''}">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</td>`;
       }).join('');
       const aa = m.scores.aa ? `<td>${m.scores.aa.toFixed(3)}</td>` : '<td style="color:var(--text-muted)">—</td>';
-      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent}</td>${cells}${aa}</tr>`;
+      const haTag = isHome !== null ? haPill(isHome, 'short') : '';
+      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent}${haTag}</td>${cells}${aa}</tr>`;
     }).join('');
 
     detail.innerHTML = `
@@ -453,6 +469,7 @@
             meetDate: meet.date,
             opponent: meet.opponent,
             meetId: meet.id,
+            isHome: meet.isHome,
           });
         }
       });
@@ -472,7 +489,7 @@
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
         <div class="lb-info">
           <div class="lb-name">${s.name}</div>
-          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent}</div>
+          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent}${haPill(s.isHome, 'short')}</div>
         </div>
         <div class="lb-score">${s.score.toFixed(3)}</div>
       </div>`).join('');

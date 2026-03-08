@@ -358,6 +358,42 @@ main {
   margin-left: 0.5rem;
 }
 
+/* Home / Away pills */
+.ha-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.ha-pill-home {
+  background: #D73F09;
+  color: #fff;
+}
+
+.ha-pill-away {
+  background: #3a3a3a;
+  color: #aaa;
+}
+
+/* Full label (cards, detail headers) */
+.ha-pill-full {
+  font-size: 0.72rem;
+  padding: 0.18rem 0.55rem;
+  margin-left: 0.5rem;
+}
+
+/* Short label (tables, leaderboards — "H" / "A") */
+.ha-pill-short {
+  font-size: 0.65rem;
+  padding: 0.12rem 0.35rem;
+  margin-left: 0.35rem;
+}
+
 .meet-scores {
   display: flex;
   justify-content: space-between;
