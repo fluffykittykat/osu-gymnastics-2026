@@ -365,6 +365,13 @@
     return '';
   }
 
+  function homeAwayBadge(isHome) {
+    if (isHome === undefined || isHome === null) return '';
+    return isHome
+      ? '<span class="badge-home-short">H</span>'
+      : '<span class="badge-away-short">A</span>';
+  }
+
   function renderMeetCard(m) {
     const statusBadge = getStatusBadge(m);
     const resultBadge = m.status !== 'upcoming'
@@ -389,7 +396,7 @@
       <div class="meet-card${m.status === 'in_progress' ? ' meet-card-live' : ''}" data-meet-id="${m.id}">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent">${m.opponent}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''} ${statusBadge}</div>
+            <div class="meet-opponent">${m.opponent} ${homeAwayBadge(m.isHome)} ${statusBadge}</div>
             <div class="meet-date">${formatDateLong(m.date)}</div>
             <div class="meet-location">${m.location}</div>
           </div>
@@ -505,7 +512,7 @@
       const rows = eventAthletes.map((a, i) => `
         <tr>
           <td>${i + 1}</td>
-          <td>${a.name}</td>
+          <td><span class="inline-link" style="cursor:pointer" data-name="${a.name}" onclick="showGymnastProfile(this.dataset.name)">${a.name}</span></td>
           <td class="score-cell">${a.scores[event].toFixed(3)}</td>
         </tr>`).join('');
 
@@ -539,7 +546,7 @@
       <div class="detail-hero">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent}</div>
+            <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent} ${homeAwayBadge(meet.isHome)}</div>
             <div class="meet-date">${formatDateLong(meet.date)}</div>
             <div class="meet-location">${meet.location}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
           </div>
@@ -571,7 +578,7 @@
         if (!profiles[a.name]) {
           profiles[a.name] = { name: a.name, meets: [], events: new Set() };
         }
-        const entry = { meetId: meet.id, date: meet.date, opponent: meet.opponent, scores: { ...a.scores } };
+        const entry = { meetId: meet.id, date: meet.date, opponent: meet.opponent, scores: { ...a.scores }, isHome: meet.isHome };
         profiles[a.name].meets.push(entry);
         Object.keys(a.scores).forEach(e => {
           if (e !== 'aa') profiles[a.name].events.add(e);
@@ -679,7 +686,7 @@
         return `<td class="${isBest ? 'personal-best' : ''}">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</td>`;
       }).join('');
       const aa = m.scores.aa ? `<td>${m.scores.aa.toFixed(3)}</td>` : '<td style="color:var(--text-muted)">—</td>';
-      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent}</td>${cells}${aa}</tr>`;
+      return `<tr><td>${formatDate(m.date)}</td><td><span class="inline-link" style="cursor:pointer" data-meet-id="${m.meetId}" onclick="showMeetDetail(this.dataset.meetId)">${m.opponent}</span> ${homeAwayBadge(m.isHome)}</td>${cells}${aa}</tr>`;
     }).join('');
 
     detail.innerHTML = `
@@ -747,6 +754,7 @@
             meetDate: meet.date,
             opponent: meet.opponent,
             meetId: meet.id,
+            isHome: meet.isHome,
           });
         }
       });
@@ -765,12 +773,16 @@
       <div class="leaderboard-item">
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
         <div class="lb-info">
-          <div class="lb-name">${s.name}</div>
-          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent}</div>
+          <div class="lb-name"><span class="inline-link" style="cursor:pointer" data-name="${s.name}" onclick="showGymnastProfile(this.dataset.name)">${s.name}</span></div>
+          <div class="lb-context">${formatDate(s.meetDate)} vs <span class="inline-link" style="cursor:pointer" data-meet-id="${s.meetId}" onclick="showMeetDetail(this.dataset.meetId)">${s.opponent}</span> ${homeAwayBadge(s.isHome)}</div>
         </div>
         <div class="lb-score">${s.score.toFixed(3)}</div>
       </div>`).join('');
   }
+
+  // Expose navigation functions globally for inline onclick handlers
+  window.showGymnastProfile = showGymnastProfile;
+  window.showMeetDetail = showMeetDetail;
 
   // ===== Event Listeners =====
   document.addEventListener('DOMContentLoaded', () => {
