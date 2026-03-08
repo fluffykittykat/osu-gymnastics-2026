@@ -5,6 +5,7 @@
 
   let meets = [];
   let currentFilter = 'all';
+  let currentOpponent = null;
   let currentView = 'season';
 
   const EVENT_NAMES = {
@@ -58,9 +59,16 @@
     } else if (raw.startsWith('season?')) {
       const params = new URLSearchParams(raw.split('?')[1]);
       const filter = params.get('filter');
+      const opponent = params.get('opponent');
       if (filter) {
         currentFilter = filter;
+        currentOpponent = null;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+      }
+      if (opponent) {
+        currentOpponent = decodeURIComponent(opponent);
+        currentFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
       }
       showView('season');
     } else if (raw.startsWith('meet/')) {
@@ -87,6 +95,25 @@
       const res = await fetch('/api/meets');
       meets = await res.json();
       document.getElementById('loading').style.display = 'none';
+
+      // Wire up global search with hash routing
+      if (window.OSUSearch) {
+        OSUSearch.buildIndex(meets);
+        OSUSearch.createUI();
+        OSUSearch.onGymnastSelect = function (name) {
+          navigateTo('#gymnast/' + slugify(name));
+        };
+        OSUSearch.onMeetSelect = function (meetId) {
+          navigateTo('#meet/' + meetId);
+        };
+        OSUSearch.onLeaderboardSelect = function (event) {
+          navigateTo('#leaderboard/' + event);
+        };
+        OSUSearch.onFilterSelect = function (filter) {
+          navigateTo('#season?filter=' + filter);
+        };
+      }
+
       parseAndRoute();
     } catch (err) {
       document.getElementById('loading').innerHTML =
@@ -110,6 +137,8 @@
     }
 
     if (view === 'season') {
+      // Clear opponent filter when navigating to plain season view
+      if (!window.location.hash.includes('opponent=')) currentOpponent = null;
       updateBreadcrumb([{label: 'Season'}]);
       renderSeason();
     } else if (view === 'gymnasts') {
@@ -187,12 +216,24 @@
 
   function renderMeetCards() {
     const grid = document.getElementById('meetsGrid');
-    const filtered = meets.filter(m => {
+    let filtered = meets.filter(m => {
+      if (currentOpponent) return m.opponent === currentOpponent;
       if (currentFilter === 'all') return true;
       if (currentFilter === 'home') return m.isHome;
       if (currentFilter === 'away') return !m.isHome;
       return m.result === currentFilter;
     });
+
+    // Show opponent filter banner if active
+    const existingBanner = document.querySelector('.opponent-filter-banner');
+    if (existingBanner) existingBanner.remove();
+    if (currentOpponent) {
+      const banner = document.createElement('div');
+      banner.className = 'opponent-filter-banner';
+      banner.style.cssText = 'background:rgba(215,63,9,0.1);border:1px solid var(--orange);border-radius:8px;padding:0.5rem 1rem;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center;font-size:0.9rem;';
+      banner.innerHTML = `<span>Showing all meets vs <strong>${currentOpponent}</strong></span><button onclick="window.location.hash='#season'" style="background:none;border:none;color:var(--orange);cursor:pointer;font-size:0.85rem;">✕ Clear</button>`;
+      grid.parentNode.insertBefore(banner, grid);
+    }
 
     if (filtered.length === 0) {
       grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><p class="empty-text">No meets match this filter.</p></div>';
@@ -289,7 +330,7 @@
         + '<h2 class="section-title">📰 Meet Recap</h2>'
         + '<div class="recap-content">'
         + '<p class="recap-lede">' + lede + '</p>'
-        + (restHtml ? '<div class="recap-body" id="' + restId + '" style="display:none">' + restHtml + '</div>'
+        + (restHtml ? '<div class="recap-body" id="' + restId + '">' + restHtml + '</div>'
             + '<button class="recap-toggle" data-target="' + restId + '">Read more ↓</button>' : '')
         + '<p class="recap-attribution"><a href="' + meet.recapUrl + '" target="_blank" rel="noopener">Source: Oregon State Athletics ↗</a></p>'
         + '</div></div>';
@@ -335,7 +376,7 @@
       <div class="detail-hero">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent}</div>
+            <div class="meet-opponent" style="font-size:1.5rem;">vs <a href="#season?opponent=${encodeURIComponent(meet.opponent)}" onclick="event.preventDefault();window.location.hash='#season?opponent=${encodeURIComponent(meet.opponent)}'" style="color:inherit;text-decoration:none;">${meet.opponent}</a></div>
             <div class="meet-date">${formatDateLong(meet.date)}</div>
             <div class="meet-location"><a href="#season?filter=${locationFilter}" onclick="event.preventDefault();window.location.hash='#season?filter=${locationFilter}'">${meet.location}</a>${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
           </div>
@@ -629,12 +670,15 @@
       if (tab) navigateTo('#leaderboard/' + tab.dataset.event);
     });
 
-    // Recap toggle
+    // Recap toggle (mobile only — CSS controls visibility)
     document.getElementById('meetDetailContent').addEventListener('click', e => {
       const btn = e.target.closest('.recap-toggle');
       if (btn) {
         const target = document.getElementById(btn.dataset.target);
-        if (target) { target.style.display = 'block'; btn.style.display = 'none'; }
+        if (target) {
+          target.classList.add('expanded');
+          btn.classList.add('expanded');
+        }
       }
     });
   });

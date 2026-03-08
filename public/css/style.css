@@ -893,7 +893,11 @@ main {
   margin-bottom: 0.8rem;
   color: var(--text-muted);
 }
+/* recap-body is always visible on desktop; CSS overrides for mobile below */
+.recap-body { display: block; }
+
 .recap-toggle {
+  display: none; /* hidden on desktop */
   background: none;
   border: 1px solid var(--orange);
   color: var(--orange);
@@ -940,6 +944,11 @@ main {
 
 @media (max-width: 768px) {
   .recap-content { font-size: 0.9rem; }
+  /* Collapse recap body on mobile by default; JS adds .expanded to reveal */
+  .recap-body { display: none; }
+  .recap-body.expanded { display: block; }
+  .recap-toggle { display: inline-block; }
+  .recap-toggle.expanded { display: none; }
 }
 
 /* Small phone */
