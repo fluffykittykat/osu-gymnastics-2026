@@ -1569,3 +1569,53 @@ main {
   color: var(--text-primary);
 }
 .lb-stat:first-child .lb-stat-val { color: var(--orange); }
+
+/* ===== Insights Tab ===== */
+.insights-view { padding-bottom: 2rem; }
+.insight-headlines { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.insight-headline {
+  background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+  border-left: 3px solid var(--orange);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+.insight-section-title {
+  font-family: Oswald, sans-serif;
+  font-size: 1.1rem;
+  color: var(--orange);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 1.5rem 0 0.5rem;
+}
+.insight-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+.insight-note { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 0.75rem; }
+.insight-big-stat { font-size: 1.1rem; color: var(--text-primary); margin: 0.5rem 0; }
+.insight-table { display: flex; flex-direction: column; gap: 0.35rem; }
+.itrow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+.itrow.header {
+  font-family: Oswald, sans-serif;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.4rem;
+}
+.itrow:not(.header):hover { background: rgba(215,63,9,0.05); }
+.cons-bar-wrap { height: 6px; background: #333; border-radius: 3px; overflow: hidden; }
+.cons-bar { display: block; height: 100%; background: var(--orange); border-radius: 3px; }

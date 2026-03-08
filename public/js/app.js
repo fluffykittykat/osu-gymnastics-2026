@@ -235,6 +235,7 @@
     if (view === 'season') renderSeason();
     else if (view === 'gymnasts') renderGymnasts();
     else if (view === 'leaderboards') renderLeaderboard('vault');
+    else if (view === 'insights') renderInsights();
   }
 
   // ===== Season Overview =====
@@ -881,6 +882,296 @@
         </div>
       </div>`;
     }).join('');
+  }
+
+  // ===== Insights =====
+  function renderInsights() {
+    // --- helpers ---
+    function mean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : 0; }
+    function stddev(arr) {
+      if (arr.length < 2) return 0;
+      const m = mean(arr);
+      return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/arr.length);
+    }
+    function linReg(pts) {
+      const n = pts.length;
+      if (n < 2) return {slope:0};
+      const sx=pts.reduce((s,p)=>s+p.x,0), sy=pts.reduce((s,p)=>s+p.y,0);
+      const sxy=pts.reduce((s,p)=>s+p.x*p.y,0), sx2=pts.reduce((s,p)=>s+p.x*p.x,0);
+      return {slope:(n*sxy-sx*sy)/(n*sx2-sx*sx)||0};
+    }
+    function pearson(xs,ys) {
+      const n=xs.length; if(n<3) return null;
+      const mx=mean(xs),my=mean(ys);
+      const num=xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
+      const den=Math.sqrt(xs.reduce((s,x)=>s+(x-mx)**2,0)*ys.reduce((s,y)=>s+(y-my)**2,0));
+      return den===0?null:num/den;
+    }
+    function fmt(n) { return typeof n==='number' ? n.toFixed(3) : '—'; }
+    function fmtDiff(n) { return (n>=0?'+':'')+n.toFixed(3); }
+
+    const EVS = ['vault','bars','beam','floor'];
+    const EV_LABELS = {vault:'Vault',bars:'Bars',beam:'Beam',floor:'Floor'};
+    const sortedMeets = meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+    // Dedupe to unique competition days for team-level analysis
+    const compDays = [];
+    const seenDates = new Set();
+    sortedMeets.forEach(m => { if(!seenDates.has(m.date)){ seenDates.add(m.date); compDays.push(m); }});
+
+    // Get all gymnast names
+    const allNames = [...new Set(meets.flatMap(m=>m.athletes.map(a=>a.name)))].sort();
+
+    // Per gymnast, per event entries
+    function gymnEntries(name, ev) {
+      const out = [];
+      sortedMeets.forEach(meet => {
+        const a = meet.athletes.find(x=>x.name===name);
+        if (a && a.scores[ev] !== undefined) out.push({
+          score: a.scores[ev], date: meet.date, isHome: meet.isHome,
+          result: meet.result, gap: Math.abs(meet.osuScore - meet.opponentScore),
+          meetId: meet.id, opponent: meet.opponent
+        });
+      });
+      return out;
+    }
+    function allScores(name) {
+      return EVS.flatMap(ev => gymnEntries(name,ev).map(e=>e.score));
+    }
+
+    // ── CONSISTENCY ──
+    const consistency = allNames.map(name => {
+      const s = allScores(name);
+      return s.length>=4 ? {name, sd:stddev(s), avg:mean(s), n:s.length} : null;
+    }).filter(Boolean).sort((a,b)=>a.sd-b.sd);
+
+    // ── TREND ──
+    const trends = allNames.map(name => {
+      let totalSlope=0, evCount=0;
+      EVS.forEach(ev => {
+        const e = gymnEntries(name,ev);
+        if (e.length>=3) { totalSlope+=linReg(e.map((x,i)=>({x:i,y:x.score}))).slope; evCount++; }
+      });
+      if (!evCount) return null;
+      return {name, slope: totalSlope/evCount};
+    }).filter(Boolean).sort((a,b)=>b.slope-a.slope);
+
+    // ── HOME vs AWAY ──
+    const homeAway = allNames.map(name => {
+      const home=[], away=[];
+      EVS.forEach(ev => gymnEntries(name,ev).forEach(e => (e.isHome?home:away).push(e.score)));
+      if (home.length<2||away.length<2) return null;
+      return {name, home:mean(home), away:mean(away), diff:mean(home)-mean(away)};
+    }).filter(Boolean).sort((a,b)=>Math.abs(b.diff)-Math.abs(a.diff));
+
+    // ── WIN CONTRIBUTION ──
+    const winContrib = allNames.map(name => {
+      const wins=[], losses=[];
+      EVS.forEach(ev => gymnEntries(name,ev).forEach(e => (e.result==='W'?wins:losses).push(e.score)));
+      if (wins.length<2||losses.length<2) return null;
+      return {name, winAvg:mean(wins), lossAvg:mean(losses), delta:mean(wins)-mean(losses)};
+    }).filter(Boolean).sort((a,b)=>b.delta-a.delta);
+
+    // ── CLUTCH (close meets gap<1.0) ──
+    const clutch = allNames.map(name => {
+      const close=[], normal=[];
+      EVS.forEach(ev => gymnEntries(name,ev).forEach(e => (e.gap<1.0?close:normal).push(e.score)));
+      if (close.length<2||normal.length<2) return null;
+      return {name, close:mean(close), normal:mean(normal), delta:mean(close)-mean(normal), n:close.length};
+    }).filter(Boolean).sort((a,b)=>b.delta-a.delta);
+
+    // ── TEAM EVENT ANALYSIS ──
+    const teamEvents = EVS.map(ev => {
+      const all=[], wins=[], losses=[];
+      compDays.forEach(m => {
+        const v = m.events&&m.events[ev]?m.events[ev].osu:null;
+        if (v===null) return;
+        all.push(v);
+        (m.result==='W'?wins:losses).push(v);
+      });
+      return {ev, label:EV_LABELS[ev], avg:mean(all), winAvg:mean(wins), lossAvg:mean(losses),
+        winLossDiff: wins.length&&losses.length ? mean(wins)-mean(losses) : 0, n:all.length};
+    }).sort((a,b)=>b.avg-a.avg);
+
+    // ── REST DAYS EFFECT ──
+    const restData = compDays.map((m,i) => {
+      if(i===0) return null;
+      const days=Math.round((new Date(m.date)-new Date(compDays[i-1].date))/(864e5));
+      return {days, score:m.osuScore, result:m.result};
+    }).filter(Boolean);
+    const restCorr = restData.length>=4 ?
+      pearson(restData.map(d=>d.days), restData.map(d=>d.score)) : null;
+
+    // ── EVENT CORRELATIONS ──
+    const pairLabels = {vault:'VT',bars:'UB',beam:'BB',floor:'FX'};
+    const pairs = [['vault','floor'],['vault','bars'],['vault','beam'],['bars','beam'],['bars','floor'],['beam','floor']];
+    const corrMatrix = pairs.map(([e1,e2]) => {
+      const xs=[], ys=[];
+      allNames.forEach(name => {
+        const s1=gymnEntries(name,e1), s2=gymnEntries(name,e2);
+        if(s1.length>=3&&s2.length>=3){ xs.push(mean(s1.map(x=>x.score))); ys.push(mean(s2.map(x=>x.score))); }
+      });
+      if(xs.length<4) return null;
+      const r=pearson(xs,ys);
+      return r!==null?{e1,e2,r}:null;
+    }).filter(Boolean).sort((a,b)=>Math.abs(b.r)-Math.abs(a.r));
+
+    // ── BUILD HTML ──
+    const top1 = consistency[0];
+    const topTrend = trends[0];
+    const topHome = homeAway.sort((a,b)=>b.home-b.away-(a.home-a.away))[0];
+    const topClutch = clutch[0];
+
+    const headlines = [
+      top1 ? `<div class="insight-headline">🎯 <strong>${top1.name}</strong> is OSU's most consistent scorer — std dev of just <strong>${top1.sd.toFixed(3)}</strong> across ${top1.n} scores</div>` : '',
+      topTrend&&topTrend.slope>0 ? `<div class="insight-headline">📈 <strong>${topTrend.name}</strong> is the biggest improver this season — trending up <strong>${(topTrend.slope*1000).toFixed(1)}pts</strong> per meet</div>` : '',
+      topClutch&&topClutch.delta>0 ? `<div class="insight-headline">⚡ <strong>${topClutch.name}</strong> scores <strong>${fmtDiff(topClutch.delta)}</strong> higher in tight meets (gap &lt; 1.0)</div>` : '',
+      restCorr!==null ? `<div class="insight-headline">📅 More rest = ${restCorr>0.2?'<strong>higher</strong>':restCorr<-0.2?'<strong>lower</strong>':'<strong>no clear change</strong> in'} team scores (r=${restCorr.toFixed(2)})</div>` : '',
+    ].filter(Boolean).join('');
+
+    function trendArrow(slope) {
+      if (slope > 0.02) return '<span style="color:#2ecc71">▲ Improving</span>';
+      if (slope < -0.02) return '<span style="color:#e74c3c">▼ Declining</span>';
+      return '<span style="color:#aaa">► Stable</span>';
+    }
+    function corrStrength(r) {
+      const a = Math.abs(r);
+      const dir = r > 0 ? 'positive' : 'negative';
+      if (a > 0.7) return `Strong ${dir}`;
+      if (a > 0.4) return `Moderate ${dir}`;
+      return `Weak ${dir}`;
+    }
+
+    document.getElementById('mainContent').innerHTML = `
+      <div class="insights-view">
+        <div class="insight-headlines">${headlines}</div>
+
+        <div class="insight-section-title">💪 Consistency Ratings</div>
+        <div class="insight-card">
+          <p class="insight-note">Ranked by score consistency (lowest std deviation = most reliable). High average + low SD = the total package.</p>
+          <div class="insight-table">
+            <div class="itrow header"><span>Gymnast</span><span>Avg</span><span>Consistency</span><span>Rating</span></div>
+            ${consistency.map((g,i) => {
+              const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+              const bar = Math.max(0, Math.round((1 - g.sd/0.3)*10));
+              const barHtml = `<span class="cons-bar" style="width:${bar*10}%"></span>`;
+              return `<div class="itrow" data-gymnast="${g.name}">
+                <span class="clickable-name" data-gymnast="${g.name}">${medal} ${g.name}</span>
+                <span>${fmt(g.avg)}</span>
+                <span class="cons-bar-wrap">${barHtml}</span>
+                <span style="color:var(--orange);font-weight:600">${g.sd.toFixed(3)} SD</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+
+        <div class="insight-section-title">📈 Season Trajectory</div>
+        <div class="insight-card">
+          <p class="insight-note">Linear regression across all events. Who's peaking at the right time going into postseason?</p>
+          <div class="insight-table">
+            <div class="itrow header"><span>Gymnast</span><span>Trend</span><span>Slope/meet</span></div>
+            ${trends.map(g => `
+              <div class="itrow">
+                <span class="clickable-name" data-gymnast="${g.name}">${g.name}</span>
+                <span>${trendArrow(g.slope)}</span>
+                <span style="color:var(--text-muted)">${fmtDiff(g.slope)}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <div class="insight-section-title">🏠 Home vs Away Split</div>
+        <div class="insight-card">
+          <p class="insight-note">Average score at home vs on the road. Positive diff = better at home. Negative = road warrior.</p>
+          <div class="insight-table">
+            <div class="itrow header"><span>Gymnast</span><span>Home</span><span>Away</span><span>Diff</span></div>
+            ${homeAway.map(g => `
+              <div class="itrow">
+                <span class="clickable-name" data-gymnast="${g.name}">${g.name}</span>
+                <span>${fmt(g.home)}</span>
+                <span>${fmt(g.away)}</span>
+                <span style="color:${g.diff>0?'#2ecc71':g.diff<0?'#e74c3c':'#aaa'};font-weight:600">${fmtDiff(g.diff)}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <div class="insight-section-title">⚡ Clutch Factor</div>
+        <div class="insight-card">
+          <p class="insight-note">Average score in close meets (team score gap &lt; 1.0 pt) vs normal meets. Who elevates when it matters?</p>
+          ${clutch.length<2?'<p class="insight-note" style="color:#e74c3c">Not enough close meets to rank — only a handful of meets qualify.</p>':''}
+          <div class="insight-table">
+            <div class="itrow header"><span>Gymnast</span><span>Clutch</span><span>Normal</span><span>Δ</span></div>
+            ${clutch.map(g => `
+              <div class="itrow">
+                <span class="clickable-name" data-gymnast="${g.name}">${g.name}</span>
+                <span>${fmt(g.close)}</span>
+                <span>${fmt(g.normal)}</span>
+                <span style="color:${g.delta>0?'#2ecc71':g.delta<0?'#e74c3c':'#aaa'};font-weight:600">${fmtDiff(g.delta)}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <div class="insight-section-title">🏆 Win Contribution</div>
+        <div class="insight-card">
+          <p class="insight-note">Average score in OSU wins vs losses. Who shows up on winning days?</p>
+          <div class="insight-table">
+            <div class="itrow header"><span>Gymnast</span><span>In Wins</span><span>In Losses</span><span>Δ</span></div>
+            ${winContrib.map(g => `
+              <div class="itrow">
+                <span class="clickable-name" data-gymnast="${g.name}">${g.name}</span>
+                <span style="color:#2ecc71">${fmt(g.winAvg)}</span>
+                <span style="color:#e74c3c">${fmt(g.lossAvg)}</span>
+                <span style="color:${g.delta>0?'#2ecc71':g.delta<0?'#e74c3c':'#aaa'};font-weight:600">${fmtDiff(g.delta)}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <div class="insight-section-title">🎪 Team Event Breakdown</div>
+        <div class="insight-card">
+          <p class="insight-note">OSU's average team score per event, split by meet result. Where does OSU win and lose rotations?</p>
+          <div class="insight-table">
+            <div class="itrow header"><span>Event</span><span>Season Avg</span><span>In Wins</span><span>In Losses</span><span>W/L Diff</span></div>
+            ${teamEvents.map(e => `
+              <div class="itrow">
+                <span style="font-weight:600">${e.label}</span>
+                <span>${fmt(e.avg)}</span>
+                <span style="color:#2ecc71">${e.winAvg?fmt(e.winAvg):'—'}</span>
+                <span style="color:#e74c3c">${e.lossAvg?fmt(e.lossAvg):'—'}</span>
+                <span style="color:${e.winLossDiff>0?'#2ecc71':e.winLossDiff<0?'#e74c3c':'#aaa'};font-weight:600">${e.winLossDiff?fmtDiff(e.winLossDiff):'—'}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <div class="insight-section-title">📅 Rest Days Effect</div>
+        <div class="insight-card">
+          <p class="insight-note">Does more time between meets improve performance? Correlation between rest days and team score.</p>
+          ${restCorr!==null?`<div class="insight-big-stat">${restCorr>0.2?'📈':'📉'} r = <strong>${restCorr.toFixed(2)}</strong> — ${corrStrength(restCorr)} correlation</div>`:'<p class="insight-note">Not enough data points.</p>'}
+          <div class="insight-table" style="margin-top:0.75rem">
+            <div class="itrow header"><span>Meet</span><span>Rest Days</span><span>Team Score</span><span>Result</span></div>
+            ${restData.map(d => `
+              <div class="itrow">
+                <span style="color:var(--text-muted);font-size:0.8rem">${formatDate(compDays[restData.indexOf(d)+1]?.date||'')}</span>
+                <span>${d.days}d</span>
+                <span>${fmt(d.score)}</span>
+                <span style="color:${d.result==='W'?'#2ecc71':'#e74c3c'}">${d.result}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <div class="insight-section-title">🔗 Event Correlations</div>
+        <div class="insight-card">
+          <p class="insight-note">Do gymnasts who score well on one event also score well on another? Pearson r across all athletes' season averages.</p>
+          <div class="insight-table">
+            <div class="itrow header"><span>Events</span><span>Correlation</span><span>Strength</span></div>
+            ${corrMatrix.map(c => {
+              const pct = Math.round(Math.abs(c.r)*100);
+              return `<div class="itrow">
+                <span style="font-weight:600">${pairLabels[c.e1]} ↔ ${pairLabels[c.e2]}</span>
+                <span style="color:${Math.abs(c.r)>0.5?'var(--orange)':'var(--text-muted)'}">r = ${c.r.toFixed(2)}</span>
+                <span style="color:var(--text-muted);font-size:0.8rem">${corrStrength(c.r)}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>`;
   }
 
   // ===== Event Listeners =====
