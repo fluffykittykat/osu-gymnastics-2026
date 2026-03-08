@@ -891,7 +891,7 @@
     function stddev(arr) {
       if (arr.length < 2) return 0;
       const m = mean(arr);
-      return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/arr.length);
+      return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1)); // sample stddev (Bessel's correction)
     }
     function linReg(pts) {
       const n = pts.length;
@@ -908,7 +908,7 @@
       return den===0?null:num/den;
     }
     function fmt(n) { return typeof n==='number' ? n.toFixed(3) : '—'; }
-    function fmtDiff(n) { return (n>=0?'+':'')+n.toFixed(3); }
+    function fmtDiff(n) { if (typeof n !== 'number' || isNaN(n)) return '—'; return (n>=0?'+':'')+n.toFixed(3); }
 
     const EVS = ['vault','bars','beam','floor'];
     const EV_LABELS = {vault:'Vault',bars:'Bars',beam:'Beam',floor:'Floor'};
@@ -924,13 +924,18 @@
     // Per gymnast, per event entries
     function gymnEntries(name, ev) {
       const out = [];
+      const seenDates = new Set(); // deduplicate quad meet days — same athlete, same score, same day
       sortedMeets.forEach(meet => {
+        if (seenDates.has(meet.date)) return;
         const a = meet.athletes.find(x=>x.name===name);
-        if (a && a.scores[ev] !== undefined) out.push({
-          score: a.scores[ev], date: meet.date, isHome: meet.isHome,
-          result: meet.result, gap: Math.abs(meet.osuScore - meet.opponentScore),
-          meetId: meet.id, opponent: meet.opponent
-        });
+        if (a && a.scores[ev] !== undefined) {
+          seenDates.add(meet.date);
+          out.push({
+            score: a.scores[ev], date: meet.date, isHome: meet.isHome,
+            result: meet.result, gap: Math.abs((meet.osuScore||0) - (meet.opponentScore||0)),
+            meetId: meet.id || '', opponent: meet.opponent || '?'
+          });
+        }
       });
       return out;
     }
@@ -944,12 +949,17 @@
       return s.length>=4 ? {name, sd:stddev(s), avg:mean(s), n:s.length} : null;
     }).filter(Boolean).sort((a,b)=>a.sd-b.sd);
 
-    // ── TREND ──
+    // ── TREND ── (x = days from first competition, slope = pts/day → scale to pts/week)
+    const firstDate = new Date(sortedMeets[0].date + 'T12:00:00');
     const trends = allNames.map(name => {
       let totalSlope=0, evCount=0;
       EVS.forEach(ev => {
         const e = gymnEntries(name,ev);
-        if (e.length>=3) { totalSlope+=linReg(e.map((x,i)=>({x:i,y:x.score}))).slope; evCount++; }
+        if (e.length>=3) {
+          const pts = e.map(x=>({x:Math.round((new Date(x.date+'T12:00:00')-firstDate)/864e5), y:x.score}));
+          totalSlope+=linReg(pts).slope*7; // convert to per-week
+          evCount++;
+        }
       });
       if (!evCount) return null;
       return {name, slope: totalSlope/evCount};
@@ -1087,9 +1097,9 @@
       else smallMargin.push(m.osuScore);
     });
 
-    // Quad vs dual meet performance
+    // Quad vs dual meet performance — use compDays to avoid triple-counting quad scores
     const quadScores = [], dualScores = [];
-    meets.forEach(m => {
+    compDays.forEach(m => {
       if (m.quadMeet) quadScores.push(m.osuScore);
       else dualScores.push(m.osuScore);
     });
@@ -1144,7 +1154,7 @@
         <div class="insight-card">
           <p class="insight-note">Linear regression across all events. Who's peaking at the right time going into postseason?</p>
           <div class="insight-table">
-            <div class="itrow header"><span>Gymnast</span><span>Trend</span><span>Slope/meet</span></div>
+            <div class="itrow header"><span>Gymnast</span><span>Trend</span><span>Slope/week</span></div>
             ${trends.map(g => `
               <div class="itrow">
                 <span class="clickable-name" data-gymnast="${g.name}">${g.name}</span>
@@ -1156,8 +1166,8 @@
 
         <div class="insight-section-title">🏠 Home vs Away Split</div>
         <div class="insight-card">
-          <p class="insight-note">Average score at home vs on the road. Positive diff = better at home. Negative = road warrior.</p>
-          <div class="insight-table">
+          <p class="insight-note">Average score at home vs on the road. Positive diff = better at home. Negative = road warrior. <em>Note: only 4 home meets this season — small sample.</em></p>
+          <div style="overflow-x:auto"><div class="insight-table">
             <div class="itrow header"><span>Gymnast</span><span>Home</span><span>Away</span><span>Diff</span></div>
             ${homeAway.map(g => `
               <div class="itrow">
@@ -1166,14 +1176,14 @@
                 <span>${fmt(g.away)}</span>
                 <span style="color:${g.diff>0?'#2ecc71':g.diff<0?'#e74c3c':'#aaa'};font-weight:600">${fmtDiff(g.diff)}</span>
               </div>`).join('')}
-          </div>
+          </div></div>
         </div>
 
         <div class="insight-section-title">⚡ Clutch Factor</div>
         <div class="insight-card">
           <p class="insight-note">Average score in close meets (team score gap &lt; 1.0 pt) vs normal meets. Who elevates when it matters?</p>
           ${clutch.length<2?'<p class="insight-note" style="color:#e74c3c">Not enough close meets to rank — only a handful of meets qualify.</p>':''}
-          <div class="insight-table">
+          <div style="overflow-x:auto"><div class="insight-table">
             <div class="itrow header"><span>Gymnast</span><span>Clutch</span><span>Normal</span><span>Δ</span></div>
             ${clutch.map(g => `
               <div class="itrow">
@@ -1182,7 +1192,7 @@
                 <span>${fmt(g.normal)}</span>
                 <span style="color:${g.delta>0?'#2ecc71':g.delta<0?'#e74c3c':'#aaa'};font-weight:600">${fmtDiff(g.delta)}</span>
               </div>`).join('')}
-          </div>
+          </div></div>
         </div>
 
         <div class="insight-section-title">🏆 Win Contribution</div>
@@ -1259,7 +1269,7 @@
               const scores = awayStreakGroups[k];
               const avg = scores.length ? mean(scores) : null;
               const pct = avg ? Math.round(((avg-194)/(198-194))*100) : 0;
-              const labels = ['🏠 Home / First road','2nd straight away','3rd+ straight away'];
+              const labels = ['🏠 Home meets','🛣️ 1st away meet','🛣️ 2nd+ consecutive away'];
               return avg ? '<div class="streak-row"><span class="streak-label">'+labels[k]+'</span><div class="streak-bar-wrap"><div class="streak-bar" style="width:'+pct+'%"></div></div><span class="streak-val">'+fmt(avg)+'</span></div>' : '';
             }).join('')}
           </div>
