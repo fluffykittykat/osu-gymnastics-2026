@@ -29,140 +29,12 @@
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
   }
 
-  function timeAgo(date) {
-    if (!date) return 'never';
-    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
-    if (diff < 60) return 'just now';
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
-  }
-
-  function hasLiveMeets() {
-    return meets.some(m => m.status === 'in_progress');
-  }
-
-  // ===== Toast Notifications =====
-  function showToast(message, type = 'default', duration = 4000) {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    container.appendChild(toast);
-
-    setTimeout(() => {
-      toast.classList.add('toast-exit');
-      setTimeout(() => toast.remove(), 300);
-    }, duration);
-  }
-
-  // ===== Last Updated =====
-  function updateLastUpdatedDisplay() {
-    const bar = document.getElementById('lastUpdatedBar');
-    const text = document.getElementById('lastUpdatedText');
-    if (lastRefreshedTime) {
-      bar.style.display = '';
-      text.textContent = `Last updated: ${timeAgo(lastRefreshedTime)}`;
+  // Helper to generate home/away badge
+  function getHomeAwayBadge(isHome, size = 'full') {
+    if (size === 'short') {
+      return `<span class="badge ${isHome ? 'badge-home-short' : 'badge-away-short'}">${isHome ? 'H' : 'A'}</span>`;
     }
-  }
-
-  // Update the display every 30 seconds
-  setInterval(updateLastUpdatedDisplay, 30000);
-
-  // ===== Refresh =====
-  async function doRefresh() {
-    const btn = document.getElementById('refreshBtn');
-    const mobileBtn = document.getElementById('refreshBtnMobile');
-
-    // Set loading state
-    btn.disabled = true;
-    btn.classList.add('refreshing');
-    if (mobileBtn) mobileBtn.classList.add('refreshing');
-
-    const labelEl = btn.querySelector('.refresh-label');
-    if (labelEl) labelEl.textContent = 'Refreshing...';
-
-    try {
-      const res = await fetch('/api/refresh', { method: 'POST' });
-      const data = await res.json();
-
-      if (data.success) {
-        // Re-fetch the meets data
-        const meetsRes = await fetch('/api/meets');
-        const oldMeets = meets.slice();
-        meets = await meetsRes.json();
-
-        lastRefreshedTime = new Date();
-        updateLastUpdatedDisplay();
-
-        // Re-render current view
-        if (currentView === 'season') renderSeason();
-        else if (currentView === 'gymnasts') renderGymnasts();
-        else if (currentView === 'leaderboards') renderLeaderboard(document.querySelector('.event-tab.active')?.dataset.event || 'vault');
-
-        // Show appropriate toast
-        const summary = data.summary;
-        if (summary.meetsInProgress > 0) {
-          showToast(`⚡ Live meet in progress — scores updating`, 'live');
-        } else if (summary.meetsUpdated > 0) {
-          showToast(`✅ Updated — ${summary.meetsUpdated} meet${summary.meetsUpdated > 1 ? 's' : ''} refreshed`, 'success');
-        } else {
-          showToast('✅ Data is up to date', 'success');
-        }
-
-        // Flash updated scores
-        highlightChanges(oldMeets, meets);
-
-        // Show/hide auto-refresh based on live meets
-        if (hasLiveMeets() && !autoRefreshEnabled) {
-          // Auto-refresh is available but not auto-enabled
-        }
-      } else {
-        showToast('❌ Refresh failed — ' + (data.error || 'unknown error'), 'error');
-      }
-    } catch (err) {
-      showToast('❌ Refresh failed — check connection', 'error');
-    } finally {
-      btn.disabled = false;
-      btn.classList.remove('refreshing');
-      if (mobileBtn) mobileBtn.classList.remove('refreshing');
-      if (labelEl) labelEl.textContent = 'Refresh';
-    }
-  }
-
-  function highlightChanges(oldMeets, newMeets) {
-    // Brief delay to let DOM render, then flash changed scores
-    setTimeout(() => {
-      const oldMap = {};
-      oldMeets.forEach(m => { oldMap[m.id] = m; });
-
-      newMeets.forEach(m => {
-        const old = oldMap[m.id];
-        if (old && old.osuScore !== m.osuScore) {
-          const card = document.querySelector(`[data-meet-id="${m.id}"]`);
-          if (card) {
-            const scoreEl = card.querySelector('.score-osu');
-            if (scoreEl) scoreEl.classList.add('score-updated');
-          }
-        }
-      });
-    }, 100);
-  }
-
-  // ===== Auto-Refresh =====
-  function toggleAutoRefresh() {
-    autoRefreshEnabled = !autoRefreshEnabled;
-    const toggle = document.querySelector('.toggle-switch');
-    if (toggle) toggle.classList.toggle('active', autoRefreshEnabled);
-
-    if (autoRefreshEnabled) {
-      autoRefreshInterval = setInterval(doRefresh, 60000);
-      showToast('🔄 Auto-refresh enabled (every 60s)', 'default');
-    } else {
-      clearInterval(autoRefreshInterval);
-      autoRefreshInterval = null;
-      showToast('Auto-refresh disabled', 'default');
-    }
+    return `<span class="badge ${isHome ? 'badge-home' : 'badge-away'}">${isHome ? '🏠 Home' : '✈️ Away'}</span>`;
   }
 
   // ===== Data Loading =====
@@ -389,7 +261,7 @@
       <div class="meet-card${m.status === 'in_progress' ? ' meet-card-live' : ''}" data-meet-id="${m.id}">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent">${m.opponent}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''} ${statusBadge}</div>
+            <div class="meet-opponent">${m.opponent} ${getHomeAwayBadge(m.isHome, 'full')}</div>
             <div class="meet-date">${formatDateLong(m.date)}</div>
             <div class="meet-location">${m.location}</div>
           </div>
@@ -415,7 +287,7 @@
       <div class="quad-matchup meet-card" data-meet-id="${m.id}" style="margin:0;border-radius:8px;cursor:pointer;">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent" style="font-size:1rem;">${m.opponent} ${getStatusBadge(m)}</div>
+            <div class="meet-opponent" style="font-size:1rem;">${m.opponent} ${getHomeAwayBadge(m.isHome, 'full')}</div>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem;">
             <span style="font-family:Oswald;color:var(--orange);font-size:1rem;">${m.osuScore.toFixed(3)}</span>
@@ -540,8 +412,12 @@
         <div class="meet-header">
           <div>
             <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent}</div>
+            <div style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0;">
+              ${getHomeAwayBadge(meet.isHome, 'full')}
+              <span style="color:var(--text-muted);">•</span>
+              <span style="font-size:0.9rem;color:var(--text-muted);">${meet.location}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</span>
+            </div>
             <div class="meet-date">${formatDateLong(meet.date)}</div>
-            <div class="meet-location">${meet.location}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
           </div>
           ${resultBadge}
         </div>
@@ -679,7 +555,9 @@
         return `<td class="${isBest ? 'personal-best' : ''}">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</td>`;
       }).join('');
       const aa = m.scores.aa ? `<td>${m.scores.aa.toFixed(3)}</td>` : '<td style="color:var(--text-muted)">—</td>';
-      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent}</td>${cells}${aa}</tr>`;
+      const meet = meets.find(mt => mt.opponent === m.opponent && mt.date === m.date);
+      const homeAwayBadge = meet ? getHomeAwayBadge(meet.isHome, 'short') : '';
+      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent} ${homeAwayBadge}</td>${cells}${aa}</tr>`;
     }).join('');
 
     detail.innerHTML = `
@@ -761,15 +639,19 @@
       return;
     }
 
-    list.innerHTML = top.map((s, i) => `
+    list.innerHTML = top.map((s, i) => {
+      const meet = meets.find(m => m.id === s.meetId);
+      const homeAwayBadge = meet ? getHomeAwayBadge(meet.isHome, 'short') : '';
+      return `
       <div class="leaderboard-item">
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
         <div class="lb-info">
           <div class="lb-name">${s.name}</div>
-          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent}</div>
+          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent} ${homeAwayBadge}</div>
         </div>
         <div class="lb-score">${s.score.toFixed(3)}</div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   // ===== Event Listeners =====
