@@ -1633,3 +1633,43 @@ main {
 .streak-bar-wrap { height: 10px; background: #2a2a2a; border-radius: 5px; overflow: hidden; }
 .streak-bar { height: 100%; background: linear-gradient(90deg, var(--orange), #ff6b35); border-radius: 5px; transition: width 0.4s ease; }
 .streak-val { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); text-align: right; }
+
+/* ===== Gymnast Personal Insights ===== */
+.gi-ev-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+.gi-ev-card {
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+.gi-ev-title {
+  font-family: Oswald, sans-serif;
+  font-size: 0.95rem;
+  color: var(--orange);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.gi-n {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-family: Inter, sans-serif;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.gi-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  padding: 0.15rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.gi-row:last-child { border-bottom: none; }
+.gi-row span:first-child { color: var(--text-muted); }
+.gi-row span:last-child { font-weight: 500; }

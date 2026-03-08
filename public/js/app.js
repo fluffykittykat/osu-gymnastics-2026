@@ -740,6 +740,7 @@
           <div class="profile-stats-grid">${statsGrid}</div>
         </div>
         ${sparklines}
+        ${renderGymnastInsights(p.name)}
         <div class="section-card">
           <h2 class="section-title">Meet History</h2>
           <div style="overflow-x:auto;">
@@ -755,6 +756,110 @@
       detail.style.display = 'none';
       document.getElementById('gymnastCards').style.display = 'grid';
     });
+  }
+
+  // ===== Per-gymnast Insights =====
+  function renderGymnastInsights(name) {
+    const EVS = ['vault','bars','beam','floor'];
+    const EV_LBL = {vault:'Vault',bars:'Bars',beam:'Beam',floor:'Floor'};
+    function gmean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : 0; }
+    function gsd(arr) {
+      if (arr.length < 2) return null;
+      const m = gmean(arr);
+      return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1));
+    }
+    function glinReg(pts) {
+      const n=pts.length; if(n<2) return {slope:0};
+      const sx=pts.reduce((s,p)=>s+p.x,0), sy=pts.reduce((s,p)=>s+p.y,0);
+      const sxy=pts.reduce((s,p)=>s+p.x*p.y,0), sx2=pts.reduce((s,p)=>s+p.x*p.x,0);
+      return {slope:(n*sxy-sx*sy)/(n*sx2-sx*sx)||0};
+    }
+    function gfmt(n) { return typeof n==='number'&&!isNaN(n)?n.toFixed(3):'—'; }
+    function gdiff(n) { if(typeof n!=='number'||isNaN(n)) return '—'; return (n>=0?'+':'')+n.toFixed(3); }
+    function arrow(s) {
+      if(s===null) return '<span style="color:#aaa">—</span>';
+      if(s>0.015) return '<span style="color:#2ecc71">▲</span>';
+      if(s<-0.015) return '<span style="color:#e74c3c">▼</span>';
+      return '<span style="color:#aaa">►</span>';
+    }
+
+    const sm = meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const t0 = new Date(sm[0].date+'T12:00:00');
+
+    function evEntries(ev) {
+      const out=[], seen=new Set();
+      sm.forEach(meet => {
+        if(seen.has(meet.date)) return;
+        const a=meet.athletes.find(x=>x.name===name);
+        if(a&&a.scores[ev]!==undefined){
+          seen.add(meet.date);
+          out.push({
+            score:a.scores[ev], date:meet.date, isHome:meet.isHome,
+            result:meet.result, gap:Math.abs((meet.osuScore||0)-(meet.opponentScore||0)),
+            day:Math.round((new Date(meet.date+'T12:00:00')-t0)/864e5)
+          });
+        }
+      });
+      return out;
+    }
+
+    const evStats = EVS.map(ev => {
+      const e = evEntries(ev);
+      if(e.length<2) return null;
+      const scores = e.map(x=>x.score);
+      const slope = e.length>=3 ? glinReg(e.map(x=>({x:x.day,y:x.score}))).slope*7 : null;
+      const home=e.filter(x=>x.isHome).map(x=>x.score);
+      const away=e.filter(x=>!x.isHome).map(x=>x.score);
+      const wins=e.filter(x=>x.result==='W').map(x=>x.score);
+      const losses=e.filter(x=>x.result==='L').map(x=>x.score);
+      const close=e.filter(x=>x.gap<1.0).map(x=>x.score);
+      const jan=e.filter(x=>new Date(x.date+'T12:00:00').getMonth()===0).map(x=>x.score);
+      const late=e.filter(x=>new Date(x.date+'T12:00:00').getMonth()>0).map(x=>x.score);
+      return {
+        ev, n:e.length, avg:gmean(scores), best:Math.max(...scores), sd:gsd(scores), slope,
+        homeAvg:home.length?gmean(home):null, awayAvg:away.length?gmean(away):null,
+        haDiff:home.length&&away.length?gmean(home)-gmean(away):null,
+        winAvg:wins.length?gmean(wins):null, lossAvg:losses.length?gmean(losses):null,
+        wlDiff:wins.length&&losses.length?gmean(wins)-gmean(losses):null,
+        clutch:close.length?gmean(close):null,
+        janAvg:jan.length?gmean(jan):null, lateAvg:late.length?gmean(late):null,
+        seasonDiff:jan.length&&late.length?gmean(late)-gmean(jan):null
+      };
+    }).filter(Boolean);
+
+    if(evStats.length===0) return '';
+
+    const sorted = evStats.slice().sort((a,b)=>b.avg-a.avg);
+    const mostConsistent = evStats.filter(e=>e.sd!==null).sort((a,b)=>a.sd-b.sd)[0];
+    const bestTrend = evStats.filter(e=>e.slope!==null).sort((a,b)=>b.slope-a.slope)[0];
+    const bestWinDelta = evStats.filter(e=>e.wlDiff!==null).sort((a,b)=>b.wlDiff-a.wlDiff)[0];
+
+    const headlines = [
+      sorted[0] ? `<div class="insight-headline">🏅 Strongest event: <strong>${EV_LBL[sorted[0].ev]}</strong> — season avg <strong>${gfmt(sorted[0].avg)}</strong></div>` : '',
+      mostConsistent&&evStats.length>1 ? `<div class="insight-headline">🎯 Most consistent on <strong>${EV_LBL[mostConsistent.ev]}</strong> — std dev <strong>${mostConsistent.sd.toFixed(3)}</strong></div>` : '',
+      bestTrend&&bestTrend.slope>0.01 ? `<div class="insight-headline">📈 Trending up on <strong>${EV_LBL[bestTrend.ev]}</strong> — <strong>+${bestTrend.slope.toFixed(3)}</strong> pts/week</div>` : '',
+      bestWinDelta&&bestWinDelta.wlDiff>0.02 ? `<div class="insight-headline">🏆 Raises game in wins on <strong>${EV_LBL[bestWinDelta.ev]}</strong> — <strong>${gdiff(bestWinDelta.wlDiff)}</strong> vs losing days</div>` : '',
+    ].filter(Boolean).join('');
+
+    const cards = evStats.map(e => `
+      <div class="gi-ev-card">
+        <div class="gi-ev-title">${EV_LBL[e.ev]} <span class="gi-n">${e.n} meets</span></div>
+        <div class="gi-row"><span>Avg</span><span style="color:var(--orange);font-weight:700">${gfmt(e.avg)}</span></div>
+        <div class="gi-row"><span>Best</span><span>${gfmt(e.best)}</span></div>
+        ${e.sd!==null?`<div class="gi-row"><span>Consistency</span><span>${e.sd.toFixed(3)} SD</span></div>`:''}
+        ${e.slope!==null?`<div class="gi-row"><span>Trend</span><span>${arrow(e.slope)} ${e.slope>=0?'+':''}${e.slope.toFixed(3)}/wk</span></div>`:''}
+        ${e.haDiff!==null?`<div class="gi-row"><span>Home/Away Δ</span><span style="color:${e.haDiff>0?'#2ecc71':e.haDiff<0?'#e74c3c':'#aaa'}">${gdiff(e.haDiff)}</span></div>`:''}
+        ${e.wlDiff!==null?`<div class="gi-row"><span>Win/Loss Δ</span><span style="color:${e.wlDiff>0?'#2ecc71':e.wlDiff<0?'#e74c3c':'#aaa'}">${gdiff(e.wlDiff)}</span></div>`:''}
+        ${e.clutch!==null?`<div class="gi-row"><span>Close meets</span><span>${gfmt(e.clutch)}</span></div>`:''}
+        ${e.seasonDiff!==null?`<div class="gi-row"><span>Jan→Late Δ</span><span style="color:${e.seasonDiff>0.01?'#2ecc71':e.seasonDiff<-0.01?'#e74c3c':'#aaa'}">${gdiff(e.seasonDiff)}</span></div>`:''}
+      </div>`).join('');
+
+    return `
+      <div class="section-card" style="margin-bottom:1rem">
+        <h2 class="section-title">📊 Personal Insights</h2>
+        ${headlines?`<div class="insight-headlines" style="margin-bottom:1rem">${headlines}</div>`:''}
+        <div class="gi-ev-grid">${cards}</div>
+      </div>`;
   }
 
   function createSparkline(scores, labels) {
