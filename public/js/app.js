@@ -2016,304 +2016,324 @@
     `;
   }
 
-  // ===== Season Wild Stats =====
+// ===== Season Wild Stats =====
   function renderSeasonWildStats() {
+    // ── Shared stats helpers ────────────────────────────────────────────────
     function mean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
-    function fmt(n) { return (n!=null&&!isNaN(n)) ? n.toFixed(3) : '—'; }
-    function fmtDiff(n) { if(n==null||isNaN(n)) return '—'; return (n>0?'+':'')+n.toFixed(3); }
+    function sd(arr) {
+      if(arr.length < 2) return null;
+      const m = mean(arr);
+      return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1));
+    }
+    function pearson(xs, ys) {
+      const n = xs.length;
+      if(n < 3) return null;
+      const mx = mean(xs), my = mean(ys);
+      const num = xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
+      const den = Math.sqrt(xs.reduce((s,x)=>s+Math.pow(x-mx,2),0)*ys.reduce((s,y)=>s+Math.pow(y-my,2),0));
+      return den===0 ? null : num/den;
+    }
+    function corrStrength(r) {
+      const a = Math.abs(r);
+      if(a < 0.2) return 'negligible';
+      if(a < 0.4) return 'weak';
+      if(a < 0.6) return 'moderate';
+      if(a < 0.8) return 'strong';
+      return 'very strong';
+    }
+    function corrColor(r) {
+      if(r == null) return '#666';
+      return r > 0.4 ? '#2ecc71' : r < -0.4 ? '#e74c3c' : '#f39c12';
+    }
+    function fmt2(n, dp=3) { return (n!=null&&!isNaN(n)) ? n.toFixed(dp) : '—'; }
+    function fmtR(r) { return r==null ? '—' : (r>=0?'+':'')+r.toFixed(2); }
 
-    // Unique competition days with OSU team score
+    // ── Unique competition days ─────────────────────────────────────────────
     const compDays = [];
     const seenDates = new Set();
     meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m => {
       if(seenDates.has(m.date)) return;
       seenDates.add(m.date);
       const osuTeam = m.teams?.find(t=>t.team==='Oregon State');
-      if(!osuTeam) return;
+      if(!osuTeam || !osuTeam.total) return;
       compDays.push({
         date: m.date,
         total: osuTeam.total,
-        moonFullness: m.moonPhase?.fullness,
-        moonName: m.moonPhase?.name,
-        moonEmoji: m.moonPhase?.emoji,
-        tempHigh: m.weather?.tempHighF,
-        precip: m.weather?.precipIn ?? 0,
-        elevFt: m.elevationFt,
-        distMiles: m.distanceMiles,
+        moonFullness: m.moonPhase?.fullness ?? null,
+        tempHigh: m.weather?.tempHighF ?? null,
+        precip: m.weather?.precipIn ?? null,
+        elevFt: m.elevationFt ?? null,
+        distMiles: m.distanceMiles ?? null,
         isHome: m.isHome,
-        quadName: m.quadName,
       });
     });
+    const n = compDays.length;
 
-    // ── 1. Moon phase buckets ──────────────────────────────────────────────
-    const moonBuckets = {'🌑 New Moon (<20%)':[], '🌒 Quarter (20-50%)':[], '🌔 Gibbous (50-80%)':[], '🌕 Full Moon (>80%)':[]};
-    compDays.forEach(d => {
-      if(d.moonFullness == null) return;
-      if(d.moonFullness < 0.2) moonBuckets['🌑 New Moon (<20%)'].push(d.total);
-      else if(d.moonFullness < 0.5) moonBuckets['🌒 Quarter (20-50%)'].push(d.total);
-      else if(d.moonFullness < 0.8) moonBuckets['🌔 Gibbous (50-80%)'].push(d.total);
-      else moonBuckets['🌕 Full Moon (>80%)'].push(d.total);
-    });
-    const moonRows = Object.entries(moonBuckets)
-      .filter(([,v])=>v.length)
-      .map(([label, scores]) => {
-        const avg = mean(scores);
-        const bar = Math.round(((avg-196)/2)*100);
-        return `<div class="wild-row">
-          <span class="wild-row-label">${label} (${scores.length} meet${scores.length>1?'s':''})</span>
-          <span class="wild-row-val">${fmt(avg)}</span>
-          <span class="wild-bar-wrap"><span class="wild-bar" style="width:${Math.max(0,Math.min(100,bar))}%"></span></span>
+    // ── Pearson correlations (team total vs env factor) ─────────────────────
+    function corrRow(label, emoji, key, dirHigh, dirLow) {
+      const pairs = compDays.filter(d=>d[key]!=null&&d.total!=null);
+      const r = pearson(pairs.map(d=>d[key]), pairs.map(d=>d.total));
+      if(r==null) return '';
+      const strength = corrStrength(r);
+      const dir = r > 0.05 ? `↑ higher ${dirHigh}` : r < -0.05 ? `↓ lower ${dirHigh}` : '↔ flat';
+      const pn = pairs.length;
+      const barW = Math.round(Math.abs(r)*100);
+      const col = corrColor(r);
+      return `
+        <div class="corr-row">
+          <span class="corr-label">${emoji} ${label}</span>
+          <span class="corr-r" style="color:${col}">${fmtR(r)}</span>
+          <span class="corr-strength" style="color:${col}">${strength}</span>
+          <span class="corr-dir">${dir}</span>
+          <span class="corr-n">n=${pn}</span>
         </div>`;
-      }).join('');
+    }
 
-    // ── 2. Temperature buckets ──────────────────────────────────────────────
-    const tempBuckets = {'🥶 Cold (<40°F)':[], '🧥 Cool (40–60°F)':[], '☀️ Warm (60°F+)':[]};
-    compDays.filter(d=>d.tempHigh!=null).forEach(d => {
-      if(d.tempHigh < 40) tempBuckets['🥶 Cold (<40°F)'].push(d.total);
-      else if(d.tempHigh < 60) tempBuckets['🧥 Cool (40–60°F)'].push(d.total);
-      else tempBuckets['☀️ Warm (60°F+)'].push(d.total);
-    });
-    const tempRows = Object.entries(tempBuckets)
-      .filter(([,v])=>v.length)
-      .map(([label, scores]) => {
-        const avg = mean(scores);
-        const bar = Math.round(((avg-196)/2)*100);
-        return `<div class="wild-row">
-          <span class="wild-row-label">${label}</span>
-          <span class="wild-row-val">${fmt(avg)}</span>
-          <span class="wild-bar-wrap"><span class="wild-bar" style="width:${Math.max(0,Math.min(100,bar))}%"></span></span>
+    const corrRows = [
+      corrRow('Moon fullness', '🌙', 'moonFullness', 'when full', 'under new moon'),
+      corrRow('Outside temp (°F)', '🌡️', 'tempHigh', 'in warm weather', 'in cold weather'),
+      corrRow('Venue elevation (ft)', '🏔️', 'elevFt', 'at altitude', 'at sea level'),
+      corrRow('Distance from home (mi)', '✈️', 'distMiles', 'far from home', 'close to home'),
+      corrRow('Precipitation (in)', '🌧️', 'precip', 'on rainy days', 'on dry days'),
+    ].filter(Boolean).join('');
+
+    // ── Group stats helper (returns {mean, sd, n, label}) ──────────────────
+    function groupStats(predicate) {
+      const scores = [];
+      meets.forEach(m => {
+        m.athletes.filter(a=>a.team==='Oregon State'&&predicate(a)).forEach(a => {
+          ['vault','bars','beam','floor'].forEach(ev => {
+            const s = a.scores[ev];
+            if(s!==undefined&&s>0) scores.push(s);
+          });
+        });
+      });
+      const m = mean(scores), s = sd(scores);
+      return {mean: m, sd: s, n: scores.length, gymnasts: new Set()};
+    }
+
+    // Better version — also returns unique gymnast names
+    function groupBlock(groupDefs) {
+      const results = groupDefs.map(({label, pred, emoji}) => {
+        const scores = [];
+        const names = new Set();
+        meets.forEach(m => {
+          m.athletes.filter(a=>a.team==='Oregon State'&&pred(a)).forEach(a => {
+            ['vault','bars','beam','floor'].forEach(ev => {
+              const s = a.scores[ev];
+              if(s!==undefined&&s>0) scores.push(s);
+            });
+            names.add(a.name);
+          });
+        });
+        return {label, emoji, mean: mean(scores), sd: sd(scores), n: scores.length, gymnasts: names.size};
+      }).filter(x=>x.mean!=null&&x.n>0).sort((a,b)=>b.mean-a.mean);
+
+      const overall = mean(results.flatMap(r=>Array(r.n).fill(r.mean)));
+      return results.map((r,i) => {
+        const diff = r.mean - overall;
+        const pct = Math.round(Math.abs(r.mean-9.6)/0.4*100);
+        const rankLabel = i===0 ? ' 👑' : i===results.length-1 ? ' 📉' : '';
+        const isSig = r.sd!=null && Math.abs(diff) > r.sd/2;
+        return `
+          <div class="gstat-row">
+            <span class="gstat-label">${r.emoji||''} ${r.label}${rankLabel}</span>
+            <span class="gstat-mean">${fmt2(r.mean)}</span>
+            <span class="gstat-sd">±${r.sd!=null?r.sd.toFixed(3):'—'}</span>
+            <span class="gstat-diff" style="color:${diff>0?'#2ecc71':diff<0?'#e74c3c':'#aaa'}">${diff>=0?'+':''}${fmt2(diff)}</span>
+            <span class="gstat-n">${r.gymnasts}g / ${r.n}ev</span>
+          </div>`;
+      }).join('');
+    }
+
+    // ── 1. Class Year ───────────────────────────────────────────────────────
+    const classRows = groupBlock([
+      {label:'Freshman', emoji:'🐣', pred:a=>bios[a.name]?.classYear==='Freshman'},
+      {label:'Sophomore', emoji:'📚', pred:a=>bios[a.name]?.classYear==='Sophomore'},
+      {label:'Junior', emoji:'🎯', pred:a=>bios[a.name]?.classYear==='Junior'},
+      {label:'Senior', emoji:'👑', pred:a=>bios[a.name]?.classYear==='Senior'},
+    ]);
+
+    // ── 2. Home Region ──────────────────────────────────────────────────────
+    const regMap = {'Pacific NW':['WA','OR','ID'],'West Coast':['CA','NV'],'Mountain West':['UT','CO'],'Texas':['TX'],'East Coast':['NY','NC','MI','IL','FL'],'International':['INTL']};
+    function getRegion(a) {
+      const st = bios[a.name]?.homeState;
+      for(const [r,states] of Object.entries(regMap)) if(states.includes(st)) return r;
+      return null;
+    }
+    const regionDefs = Object.keys(regMap).map(r=>({label:r, emoji:{'Pacific NW':'🌲','West Coast':'🌊','Mountain West':'⛷️','Texas':'🤠','East Coast':'🗽','International':'🌍'}[r]||'🌐', pred:a=>getRegion(a)===r}));
+    const regionRows = groupBlock(regionDefs);
+
+    // ── 3. Specialist vs AA ─────────────────────────────────────────────────
+    const specRows = groupBlock([
+      {label:'All-Around', emoji:'🔄', pred:a=>bios[a.name]?.position==='All-Around'},
+      {label:'Event Specialist', emoji:'🎯', pred:a=>bios[a.name]?.position&&bios[a.name].position!=='All-Around'},
+    ]);
+
+    // ── 4. Homeschool vs Traditional ────────────────────────────────────────
+    const isHomeschool = a => /connections academy|acellus|home school|homeschool|online|odyssey charter/i.test(bios[a.name]?.highSchool||'');
+    const schoolRows = groupBlock([
+      {label:'Homeschooled to train', emoji:'📚', pred:isHomeschool},
+      {label:'Traditional school', emoji:'🏫', pred:a=>bios[a.name]?.highSchool&&!isHomeschool(a)},
+    ]);
+
+    // ── 5. Major groups ─────────────────────────────────────────────────────
+    const majors = ['Kinesiology','Animal Science','Mechanical Engineering','Business Administration','Biology'];
+    const majorEmoji = {'Kinesiology':'🦴','Animal Science':'🐄','Mechanical Engineering':'⚙️','Business Administration':'💼','Biology':'🔬'};
+    const majorRows = groupBlock(majors.map(m=>({label:m, emoji:majorEmoji[m]||'🎓', pred:a=>bios[a.name]?.major===m})));
+
+    // ── 6. Height groups ────────────────────────────────────────────────────
+    function heightIn(a) {
+      const h=bios[a.name]?.height; if(!h) return null;
+      const [f,i]=h.split('-').map(Number); return f*12+i;
+    }
+    const heightRows = groupBlock([
+      {label:'Short (≤5\'1")', emoji:'🤸', pred:a=>{const h=heightIn(a);return h!=null&&h<=61;}},
+      {label:'Mid (5\'2"–5\'3")', emoji:'📏', pred:a=>{const h=heightIn(a);return h!=null&&h>=62&&h<=63;}},
+      {label:'Tall (≥5\'4")', emoji:'🦒', pred:a=>{const h=heightIn(a);return h!=null&&h>=64;}},
+    ]);
+
+    // ── Cross-tab: Full Moon × Class Year ───────────────────────────────────
+    const fullMoonDates = new Set(compDays.filter(d=>d.moonFullness!=null&&d.moonFullness>0.75).map(d=>d.date));
+    const darkMoonDates = new Set(compDays.filter(d=>d.moonFullness!=null&&d.moonFullness<0.35).map(d=>d.date));
+    const hiAltDates = new Set(compDays.filter(d=>d.elevFt!=null&&d.elevFt>2000).map(d=>d.date));
+
+    function crossTab(datePred, groupDefs) {
+      return groupBlock(groupDefs.map(g=>({...g, pred:a=>datePred(a._meet)&&g.basePred(a)})));
+    }
+
+    // Moon × class: who peaks under a full moon?
+    const moonClassRows = (() => {
+      const clsGroups = ['Freshman','Sophomore','Junior','Senior'];
+      const clsEmoji = {Freshman:'🐣',Sophomore:'📚',Junior:'🎯',Senior:'👑'};
+      const rows = clsGroups.map(cls => {
+        const fm=[], dm=[];
+        meets.forEach(m => {
+          if(!fullMoonDates.has(m.date)&&!darkMoonDates.has(m.date)) return;
+          m.athletes.filter(a=>a.team==='Oregon State'&&bios[a.name]?.classYear===cls).forEach(a => {
+            ['vault','bars','beam','floor'].forEach(ev => {
+              const s=a.scores[ev]; if(s===undefined||s<=0) return;
+              if(fullMoonDates.has(m.date)) fm.push(s);
+              else dm.push(s);
+            });
+          });
+        });
+        if(!fm.length&&!dm.length) return null;
+        const fmMean=mean(fm), dmMean=mean(dm);
+        const diff = fmMean!=null&&dmMean!=null ? fmMean-dmMean : null;
+        return `<div class="gstat-row">
+          <span class="gstat-label">${clsEmoji[cls]} ${cls}</span>
+          <span class="gstat-mean">${fmt2(fmMean)} 🌕</span>
+          <span class="gstat-mean">${fmt2(dmMean)} 🌑</span>
+          <span class="gstat-diff" style="color:${diff==null?'#aaa':diff>0?'#2ecc71':'#e74c3c'}">${diff!=null?(diff>=0?'+':'')+fmt2(diff)+' under full moon':'—'}</span>
+          <span class="gstat-n">${fm.length}ev / ${dm.length}ev</span>
         </div>`;
-      }).join('');
+      }).filter(Boolean);
+      return rows.join('');
+    })();
 
-    // ── 3. Altitude buckets ───────────────────────────────────────────────
-    const altBuckets = {'🏙️ Sea Level (<500ft)':[], '⛰️ Mid (500–2000ft)':[], '🏔️ High (2000ft+)':[]};
-    compDays.forEach(d => {
-      if(d.elevFt == null) return;
-      if(d.elevFt < 500) altBuckets['🏙️ Sea Level (<500ft)'].push(d.total);
-      else if(d.elevFt < 2000) altBuckets['⛰️ Mid (500–2000ft)'].push(d.total);
-      else altBuckets['🏔️ High (2000ft+)'].push(d.total);
-    });
-    const altRows = Object.entries(altBuckets)
-      .filter(([,v])=>v.length)
-      .map(([label, scores]) => {
-        const avg = mean(scores);
-        const bar = Math.round(((avg-196)/2)*100);
-        return `<div class="wild-row">
-          <span class="wild-row-label">${label}</span>
-          <span class="wild-row-val">${fmt(avg)}</span>
-          <span class="wild-bar-wrap"><span class="wild-bar" style="width:${Math.max(0,Math.min(100,bar))}%"></span></span>
+    // Altitude × Region: who handles altitude best?
+    const altRegionRows = (() => {
+      const regions = Object.keys(regMap);
+      return regions.map(reg => {
+        const hi=[], lo=[];
+        meets.forEach(m => {
+          m.athletes.filter(a=>a.team==='Oregon State'&&getRegion(a)===reg).forEach(a => {
+            ['vault','bars','beam','floor'].forEach(ev => {
+              const s=a.scores[ev]; if(s===undefined||s<=0) return;
+              if(hiAltDates.has(m.date)) hi.push(s);
+              else lo.push(s);
+            });
+          });
+        });
+        if(!hi.length&&!lo.length) return null;
+        const hiMean=mean(hi), loMean=mean(lo);
+        const diff = hiMean!=null&&loMean!=null ? hiMean-loMean : null;
+        const regEmoji={'Pacific NW':'🌲','West Coast':'🌊','Mountain West':'⛷️','Texas':'🤠','East Coast':'🗽','International':'🌍'}[reg]||'🌐';
+        return `<div class="gstat-row">
+          <span class="gstat-label">${regEmoji} ${reg}</span>
+          <span class="gstat-mean">${fmt2(hiMean)} ⛰️</span>
+          <span class="gstat-mean">${fmt2(loMean)} 🏙️</span>
+          <span class="gstat-diff" style="color:${diff==null?'#aaa':diff>0?'#2ecc71':'#e74c3c'}">${diff!=null?(diff>=0?'+':'')+fmt2(diff)+' at altitude':'no data'}</span>
+          <span class="gstat-n">${hi.length}ev / ${lo.length}ev</span>
         </div>`;
-      }).join('');
-
-    // ── 4. Per-gymnast class year analysis ──────────────────────────────────
-    const CLASS_ORDER = ['Freshman','Sophomore','Junior','Senior','Graduate'];
-    const classGroups = {};
-    meets.forEach(m => {
-      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
-        const cls = bios[a.name]?.classYear;
-        if(!cls) return;
-        const scores = ['vault','bars','beam','floor'].map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
-        if(!scores.length) return;
-        if(!classGroups[cls]) classGroups[cls] = {scores:[], names: new Set()};
-        scores.forEach(s=>classGroups[cls].scores.push(s));
-        classGroups[cls].names.add(a.name);
-      });
-    });
-    const classRows = CLASS_ORDER.filter(c=>classGroups[c]).map(cls => {
-      const g = classGroups[cls];
-      const avg = mean(g.scores);
-      const bar = Math.round(((avg-9.6)/0.4)*100);
-      const emoji = {Freshman:'🐣',Sophomore:'📚',Junior:'🎯',Senior:'👑'}[cls]||'🎓';
-      return `<div class="wild-row">
-        <span class="wild-row-label">${emoji} ${cls} (${g.names.size} gymnasts)</span>
-        <span class="wild-row-val">${fmt(avg)}</span>
-        <span class="wild-bar-wrap"><span class="wild-bar" style="width:${Math.max(0,Math.min(100,bar))}%"></span></span>
-      </div>`;
-    }).join('');
-
-    // ── 5. Geographic clusters ────────────────────────────────────────────
-    const regionMap = {'Pacific NW':['WA','OR','ID'], 'West Coast':['CA','NV'], 'Mountain West':['UT','CO','AZ','NM'], 'Texas':['TX'], 'East Coast':['NY','NC','MI','IL','FL','VA','MD','PA','NJ','CT'], 'International':['INTL']};
-    const regionGroups = {};
-    meets.forEach(m => {
-      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
-        const st = bios[a.name]?.homeState;
-        let region = 'Other';
-        for(const [r, states] of Object.entries(regionMap)) {
-          if(states.includes(st)) { region = r; break; }
-        }
-        const scores = ['vault','bars','beam','floor'].map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
-        if(!scores.length) return;
-        if(!regionGroups[region]) regionGroups[region] = {scores:[], names: new Set()};
-        scores.forEach(s=>regionGroups[region].scores.push(s));
-        regionGroups[region].names.add(a.name);
-      });
-    });
-    const regionEmoji = {'Pacific NW':'🌲','West Coast':'🌊','Mountain West':'⛷️','Texas':'🤠','East Coast':'🗽','International':'🌍','Other':'🌐'};
-    const regionRows = Object.entries(regionGroups)
-      .filter(([,g])=>g.names.size>=1)
-      .sort(([,a],[,b])=>mean(b.scores)-mean(a.scores))
-      .map(([region, g]) => {
-        const avg = mean(g.scores);
-        const bar = Math.round(((avg-9.6)/0.4)*100);
-        return `<div class="wild-row">
-          <span class="wild-row-label">${regionEmoji[region]||'🌐'} ${region} (${g.names.size})</span>
-          <span class="wild-row-val">${fmt(avg)}</span>
-          <span class="wild-bar-wrap"><span class="wild-bar" style="width:${Math.max(0,Math.min(100,bar))}%"></span></span>
-        </div>`;
-      }).join('');
-
-    // ── 6. Homeschool vs Traditional ─────────────────────────────────────
-    const schoolGroups = {'📚 Homeschooled':{scores:[],names:new Set()}, '🏫 Traditional':{scores:[],names:new Set()}};
-    meets.forEach(m => {
-      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
-        const hs = bios[a.name]?.highSchool||'';
-        const key = /connections academy|acellus|home school|homeschool|online|odyssey charter/i.test(hs)
-          ? '📚 Homeschooled' : '🏫 Traditional';
-        const scores = ['vault','bars','beam','floor'].map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
-        if(!scores.length) return;
-        scores.forEach(s=>schoolGroups[key].scores.push(s));
-        schoolGroups[key].names.add(a.name);
-      });
-    });
-    const schoolRows = Object.entries(schoolGroups).filter(([,g])=>g.names.size).map(([label,g]) => {
-      const avg = mean(g.scores);
-      const bar = Math.round(((avg-9.6)/0.4)*100);
-      return `<div class="wild-row">
-        <span class="wild-row-label">${label} (${g.names.size} gymnasts)</span>
-        <span class="wild-row-val">${fmt(avg)}</span>
-        <span class="wild-bar-wrap"><span class="wild-bar" style="width:${Math.max(0,Math.min(100,bar))}%"></span></span>
-      </div>`;
-    }).join('');
-
-    // ── 7. Major groups ────────────────────────────────────────────────────
-    const majorGroups = {};
-    meets.forEach(m => {
-      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
-        const major = bios[a.name]?.major;
-        if(!major) return;
-        const scores = ['vault','bars','beam','floor'].map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
-        if(!scores.length) return;
-        if(!majorGroups[major]) majorGroups[major] = {scores:[], names: new Set()};
-        scores.forEach(s=>majorGroups[major].scores.push(s));
-        majorGroups[major].names.add(a.name);
-      });
-    });
-    const majorEmoji = {'Kinesiology':'🦴','Animal Science':'🐄','Mechanical Engineering':'⚙️','Business Administration':'💼','Biology':'🔬','Undecided':'🤷'};
-    const majorRows = Object.entries(majorGroups)
-      .sort(([,a],[,b])=>mean(b.scores)-mean(a.scores))
-      .map(([major,g]) => {
-        const avg = mean(g.scores);
-        const bar = Math.round(((avg-9.6)/0.4)*100);
-        return `<div class="wild-row">
-          <span class="wild-row-label">${majorEmoji[major]||'🎓'} ${major} (${g.names.size})</span>
-          <span class="wild-row-val">${fmt(avg)}</span>
-          <span class="wild-bar-wrap"><span class="wild-bar" style="width:${Math.max(0,Math.min(100,bar))}%"></span></span>
-        </div>`;
-      }).join('');
-
-    // ── 8. Height groups ──────────────────────────────────────────────────
-    const heightGroups = {'🐤 Short (≤5-1)':{scores:[],names:new Set()}, '📏 Average (5-2 to 5-3)':{scores:[],names:new Set()}, '🦒 Tall (≥5-4)':{scores:[],names:new Set()}};
-    meets.forEach(m => {
-      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
-        const h = bios[a.name]?.height;
-        if(!h) return;
-        const [ft, inch] = h.split('-').map(Number);
-        const totalIn = ft*12+inch;
-        const key = totalIn <= 61 ? '🐤 Short (≤5-1)' : totalIn <= 63 ? '📏 Average (5-2 to 5-3)' : '🦒 Tall (≥5-4)';
-        const scores = ['vault','bars','beam','floor'].map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
-        if(!scores.length) return;
-        scores.forEach(s=>heightGroups[key].scores.push(s));
-        heightGroups[key].names.add(a.name);
-      });
-    });
-    const heightRows = Object.entries(heightGroups).filter(([,g])=>g.names.size).map(([label,g]) => {
-      const avg = mean(g.scores);
-      const bar = Math.round(((avg-9.6)/0.4)*100);
-      return `<div class="wild-row">
-        <span class="wild-row-label">${label} (${g.names.size})</span>
-        <span class="wild-row-val">${fmt(avg)}</span>
-        <span class="wild-bar-wrap"><span class="wild-bar" style="width:${Math.max(0,Math.min(100,bar))}%"></span></span>
-      </div>`;
-    }).join('');
-
-    // ── Best moon × class combo ───────────────────────────────────────────
-    // Full moon meets: find which class year scores best
-    const fullMoonMeetDates = compDays.filter(d=>d.moonFullness>0.8).map(d=>d.date);
-    const fmClassGroups = {};
-    meets.filter(m=>fullMoonMeetDates.includes(m.date)).forEach(m => {
-      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
-        const cls = bios[a.name]?.classYear;
-        if(!cls) return;
-        const scores = ['vault','bars','beam','floor'].map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
-        if(!scores.length) return;
-        if(!fmClassGroups[cls]) fmClassGroups[cls] = [];
-        scores.forEach(s=>fmClassGroups[cls].push(s));
-      });
-    });
-    const fmBest = Object.entries(fmClassGroups)
-      .map(([cls,scores])=>({cls, avg: mean(scores)}))
-      .filter(x=>x.avg).sort((a,b)=>b.avg-a.avg)[0];
-
-    const fmInsight = fmBest
-      ? `🌕 Under a full moon, <strong>${fmBest.cls}s</strong> lead the team with a <strong>${fmt(fmBest.avg)}</strong> event avg — so yes, ${fmBest.cls}s peak when the moon is bright.`
-      : '';
+      }).filter(Boolean).join('');
+    })();
 
     return `
       <div class="section-card" style="margin-top:1.5rem;">
-        <h2 class="section-title">🎲 Season Wild Stats</h2>
-        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.2rem;">Correlations, clusters, and questions no reasonable person would think to ask.</p>
+        <h2 class="section-title">🔬 Season Wild Stats & Correlations</h2>
+        <p class="wild-intro">Pearson r, group means ± SD, and cross-tabs. Small samples — treat as patterns, not proofs.</p>
 
-        <div class="wild-stats-grid">
-          <div class="wild-stat-block">
-            <div class="wild-stat-title">🌙 Team Score by Moon Phase</div>
-            <div class="wild-caption">Does the moon actually affect gymnastics? You be the judge.</div>
-            ${moonRows}
+        <div class="corr-section">
+          <div class="corr-section-title">📈 Environmental Correlations with Team Score (n=${n} meet days)</div>
+          <div class="corr-legend">r = Pearson correlation coefficient. ±1.0 = perfect, 0 = none. Threshold for "interesting": |r| > 0.4</div>
+          <div class="corr-header">
+            <span>Factor</span><span>r</span><span>Strength</span><span>Direction</span><span>N</span>
           </div>
+          ${corrRows}
+        </div>
 
-          <div class="wild-stat-block">
-            <div class="wild-stat-title">🌡️ Team Score by Outside Temperature</div>
-            <div class="wild-caption">Competing indoors, but does the weather matter anyway?</div>
-            ${tempRows}
-          </div>
-
-          <div class="wild-stat-block">
-            <div class="wild-stat-title">🏔️ Team Score by Venue Elevation</div>
-            <div class="wild-caption">Thin air at BYU (4,549ft) and Utah State (4,780ft). Does it hurt?</div>
-            ${altRows}
-          </div>
+        <div class="wild-stats-grid" style="margin-top:1.2rem;">
 
           <div class="wild-stat-block">
             <div class="wild-stat-title">👩‍🎓 Event Avg by Class Year</div>
-            <div class="wild-caption">Do seniors lead? Do freshmen choke? Actual data, actual answer.</div>
+            <div class="wild-caption">Mean ± SD per scored event. Δ vs group mean. g=gymnasts, ev=events scored.</div>
+            <div class="gstat-header"><span>Group</span><span>Mean</span><span>± SD</span><span>Δ</span><span>Sample</span></div>
             ${classRows}
           </div>
 
           <div class="wild-stat-block">
             <div class="wild-stat-title">🗺️ Event Avg by Home Region</div>
-            <div class="wild-caption">East Coast gymnasts vs West Coast gymnasts vs the Texans.</div>
+            <div class="wild-caption">Where they grew up — does it affect how they perform?</div>
+            <div class="gstat-header"><span>Region</span><span>Mean</span><span>± SD</span><span>Δ</span><span>Sample</span></div>
             ${regionRows}
           </div>
 
           <div class="wild-stat-block">
+            <div class="wild-stat-title">🎯 All-Around vs Specialists</div>
+            <div class="wild-caption">AA gymnasts compete in everything. Specialists own their events. Who scores higher?</div>
+            <div class="gstat-header"><span>Type</span><span>Mean</span><span>± SD</span><span>Δ</span><span>Sample</span></div>
+            ${specRows}
+          </div>
+
+          <div class="wild-stat-block">
             <div class="wild-stat-title">📚 Homeschooled vs Traditional</div>
-            <div class="wild-caption">Trained 40hrs/week instead of going to prom. Worth it?</div>
+            <div class="wild-caption">Gave up high school to train 40hrs/week. Statistically, was it worth it?</div>
+            <div class="gstat-header"><span>School</span><span>Mean</span><span>± SD</span><span>Δ</span><span>Sample</span></div>
             ${schoolRows}
           </div>
 
           ${majorRows ? `<div class="wild-stat-block">
             <div class="wild-stat-title">🎓 Event Avg by Major</div>
-            <div class="wild-caption">Does studying the body help you control it under pressure?</div>
+            <div class="wild-caption">Does studying the body help you control it? Limited sample — only 6 known majors.</div>
+            <div class="gstat-header"><span>Major</span><span>Mean</span><span>± SD</span><span>Δ</span><span>Sample</span></div>
             ${majorRows}
           </div>` : ''}
 
           <div class="wild-stat-block">
             <div class="wild-stat-title">📏 Event Avg by Height</div>
-            <div class="wild-caption">Short gymnasts: lower center of gravity. Tall gymnasts: longer lines. Who wins?</div>
+            <div class="wild-caption">Lower center of gravity vs longer lines. Physics says both matter.</div>
+            <div class="gstat-header"><span>Height</span><span>Mean</span><span>± SD</span><span>Δ</span><span>Sample</span></div>
             ${heightRows}
           </div>
+
         </div>
 
-        ${fmInsight ? `<div class="wild-item" style="margin-top:1rem;">${fmInsight}</div>` : ''}
+        ${moonClassRows ? `<div class="wild-stat-block" style="margin-top:1rem;">
+          <div class="wild-stat-title">🌙 × 👩‍🎓 Cross-Tab: Who Peaks Under a Full Moon?</div>
+          <div class="wild-caption">Full moon (>75% illuminated) vs dark moon (<35%) — by class year. The question that had to be asked.</div>
+          <div class="gstat-header"><span>Class</span><span>Full Moon</span><span>Dark Moon</span><span>Full Moon Effect</span><span>Sample</span></div>
+          ${moonClassRows}
+        </div>` : ''}
+
+        ${altRegionRows ? `<div class="wild-stat-block" style="margin-top:1rem;">
+          <div class="wild-stat-title">🏔️ × 🗺️ Cross-Tab: Who Handles Altitude Best?</div>
+          <div class="wild-caption">High altitude venues (BYU, Utah State — 4500+ ft) vs sea-level/low-altitude. By home region.</div>
+          <div class="gstat-header"><span>Region</span><span>High Alt</span><span>Low Alt</span><span>Altitude Effect</span><span>Sample</span></div>
+          ${altRegionRows}
+        </div>` : ''}
+
       </div>`;
   }
 

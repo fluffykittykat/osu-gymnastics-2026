@@ -1964,3 +1964,67 @@ main {
   border-radius: 4px;
   transition: width 0.4s ease;
 }
+
+/* ===== Correlation & Group Stats Tables ===== */
+.wild-intro {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  margin-bottom: 1.2rem;
+  font-style: italic;
+}
+.corr-section {
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+}
+.corr-section-title {
+  font-family: Oswald, sans-serif;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin-bottom: 0.2rem;
+}
+.corr-legend {
+  font-size: 0.72rem;
+  color: #555;
+  margin-bottom: 0.8rem;
+  font-style: italic;
+}
+.corr-header, .corr-row {
+  display: grid;
+  grid-template-columns: 1.8fr 0.5fr 0.9fr 1.5fr 0.4fr;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #1e1e1e;
+  font-size: 0.78rem;
+}
+.corr-header { color: #555; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.corr-label { color: var(--text-muted); }
+.corr-r { font-family: Oswald, monospace; font-weight: 700; font-size: 1rem; }
+.corr-strength { font-style: italic; }
+.corr-dir { font-size: 0.73rem; }
+.corr-n { color: #555; font-size: 0.7rem; }
+
+/* Group stat rows */
+.gstat-header, .gstat-row {
+  display: grid;
+  grid-template-columns: 1.6fr 0.6fr 0.6fr 0.7fr 0.8fr;
+  gap: 0.3rem;
+  align-items: center;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid #1e1e1e;
+  font-size: 0.77rem;
+}
+.gstat-header { color: #555; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.gstat-label { color: var(--text-muted); }
+.gstat-mean { font-family: Oswald, sans-serif; font-weight: 600; color: var(--orange); }
+.gstat-sd { color: #666; font-size: 0.72rem; }
+.gstat-diff { font-family: Oswald, sans-serif; font-weight: 600; font-size: 0.85rem; }
+.gstat-n { color: #555; font-size: 0.68rem; }
+@media (max-width: 600px) {
+  .corr-header, .corr-row { grid-template-columns: 1.4fr 0.5fr 0.9fr; }
+  .corr-dir, .corr-n { display: none; }
+  .gstat-header, .gstat-row { grid-template-columns: 1.4fr 0.6fr 0.6fr 0.7fr; }
+  .gstat-n { display: none; }
+}
