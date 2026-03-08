@@ -6,7 +6,9 @@
   let meets = [];
   let currentFilter = 'all';
   let currentView = 'season';
-  let _suppressHashPush = false;
+  let lastRefreshedTime = null;
+  let autoRefreshInterval = null;
+  let autoRefreshEnabled = false;
 
   const EVENT_NAMES = {
     vault: 'Vault', bars: 'Bars', beam: 'Beam', floor: 'Floor', aa: 'All-Around'
@@ -27,53 +29,141 @@
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
   }
 
-  function slugifyName(name) {
-    return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  function timeAgo(date) {
+    if (!date) return 'never';
+    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
   }
 
-  // ===== Hash Routing =====
-  function pushHash(hash) {
-    if (_suppressHashPush) return;
-    history.pushState(null, '', '#' + hash);
+  function hasLiveMeets() {
+    return meets.some(m => m.status === 'in_progress');
   }
 
-  function readAndRouteHash() {
-    const hash = location.hash.replace('#', '');
-    if (!hash || hash === 'season') {
-      showView('season', true);
-      return;
+  // ===== Toast Notifications =====
+  function showToast(message, type = 'default', duration = 4000) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('toast-exit');
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  }
+
+  // ===== Last Updated =====
+  function updateLastUpdatedDisplay() {
+    const bar = document.getElementById('lastUpdatedBar');
+    const text = document.getElementById('lastUpdatedText');
+    if (lastRefreshedTime) {
+      bar.style.display = '';
+      text.textContent = `Last updated: ${timeAgo(lastRefreshedTime)}`;
     }
-    if (hash.startsWith('meet/')) {
-      const meetId = hash.slice(5);
-      const m = meets.find(x => x.id === meetId);
-      if (m) { showMeetDetail(meetId, true); return; }
-    }
-    if (hash.startsWith('gymnast/')) {
-      const slug = hash.slice(8);
-      const profiles = getGymnastProfiles();
-      const p = profiles.find(pr => slugifyName(pr.name) === slug);
-      if (p) {
-        showView('gymnasts', true);
-        showGymnastProfile(p.name, true);
-        return;
+  }
+
+  // Update the display every 30 seconds
+  setInterval(updateLastUpdatedDisplay, 30000);
+
+  // ===== Refresh =====
+  async function doRefresh() {
+    const btn = document.getElementById('refreshBtn');
+    const mobileBtn = document.getElementById('refreshBtnMobile');
+
+    // Set loading state
+    btn.disabled = true;
+    btn.classList.add('refreshing');
+    if (mobileBtn) mobileBtn.classList.add('refreshing');
+
+    const labelEl = btn.querySelector('.refresh-label');
+    if (labelEl) labelEl.textContent = 'Refreshing...';
+
+    try {
+      const res = await fetch('/api/refresh', { method: 'POST' });
+      const data = await res.json();
+
+      if (data.success) {
+        // Re-fetch the meets data
+        const meetsRes = await fetch('/api/meets');
+        const oldMeets = meets.slice();
+        meets = await meetsRes.json();
+
+        lastRefreshedTime = new Date();
+        updateLastUpdatedDisplay();
+
+        // Re-render current view
+        if (currentView === 'season') renderSeason();
+        else if (currentView === 'gymnasts') renderGymnasts();
+        else if (currentView === 'leaderboards') renderLeaderboard(document.querySelector('.event-tab.active')?.dataset.event || 'vault');
+
+        // Show appropriate toast
+        const summary = data.summary;
+        if (summary.meetsInProgress > 0) {
+          showToast(`⚡ Live meet in progress — scores updating`, 'live');
+        } else if (summary.meetsUpdated > 0) {
+          showToast(`✅ Updated — ${summary.meetsUpdated} meet${summary.meetsUpdated > 1 ? 's' : ''} refreshed`, 'success');
+        } else {
+          showToast('✅ Data is up to date', 'success');
+        }
+
+        // Flash updated scores
+        highlightChanges(oldMeets, meets);
+
+        // Show/hide auto-refresh based on live meets
+        if (hasLiveMeets() && !autoRefreshEnabled) {
+          // Auto-refresh is available but not auto-enabled
+        }
+      } else {
+        showToast('❌ Refresh failed — ' + (data.error || 'unknown error'), 'error');
       }
+    } catch (err) {
+      showToast('❌ Refresh failed — check connection', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('refreshing');
+      if (mobileBtn) mobileBtn.classList.remove('refreshing');
+      if (labelEl) labelEl.textContent = 'Refresh';
     }
-    if (hash.startsWith('leaderboard/')) {
-      const event = hash.slice(12);
-      showView('leaderboards', true);
-      renderLeaderboard(event);
-      return;
-    }
-    if (hash === 'gymnasts') { showView('gymnasts', true); return; }
-    if (hash === 'leaderboards') { showView('leaderboards', true); return; }
-    showView('season', true);
   }
 
-  window.addEventListener('popstate', () => {
-    _suppressHashPush = true;
-    readAndRouteHash();
-    _suppressHashPush = false;
-  });
+  function highlightChanges(oldMeets, newMeets) {
+    // Brief delay to let DOM render, then flash changed scores
+    setTimeout(() => {
+      const oldMap = {};
+      oldMeets.forEach(m => { oldMap[m.id] = m; });
+
+      newMeets.forEach(m => {
+        const old = oldMap[m.id];
+        if (old && old.osuScore !== m.osuScore) {
+          const card = document.querySelector(`[data-meet-id="${m.id}"]`);
+          if (card) {
+            const scoreEl = card.querySelector('.score-osu');
+            if (scoreEl) scoreEl.classList.add('score-updated');
+          }
+        }
+      });
+    }, 100);
+  }
+
+  // ===== Auto-Refresh =====
+  function toggleAutoRefresh() {
+    autoRefreshEnabled = !autoRefreshEnabled;
+    const toggle = document.querySelector('.toggle-switch');
+    if (toggle) toggle.classList.toggle('active', autoRefreshEnabled);
+
+    if (autoRefreshEnabled) {
+      autoRefreshInterval = setInterval(doRefresh, 60000);
+      showToast('🔄 Auto-refresh enabled (every 60s)', 'default');
+    } else {
+      clearInterval(autoRefreshInterval);
+      autoRefreshInterval = null;
+      showToast('Auto-refresh disabled', 'default');
+    }
+  }
 
   // ===== Data Loading =====
   async function loadData() {
@@ -90,9 +180,11 @@
 
       document.getElementById('loading').style.display = 'none';
 
+      // Build search index and initialize search UI
       if (window.OSUSearch) {
         OSUSearch.buildIndex(meets);
         OSUSearch.createUI();
+        // Wire navigation callbacks
         OSUSearch.onGymnastSelect = function (name) {
           showView('gymnasts');
           showGymnastProfile(name);
@@ -114,12 +206,7 @@
         };
       }
 
-      // Route from hash or default to season
-      if (location.hash && location.hash !== '#') {
-        readAndRouteHash();
-      } else {
-        showView('season', true);
-      }
+      showView('season');
     } catch (err) {
       document.getElementById('loading').innerHTML =
         '<div class="empty-state"><div class="empty-icon">😕</div><p class="empty-text">Failed to load data. Is the server running?</p></div>';
@@ -127,7 +214,7 @@
   }
 
   // ===== Navigation =====
-  function showView(view, skipPush) {
+  function showView(view) {
     currentView = view;
     document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
     document.querySelectorAll('.nav-link, .bottom-nav-item').forEach(l => {
@@ -139,11 +226,9 @@
     if (el) {
       el.style.display = 'block';
       el.style.animation = 'none';
-      el.offsetHeight;
+      el.offsetHeight; // trigger reflow
       el.style.animation = '';
     }
-
-    if (!skipPush) pushHash(view);
 
     if (view === 'season') renderSeason();
     else if (view === 'gymnasts') renderGymnasts();
@@ -191,12 +276,15 @@
     let pathD = scores.map((s, i) => `${i === 0 ? 'M' : 'L'}${xScale(i).toFixed(1)},${yScale(s).toFixed(1)}`).join(' ');
 
     let dots = scores.map((s, i) => {
-      const color = meets[i].result === 'W' ? '#2ecc71' : '#e74c3c';
-      return `<circle cx="${xScale(i).toFixed(1)}" cy="${yScale(s).toFixed(1)}" r="5" fill="${color}" stroke="var(--dark)" stroke-width="2" class="trend-dot" data-meet-id="${meets[i].id}" style="cursor:pointer;">
-        <title>${formatDate(meets[i].date)}: ${s.toFixed(3)} (${meets[i].result})</title>
+      const meet = scoredMeets[i];
+      const color = meet.result === 'W' ? '#2ecc71' : '#e74c3c';
+      const isLive = meet.status === 'in_progress';
+      return `<circle cx="${xScale(i).toFixed(1)}" cy="${yScale(s).toFixed(1)}" r="5" fill="${isLive ? '#ff4444' : color}" stroke="var(--dark)" stroke-width="2"${isLive ? ' class="live-dot"' : ''}>
+        <title>${formatDate(meet.date)}: ${s.toFixed(3)} (${meet.result})${isLive ? ' 🔴 LIVE' : ''}</title>
       </circle>`;
     }).join('');
 
+    // Y-axis labels
     const yTicks = 5;
     let yLabels = '';
     let yGridLines = '';
@@ -207,9 +295,10 @@
       yGridLines += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="#333" stroke-width="0.5"/>`;
     }
 
-    let xLabels = meets.map((m, i) => {
+    // X-axis labels
+    let xLabels = scoredMeets.map((m, i) => {
       const x = xScale(i);
-      return `<text x="${x}" y="${h - 5}" text-anchor="middle" fill="#999" font-size="9" font-family="Inter" class="trend-dot" data-meet-id="${m.id}" style="cursor:pointer;">${formatDate(m.date)}</text>`;
+      return `<text x="${x}" y="${h - 5}" text-anchor="middle" fill="#999" font-size="9" font-family="Inter">${formatDate(m.date)}</text>`;
     }).join('');
 
     container.innerHTML = `
@@ -221,11 +310,6 @@
         ${xLabels}
       </svg>
     `;
-
-    // Trend dot clicks
-    container.querySelectorAll('.trend-dot').forEach(el => {
-      el.addEventListener('click', () => showMeetDetail(el.dataset.meetId));
-    });
   }
 
   function renderMeetCards() {
@@ -242,6 +326,7 @@
       return;
     }
 
+    // Group quad meets together; non-quad meets appear as-is
     const rendered = [];
     const seenQuads = new Set();
 
@@ -249,6 +334,7 @@
       if (m.quadMeet && m.quadName) {
         if (!seenQuads.has(m.quadName)) {
           seenQuads.add(m.quadName);
+          // Gather all matchups for this quad
           const quadMeets = filtered.filter(q => q.quadName === m.quadName);
           rendered.push(renderQuadGroup(quadMeets));
         }
@@ -259,6 +345,7 @@
 
     grid.innerHTML = rendered.join('');
 
+    // Animate bars after render
     requestAnimationFrame(() => {
       grid.querySelectorAll('.event-bar-fill').forEach(bar => {
         const w = bar.style.width;
@@ -299,10 +386,10 @@
     }).join('');
 
     return `
-      <div class="meet-card" data-meet-id="${m.id}" style="cursor:pointer;">
+      <div class="meet-card${m.status === 'in_progress' ? ' meet-card-live' : ''}" data-meet-id="${m.id}">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent">${m.opponent} ${getHomeAwayBadge(m.isHome, 'full')}</div>
+            <div class="meet-opponent">${m.opponent}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''} ${statusBadge}</div>
             <div class="meet-date">${formatDateLong(m.date)}</div>
             <div class="meet-location">${m.location}</div>
           </div>
@@ -328,7 +415,7 @@
       <div class="quad-matchup meet-card" data-meet-id="${m.id}" style="margin:0;border-radius:8px;cursor:pointer;">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent" style="font-size:1rem;">${m.opponent} ${getHomeAwayBadge(m.isHome, 'full')}</div>
+            <div class="meet-opponent" style="font-size:1rem;">${m.opponent} ${getStatusBadge(m)}</div>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem;">
             <span style="font-family:Oswald;color:var(--orange);font-size:1rem;">${m.osuScore.toFixed(3)}</span>
@@ -360,26 +447,35 @@
   }
 
   // ===== Meet Detail =====
-  function showMeetDetail(meetId, skipPush) {
+  function showMeetDetail(meetId) {
     const meet = meets.find(m => m.id === meetId);
     if (!meet) return;
 
-    if (!skipPush) pushHash('meet/' + meetId);
-
     document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
-    document.querySelectorAll('.nav-link, .bottom-nav-item').forEach(l => l.classList.remove('active'));
     const view = document.getElementById('view-meet');
     view.style.display = 'block';
 
-    // Breadcrumb
-    const breadcrumb = `
-      <nav class="breadcrumb">
-        <a href="#" class="breadcrumb-link" data-nav="season">Season</a>
-        <span class="breadcrumb-sep">›</span>
-        <span class="breadcrumb-current">${meet.opponent} ${formatDate(meet.date)}</span>
-      </nav>`;
+    const content = document.getElementById('meetDetailContent');
 
-    // Quad meet full standings table
+    // Live banner
+    let liveBanner = '';
+    if (meet.status === 'in_progress') {
+      const lastUpdated = meet.lastRefreshed ? timeAgo(new Date(meet.lastRefreshed)) : 'unknown';
+      liveBanner = `
+        <div class="live-banner">
+          <div class="live-banner-text">
+            <span class="badge badge-live">🔴 LIVE</span>
+            <span>Meet in progress — scores may be partial</span>
+            <span class="live-banner-time">Last updated: ${lastUpdated}</span>
+          </div>
+          <div class="auto-refresh-toggle">
+            <span>Auto-refresh</span>
+            <div class="toggle-switch${autoRefreshEnabled ? ' active' : ''}" id="autoRefreshToggle"></div>
+          </div>
+        </div>`;
+    }
+
+    // Quad meet teams table
     let teamsTable = '';
     if (meet.allTeams) {
       teamsTable = `
@@ -400,7 +496,7 @@
         </div>`;
     }
 
-    // Event detail cards with clickable athlete names and event headers
+    // Event detail cards with athlete lineups
     const eventCards = ['vault', 'bars', 'beam', 'floor'].map(event => {
       const eventAthletes = meet.athletes
         .filter(a => a.scores[event] !== undefined)
@@ -409,7 +505,7 @@
       const rows = eventAthletes.map((a, i) => `
         <tr>
           <td>${i + 1}</td>
-          <td><a href="#" class="inline-link gymnast-link" data-gymnast="${a.name}">${a.name}</a></td>
+          <td>${a.name}</td>
           <td class="score-cell">${a.scores[event].toFixed(3)}</td>
         </tr>`).join('');
 
@@ -419,11 +515,9 @@
 
       return `
         <div class="detail-event-card">
-          <div class="detail-event-title">
-            <a href="#" class="inline-link event-link" data-event="${event}">${EVENT_NAMES[event]}</a>
-          </div>
+          <div class="detail-event-title">${EVENT_NAMES[event]}</div>
           <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
-            <a href="#" class="inline-link event-score-link" data-event="${event}" data-score="${osuScore}" style="font-family:Oswald;font-weight:600;color:var(--orange);">${osuScore.toFixed(3)}</a>
+            <span style="color:var(--orange);font-family:Oswald;font-weight:600;">${osuScore.toFixed(3)}</span>
             <span style="color:var(--text-muted);font-size:0.85rem;">vs ${oppScore.toFixed(3)}</span>
           </div>
           <div class="event-bar-track" style="margin-bottom:0.75rem;">
@@ -436,54 +530,18 @@
         </div>`;
     }).join('');
 
-    // Meet recap section
-    let recapSection = '';
-    if (meet.recap) {
-      const paragraphs = meet.recap.trim().split(/\n\n+/).filter(p => p.trim());
-      const lede = paragraphs[0] || '';
-      const rest = paragraphs.slice(1);
+    const resultBadge = meet.status === 'upcoming'
+      ? '<span class="badge badge-upcoming" style="font-size:1rem;padding:0.3rem 0.8rem;">UPCOMING</span>'
+      : `<span class="badge badge-${meet.result.toLowerCase()}" style="font-size:1rem;padding:0.3rem 0.8rem;">${meet.result}</span>`;
 
-      // Mobile collapsible: first 3 paragraphs visible, rest hidden
-      const visibleParas = paragraphs.slice(0, 3).map(p => `<p>${p.trim()}</p>`).join('');
-      const hiddenParas = paragraphs.slice(3).map(p => `<p>${p.trim()}</p>`).join('');
-
-      recapSection = `
-        <div class="section-card recap-card">
-          <h2 class="section-title">📰 Meet Recap</h2>
-          <div class="recap-body">
-            <div class="recap-visible">${visibleParas}</div>
-            ${hiddenParas ? `
-              <div class="recap-hidden" id="recapHidden" style="display:none;">${hiddenParas}</div>
-              <button class="recap-toggle" id="recapToggle">Read more ▾</button>
-            ` : ''}
-          </div>
-          <div class="recap-attribution">
-            Source: <a href="${meet.recapUrl}" target="_blank" rel="noopener" class="inline-link">Oregon State Athletics</a>
-          </div>
-        </div>`;
-    }
-
-    // Location/home-away filter links
-    const locationText = meet.isHome
-      ? `<a href="#" class="inline-link location-link" data-filter="home">${meet.location}</a>`
-      : `<a href="#" class="inline-link location-link" data-filter="away">${meet.location}</a>`;
-
-    const dateMonth = new Date(meet.date + 'T12:00:00').toLocaleString('en-US', { month: 'long' });
-
-    const content = document.getElementById('meetDetailContent');
     content.innerHTML = `
-      ${breadcrumb}
+      ${liveBanner}
       <div class="detail-hero">
         <div class="meet-header">
           <div>
-            <div class="meet-opponent" style="font-size:1.5rem;">
-              vs <a href="#" class="inline-link opponent-link" data-opponent="${meet.opponent}">${meet.opponent}</a>
-              ${meet.isHome ? '<span class="badge badge-home">HOME</span>' : ''}
-            </div>
-            <div class="meet-date">
-              <a href="#" class="inline-link date-link" data-month="${dateMonth}">${formatDateLong(meet.date)}</a>
-            </div>
-            <div class="meet-location">${locationText}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
+            <div class="meet-opponent" style="font-size:1.5rem;">vs ${meet.opponent}</div>
+            <div class="meet-date">${formatDateLong(meet.date)}</div>
+            <div class="meet-location">${meet.location}${meet.attendance ? ` • Attendance: ${meet.attendance}` : ''}</div>
           </div>
           ${resultBadge}
         </div>
@@ -494,123 +552,15 @@
         </div>
       </div>
       ${teamsTable}
-      ${recapSection}
       <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
       <div class="detail-event-grid">${eventCards}</div>
     `;
 
-    // Wire up breadcrumb
-    content.querySelector('.breadcrumb-link[data-nav="season"]').addEventListener('click', e => {
-      e.preventDefault();
-      showView('season');
-    });
-
-    // Wire up gymnast links
-    content.querySelectorAll('.gymnast-link').forEach(el => {
-      el.addEventListener('click', e => {
-        e.preventDefault();
-        showView('gymnasts');
-        showGymnastProfile(el.dataset.gymnast);
-      });
-    });
-
-    // Wire up event links → leaderboard
-    content.querySelectorAll('.event-link').forEach(el => {
-      el.addEventListener('click', e => {
-        e.preventDefault();
-        showView('leaderboards');
-        renderLeaderboard(el.dataset.event);
-        pushHash('leaderboard/' + el.dataset.event);
-      });
-    });
-
-    // Wire up event score links → leaderboard
-    content.querySelectorAll('.event-score-link').forEach(el => {
-      el.addEventListener('click', e => {
-        e.preventDefault();
-        showView('leaderboards');
-        renderLeaderboard(el.dataset.event);
-        pushHash('leaderboard/' + el.dataset.event);
-      });
-    });
-
-    // Wire up opponent links → filtered season
-    content.querySelectorAll('.opponent-link').forEach(el => {
-      el.addEventListener('click', e => {
-        e.preventDefault();
-        showView('season');
-        // Filter by opponent using a custom filter
-        filterByOpponent(el.dataset.opponent);
-      });
-    });
-
-    // Wire up date links → season (no filter change, just scroll)
-    content.querySelectorAll('.date-link').forEach(el => {
-      el.addEventListener('click', e => {
-        e.preventDefault();
-        showView('season');
-      });
-    });
-
-    // Wire up location links → home/away filter
-    content.querySelectorAll('.location-link').forEach(el => {
-      el.addEventListener('click', e => {
-        e.preventDefault();
-        currentFilter = el.dataset.filter;
-        showView('season');
-        document.querySelectorAll('.filter-btn').forEach(b => {
-          b.classList.toggle('active', b.dataset.filter === el.dataset.filter);
-        });
-        renderMeetCards();
-      });
-    });
-
-    // Wire up recap toggle
-    const recapToggle = content.querySelector('#recapToggle');
-    const recapHidden = content.querySelector('#recapHidden');
-    if (recapToggle && recapHidden) {
-      recapToggle.addEventListener('click', () => {
-        const expanded = recapHidden.style.display !== 'none';
-        recapHidden.style.display = expanded ? 'none' : 'block';
-        recapToggle.textContent = expanded ? 'Read more ▾' : 'Read less ▴';
-      });
+    // Bind auto-refresh toggle
+    const toggle = document.getElementById('autoRefreshToggle');
+    if (toggle) {
+      toggle.addEventListener('click', toggleAutoRefresh);
     }
-
-    // Animate bars
-    requestAnimationFrame(() => {
-      content.querySelectorAll('.event-bar-fill').forEach(bar => {
-        const w = bar.style.width;
-        bar.style.width = '0%';
-        requestAnimationFrame(() => { bar.style.width = w; });
-      });
-    });
-  }
-
-  function filterByOpponent(opponent) {
-    const grid = document.getElementById('meetsGrid');
-    // Show all meets vs this opponent
-    const filtered = meets.filter(m => m.opponent === opponent);
-
-    if (filtered.length === 0) {
-      renderMeetCards();
-      return;
-    }
-
-    // Reset filter UI
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('.filter-btn[data-filter="all"]')?.classList.add('active');
-    currentFilter = 'all';
-
-    // Show filtered cards with a header
-    grid.innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;padding:0.5rem 0;margin-bottom:0.5rem;">
-      Showing all meets vs <strong style="color:var(--text)">${opponent}</strong>
-      <a href="#" id="clearOpponentFilter" style="color:var(--orange);margin-left:0.75rem;font-size:0.8rem;">Clear filter</a>
-    </div>` + filtered.map(m => renderMeetCard(m)).join('');
-
-    grid.querySelector('#clearOpponentFilter')?.addEventListener('click', e => {
-      e.preventDefault();
-      renderMeetCards();
-    });
   }
 
   // ===== Gymnasts =====
@@ -629,21 +579,19 @@
       });
     });
 
+    // Compute averages and bests
     Object.values(profiles).forEach(p => {
       p.averages = {};
       p.bests = {};
-      p.bestMeets = {};
       p.eventsList = Array.from(p.events);
 
       ['vault', 'bars', 'beam', 'floor', 'aa'].forEach(event => {
         const scores = p.meets
           .filter(m => m.scores[event] !== undefined)
-          .map(m => ({ score: m.scores[event], meetId: m.meetId }));
+          .map(m => m.scores[event]);
         if (scores.length > 0) {
-          p.averages[event] = scores.reduce((a, b) => a + b.score, 0) / scores.length;
-          const best = scores.reduce((a, b) => b.score > a.score ? b : a);
-          p.bests[event] = best.score;
-          p.bestMeets[event] = best.meetId;
+          p.averages[event] = scores.reduce((a, b) => a + b, 0) / scores.length;
+          p.bests[event] = Math.max(...scores);
         }
       });
 
@@ -678,7 +626,7 @@
       }).join('');
 
       return `
-        <div class="gymnast-card" data-gymnast="${p.name}" style="cursor:pointer;">
+        <div class="gymnast-card" data-gymnast="${p.name}">
           <div class="gymnast-name">${p.name}</div>
           <div class="gymnast-events">${eventBadges}</div>
           <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem;">${p.totalMeets} meets</div>
@@ -687,41 +635,30 @@
     }).join('');
   }
 
-  function showGymnastProfile(name, skipPush) {
+  function showGymnastProfile(name) {
     const profiles = getGymnastProfiles();
     const p = profiles.find(pr => pr.name === name);
     if (!p) return;
-
-    if (!skipPush) pushHash('gymnast/' + slugifyName(name));
 
     document.getElementById('gymnastCards').style.display = 'none';
     const detail = document.getElementById('gymnastDetail');
     detail.style.display = 'block';
 
-    // Breadcrumb
-    const breadcrumb = `
-      <nav class="breadcrumb">
-        <a href="#" class="breadcrumb-link" data-nav="gymnasts">Gymnasts</a>
-        <span class="breadcrumb-sep">›</span>
-        <span class="breadcrumb-current">${p.name}</span>
-      </nav>`;
-
+    // Stats grid
     const statsGrid = ['vault', 'bars', 'beam', 'floor'].map(event => {
       if (!p.averages[event]) return '';
-      const pbMeetId = p.bestMeets[event];
       return `
         <div class="profile-stat">
           <div class="stat-value" style="color:var(--orange)">${p.averages[event].toFixed(3)}</div>
           <div class="stat-label">${EVENT_NAMES[event]} Avg</div>
         </div>
         <div class="profile-stat">
-          <div class="stat-value">
-            <a href="#" class="inline-link pb-link" data-meet-id="${pbMeetId}">${p.bests[event].toFixed(3)}</a> ★
-          </div>
+          <div class="stat-value">${p.bests[event].toFixed(3)}</div>
           <div class="stat-label">${EVENT_NAMES[event]} Best</div>
         </div>`;
     }).join('');
 
+    // Sparklines per event
     const sparklines = ['vault', 'bars', 'beam', 'floor'].map(event => {
       const eventMeets = p.meets.filter(m => m.scores[event] !== undefined);
       if (eventMeets.length < 2) return '';
@@ -734,26 +671,18 @@
         </div>`;
     }).join('');
 
+    // Meet history table
     const historyRows = p.meets.map(m => {
       const cells = ['vault', 'bars', 'beam', 'floor'].map(e => {
         if (m.scores[e] === undefined) return '<td style="color:var(--text-muted)">—</td>';
         const isBest = p.bests[e] === m.scores[e];
-        return `<td class="${isBest ? 'personal-best' : ''}">
-          <a href="#" class="inline-link score-meet-link" data-meet-id="${m.meetId}">${m.scores[e].toFixed(3)}</a>${isBest ? ' <span class="pb-badge" data-meet-id="${m.meetId}">PB</span>' : ''}
-        </td>`;
+        return `<td class="${isBest ? 'personal-best' : ''}">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</td>`;
       }).join('');
-      const aa = m.scores.aa
-        ? `<td><a href="#" class="inline-link score-meet-link" data-meet-id="${m.meetId}">${m.scores.aa.toFixed(3)}</a></td>`
-        : '<td style="color:var(--text-muted)">—</td>';
-      return `<tr>
-        <td>${formatDate(m.date)}</td>
-        <td><a href="#" class="inline-link meet-detail-link" data-meet-id="${m.meetId}">${m.opponent}</a></td>
-        ${cells}${aa}
-      </tr>`;
+      const aa = m.scores.aa ? `<td>${m.scores.aa.toFixed(3)}</td>` : '<td style="color:var(--text-muted)">—</td>';
+      return `<tr><td>${formatDate(m.date)}</td><td>${m.opponent}</td>${cells}${aa}</tr>`;
     }).join('');
 
     detail.innerHTML = `
-      ${breadcrumb}
       <div class="gymnast-profile">
         <button class="back-btn" id="backToGymnasts">← Back to Gymnasts</button>
         <div class="profile-header">
@@ -773,35 +702,9 @@
         </div>
       </div>`;
 
-    // Wire back button
-    detail.querySelector('#backToGymnasts').addEventListener('click', () => {
-      pushHash('gymnasts');
+    document.getElementById('backToGymnasts').addEventListener('click', () => {
       detail.style.display = 'none';
       document.getElementById('gymnastCards').style.display = 'grid';
-    });
-
-    // Wire breadcrumb
-    detail.querySelector('.breadcrumb-link[data-nav="gymnasts"]').addEventListener('click', e => {
-      e.preventDefault();
-      pushHash('gymnasts');
-      detail.style.display = 'none';
-      document.getElementById('gymnastCards').style.display = 'grid';
-    });
-
-    // Wire PB links → meet detail
-    detail.querySelectorAll('.pb-link').forEach(el => {
-      el.addEventListener('click', e => {
-        e.preventDefault();
-        showMeetDetail(el.dataset.meetId);
-      });
-    });
-
-    // Wire score-meet links → meet detail
-    detail.querySelectorAll('.score-meet-link, .meet-detail-link').forEach(el => {
-      el.addEventListener('click', e => {
-        e.preventDefault();
-        showMeetDetail(el.dataset.meetId);
-      });
     });
   }
 
@@ -858,40 +761,15 @@
       return;
     }
 
-    list.innerHTML = top.map((s, i) => {
-      const meet = meets.find(m => m.id === s.meetId);
-      const homeAwayBadge = meet ? getHomeAwayBadge(meet.isHome, 'short') : '';
-      return `
+    list.innerHTML = top.map((s, i) => `
       <div class="leaderboard-item">
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
         <div class="lb-info">
-          <div class="lb-name">
-            <a href="#" class="inline-link gymnast-lb-link" data-gymnast="${s.name}">${s.name}</a>
-          </div>
-          <div class="lb-context">
-            ${formatDate(s.meetDate)} vs
-            <a href="#" class="inline-link meet-lb-link" data-meet-id="${s.meetId}">${s.opponent}</a>
-          </div>
+          <div class="lb-name">${s.name}</div>
+          <div class="lb-context">${formatDate(s.meetDate)} vs ${s.opponent}</div>
         </div>
         <div class="lb-score">${s.score.toFixed(3)}</div>
       </div>`).join('');
-
-    // Wire leaderboard gymnast links
-    list.querySelectorAll('.gymnast-lb-link').forEach(el => {
-      el.addEventListener('click', e => {
-        e.preventDefault();
-        showView('gymnasts');
-        showGymnastProfile(el.dataset.gymnast);
-      });
-    });
-
-    // Wire leaderboard meet links
-    list.querySelectorAll('.meet-lb-link').forEach(el => {
-      el.addEventListener('click', e => {
-        e.preventDefault();
-        showMeetDetail(el.dataset.meetId);
-      });
-    });
   }
 
   // ===== Event Listeners =====
@@ -926,13 +804,13 @@
       });
     });
 
-    // Meet card click (season view)
+    // Meet card click
     document.getElementById('meetsGrid').addEventListener('click', e => {
       const card = e.target.closest('.meet-card');
       if (card) showMeetDetail(card.dataset.meetId);
     });
 
-    // Back button on meet detail
+    // Back button
     document.getElementById('backToSeason').addEventListener('click', () => showView('season'));
 
     // Gymnast search
@@ -946,13 +824,10 @@
       if (card) showGymnastProfile(card.dataset.gymnast);
     });
 
-    // Event tabs (leaderboard)
+    // Event tabs
     document.getElementById('eventTabs').addEventListener('click', e => {
       const tab = e.target.closest('.event-tab');
-      if (tab) {
-        renderLeaderboard(tab.dataset.event);
-        pushHash('leaderboard/' + tab.dataset.event);
-      }
+      if (tab) renderLeaderboard(tab.dataset.event);
     });
   });
 })();
