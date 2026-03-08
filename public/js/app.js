@@ -277,9 +277,8 @@
     const seenD = new Set();
     meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m => {
       if (seenD.has(m.date)) return; seenD.add(m.date);
-      const osu = m.teams?.find(t=>t.team==='Oregon State');
-      if (!osu || !osu.total) return;
-      compDays.push({ date: m.date, total: osu.total, isHome: m.isHome,
+      if (!m.osuScore || m.osuScore <= 0) return;
+      compDays.push({ date: m.date, total: m.osuScore, isHome: m.isHome,
         moonFullness: m.moonPhase?.fullness ?? null,
         elevFt: m.elevationFt ?? null });
     });
@@ -481,9 +480,8 @@
     const seenD = new Set();
     meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m => {
       if (seenD.has(m.date)) return; seenD.add(m.date);
-      const osu = m.teams?.find(t=>t.team==='Oregon State');
-      if (!osu || !osu.total) return;
-      compDays.push({ date: m.date, total: osu.total, isHome: m.isHome,
+      if (!m.osuScore || m.osuScore <= 0) return;
+      compDays.push({ date: m.date, total: m.osuScore, isHome: m.isHome,
         moonFullness: m.moonPhase?.fullness ?? null, elevFt: m.elevationFt ?? null,
         tempHigh: m.weather?.tempHighF ?? null });
     });
@@ -1463,7 +1461,6 @@
           ${meet.recapUrl ? `<a href="${meet.recapUrl}" target="_blank" class="recap-link">Full recap on osubeavers.com →</a>` : ''}
         </div>`;
       })() : ''}
-      <div style="background:#1a1a1a;border:2px solid var(--orange);border-radius:12px;padding:1rem;margin-bottom:1rem;font-size:0.8rem;color:#aaa">🧪 Debug: JS v=a1c0328 running. Meet=${meet.id}. moonPhase=${!!meet.moonPhase}. events=${!!meet.events}.</div>
       ${(()=>{try{return renderMeetInsights(meet);}catch(e){return '<div style="color:red;padding:1rem;background:#1a0000;border-radius:8px;margin-bottom:1rem">⚠️ Meet Analysis error: '+e.message+'</div>';}})()}
       ${(()=>{try{return renderMeetWildStats(meet);}catch(e){return '<div style="color:red;padding:1rem;background:#1a0000;border-radius:8px;margin-bottom:1rem">⚠️ Wild Stats error: '+e.message+'</div>';}})()}
       <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
@@ -2603,7 +2600,6 @@
         const sc = osuA.map(a=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
         return sc.length ? mean(sc) : null;
       }
-      const osuTeam = m.teams?.find(t=>t.team==='Oregon State');
       meetDays.push({
         date: m.date,
         isHome: m.isHome ? 1 : 0,
@@ -2616,7 +2612,7 @@
         ubAvg: evAvg('bars'),
         bbAvg: evAvg('beam'),
         fxAvg: evAvg('floor'),
-        total: osuTeam?.total ?? null,
+        total: m.osuScore || null,
       });
     });
 
@@ -2957,11 +2953,10 @@
     meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m => {
       if(seenDates.has(m.date)) return;
       seenDates.add(m.date);
-      const osuTeam = m.teams?.find(t=>t.team==='Oregon State');
-      if(!osuTeam || !osuTeam.total) return;
+      if(!m.osuScore || m.osuScore <= 0) return;
       compDays.push({
         date: m.date,
-        total: osuTeam.total,
+        total: m.osuScore,
         moonFullness: m.moonPhase?.fullness ?? null,
         tempHigh: m.weather?.tempHighF ?? null,
         precip: m.weather?.precipIn ?? null,
