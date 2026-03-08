@@ -586,7 +586,7 @@
         if (!profiles[a.name]) {
           profiles[a.name] = { name: a.name, meets: [], events: new Set() };
         }
-        const entry = { meetId: meet.id, date: meet.date, opponent: meet.opponent, scores: { ...a.scores } };
+        const entry = { meetId: meet.id, date: meet.date, opponent: meet.opponent, isHome: meet.isHome, scores: { ...a.scores } };
         profiles[a.name].meets.push(entry);
         Object.keys(a.scores).forEach(e => {
           if (e !== 'aa') profiles[a.name].events.add(e);
@@ -694,7 +694,8 @@
         return `<td class="${isBest ? 'personal-best' : ''}">${m.scores[e].toFixed(3)}${isBest ? ' ★' : ''}</td>`;
       }).join('');
       const aa = m.scores.aa ? `<td>${m.scores.aa.toFixed(3)}</td>` : '<td style="color:var(--text-muted)">—</td>';
-      return `<tr><td>${formatDate(m.date)}</td><td><span class="clickable-meet" data-meet-id="${m.meetId}">${m.opponent}</span></td>${cells}${aa}</tr>`;
+      const haBadge = m.isHome ? '<span class="badge badge-home" style="font-size:0.65rem;padding:0.1rem 0.4rem;margin-left:0.3rem;">H</span>' : '<span class="badge" style="font-size:0.65rem;padding:0.1rem 0.4rem;margin-left:0.3rem;background:#333;color:#aaa;">A</span>';
+      return `<tr><td>${formatDate(m.date)}</td><td><span class="clickable-meet" data-meet-id="${m.meetId}">${m.opponent}</span>${haBadge}</td>${cells}${aa}</tr>`;
     }).join('');
 
     detail.innerHTML = `
