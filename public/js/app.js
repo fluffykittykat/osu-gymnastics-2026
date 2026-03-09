@@ -969,7 +969,7 @@
 
     // Quad card photo banner
     const qThumb = meetPhotos[first.date]?.heroImage;
-    const qThumbHtml = qThumb ? `<div style="height:90px;overflow:hidden;position:relative;">
+    const qThumbHtml = qThumb ? `<div class="quad-banner-click" data-quad-name="${first.quadName}" data-quad-date="${first.date}" style="height:90px;overflow:hidden;position:relative;cursor:pointer;">
       <img src="${qThumb}" alt="${first.quadName}" style="width:100%;height:100%;object-fit:cover;object-position:center center;" loading="lazy" onerror="this.parentElement.style.display='none'">
       <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,var(--card))"></div>
     </div>` : '';
@@ -3777,6 +3777,8 @@
 
     // Meet card click
     document.getElementById('meetsGrid').addEventListener('click', e => {
+      const banner = e.target.closest('.quad-banner-click');
+      if (banner) { showQuadOverview(banner.dataset.quadName, banner.dataset.quadDate); return; }
       const card = e.target.closest('.meet-card');
       if (card) showMeetDetail(card.dataset.meetId);
     });
