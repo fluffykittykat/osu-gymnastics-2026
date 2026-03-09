@@ -77,6 +77,16 @@ app.get('/api/meets', (req, res) => {
   }
 });
 
+app.get('/api/competitor-scores', (req, res) => {
+  const meets = meetsData || [];
+  res.json(meets.map(m => ({
+    id: m.id,
+    date: m.date,
+    competitorAthletes: m.competitorAthletes || {},
+    competitorLineups: m.competitorLineups || {},
+  })));
+});
+
 app.post('/api/refresh', async (req, res) => {
   try {
     const result = await new Promise((resolve, reject) => {

@@ -240,7 +240,7 @@ def parse_osu_athletes(pages_text):
                 if stripped.startswith("#Name") or stripped.startswith("# Name"):
                     # Compact format: all scores on one line
                     # Final scores are preceded by space: " 9.750"
-                    final_scores = re.findall(r"\s(\d+\.\d{3})(?=\d[^.]|\s|$)", stripped)
+                    final_scores = re.findall(r"\s(\d+\.\d{3})(?=\d(?:[^.]|$)|\s|$)", stripped)
                     current_scores.extend(float(s) for s in final_scores)
                 else:
                     score_match = re.match(r"^(\d+)\s+", stripped)
@@ -374,6 +374,105 @@ def fix_lineup_names(lineups):
     return fixed
 
 
+def _flush_competitor_event(athletes, lineups, event, scores, names_text):
+    """Assign scores to competitor athletes for a given event."""
+    if not event or not scores or not names_text:
+        return
+    names = split_concatenated_names(names_text)
+    if event not in lineups:
+        lineups[event] = []
+    for j, name in enumerate(names):
+        if j < len(scores):
+            if name not in athletes:
+                athletes[name] = {}
+            athletes[name][event] = scores[j]
+            lineups[event].append({"position": j + 1, "name": name, "score": scores[j]})
+
+
+def parse_competitor_page(text):
+    """
+    Parse a competitor (non-OSU) NCAA Gymnastics Score Sheet page.
+    Returns (athletes_dict, lineups_dict) where:
+    - athletes_dict: {name: {event: score}}
+    - lineups_dict: {event: [{'position': int, 'name': str, 'score': float}]}
+    """
+    athletes = {}
+    lineups = {}
+    lines = text.split("\n")
+    current_event = None
+    current_scores = []
+    collecting_names = False
+    names_text = ""
+
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        next_stripped = lines[i + 1].strip() if i + 1 < len(lines) else ""
+
+        def _start_event(event_name, advance):
+            nonlocal current_event, current_scores, collecting_names, names_text
+            _flush_competitor_event(athletes, lineups, current_event, current_scores, names_text)
+            current_event = event_name
+            current_scores = []
+            collecting_names = False
+            names_text = ""
+            return advance
+
+        if (stripped == "V" and next_stripped == "T") or stripped == "VT":
+            skip = _start_event("vault", 2 if stripped == "V" else 1)
+            i += skip; continue
+        elif (stripped == "U" and next_stripped == "B") or stripped == "UB":
+            skip = _start_event("bars", 2 if stripped == "U" else 1)
+            i += skip; continue
+        elif stripped == "B" and next_stripped == "B":
+            skip = _start_event("beam", 2)
+            i += skip; continue
+        elif stripped == "BB" and current_event != "beam":
+            skip = _start_event("beam", 1)
+            i += skip; continue
+        elif (stripped == "F" and next_stripped == "X") or stripped == "FX":
+            skip = _start_event("floor", 2 if stripped == "F" else 1)
+            i += skip; continue
+
+        if current_event is None:
+            i += 1
+            continue
+
+        if not collecting_names:
+            if stripped.startswith("#Name") or stripped.startswith("# Name"):
+                # Compact format: all scores packed on one line
+                final_scores = re.findall(r"\s(\d+\.\d{3})(?=\d(?:[^.]|$)|\s|$)", stripped)
+                current_scores.extend(float(s) for s in final_scores)
+            else:
+                score_match = re.match(r"^(\d+)\s+", stripped)
+                if score_match and "Name" not in stripped and "Judge" not in stripped:
+                    nums = re.findall(r"[\d]+\.[\d]+", stripped)
+                    if nums:
+                        current_scores.append(float(nums[-1]))
+
+        # Event total triggers name collection
+        if re.match(r"(VT|UB|BB|FX)\s+Score:", stripped):
+            collecting_names = True
+            names_text = ""
+            i += 1
+            continue
+
+        if collecting_names:
+            if stripped.startswith("#") or "Judge" in stripped or stripped == "\xa0" or stripped == "":
+                _flush_competitor_event(athletes, lineups, current_event, current_scores, names_text)
+                collecting_names = False
+                names_text = ""
+            elif re.search(r"[A-Za-z]", stripped) and "Score" not in stripped and "©" not in stripped and "Running" not in stripped:
+                names_text += stripped
+
+        i += 1
+
+    # Flush last event
+    _flush_competitor_event(athletes, lineups, current_event, current_scores, names_text)
+    return athletes, lineups
+
+
 def parse_meet_pdf(meet_info):
     if "hardcoded" in meet_info:
         hc = meet_info["hardcoded"]
@@ -383,6 +482,7 @@ def parse_meet_pdf(meet_info):
             "isHome": meet_info["isHome"], "result": hc["result"],
             "osuScore": hc["osuScore"], "opponentScore": hc["opponentScore"],
             "events": hc["events"], "athletes": hc["athletes"],
+            "competitorAthletes": {}, "competitorLineups": {},
         }
         if meet_info.get("imageBasedPdf"):
             record["imageBasedPdf"] = True
@@ -422,6 +522,21 @@ def parse_meet_pdf(meet_info):
     is_quad = meet_info.get("isQuad", False)
     
     athletes, lineups = parse_osu_athletes(score_sheet_pages)
+
+    # Extract competitor athlete data from non-OSU score sheet pages
+    all_comp_athletes = {}  # team_name -> {athlete_name: {event: score}}
+    all_comp_lineups = {}   # team_name -> {event: [lineup]}
+    for text in score_sheet_pages:
+        if "Team: Oregon State" in text or "Team:Oregon State" in text:
+            continue
+        m = re.search(r"Team:\s*(.+?)(?:\n|Date:|Location:|$)", text[:300])
+        if not m:
+            continue
+        team_name = m.group(1).strip()
+        comp_athletes, comp_lineups = parse_competitor_page(text)
+        all_comp_athletes[team_name] = comp_athletes
+        all_comp_lineups[team_name] = comp_lineups
+        print(f"    Competitor {team_name}: {len(comp_athletes)} athletes")
 
     attendance = meet_info.get("attendance", "")
     if not attendance:
@@ -476,6 +591,8 @@ def parse_meet_pdf(meet_info):
                 "athletes": athletes,
                 "lineups": lineups,
                 "allTeams": all_teams,
+                "competitorAthletes": all_comp_athletes,
+                "competitorLineups": all_comp_lineups,
             }
             if attendance:
                 record["attendance"] = attendance
@@ -490,7 +607,7 @@ def parse_meet_pdf(meet_info):
         else:
             opp_score, opp_events = 0, {"vault": 0, "bars": 0, "beam": 0, "floor": 0}
         result = "W" if osu["total"] > opp_score else "L"
-        
+
         meet_data = {
             "id": meet_info["id"], "date": meet_info["date"],
             "opponent": meet_info["opponent"], "location": meet_info["location"],
@@ -504,6 +621,8 @@ def parse_meet_pdf(meet_info):
             },
             "athletes": athletes,
             "lineups": lineups,
+            "competitorAthletes": all_comp_athletes,
+            "competitorLineups": all_comp_lineups,
         }
         if attendance:
             meet_data["attendance"] = attendance

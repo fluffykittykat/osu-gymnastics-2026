@@ -312,23 +312,549 @@
         "floor": 48.675
       }
     ],
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.497,
-      "name": "Full Moon",
-      "emoji": "\ud83c\udf15",
-      "fullness": 1.0
+    "competitorAthletes": {
+      "Washington": {
+        "Caitlin Mc": {
+          "vault": 9.625,
+          "bars": 9.725,
+          "floor": 9.825
+        },
+        "WilliamsKristin Lin": {
+          "vault": 9.725,
+          "bars": 9.675
+        },
+        "Lilly Tubbs": {
+          "vault": 9.725,
+          "beam": 9.875
+        },
+        "Jessica Scha\ufb00er": {
+          "vault": 9.725
+        },
+        "Kira Bolden": {
+          "vault": 9.725,
+          "floor": 9.775
+        },
+        "Mary McDonough": {
+          "vault": 9.775,
+          "floor": 9.5
+        },
+        "Olivia Oppegard": {
+          "bars": 9.725,
+          "beam": 9.825
+        },
+        "Deiah Moody": {
+          "bars": 9.825,
+          "beam": 9.825
+        },
+        "Mary Mc": {
+          "bars": 9.775
+        },
+        "DonoughLilly Tubbs": {
+          "bars": 9.15
+        },
+        "Kristin Lin": {
+          "beam": 9.825,
+          "floor": 9.775
+        },
+        "Lana Navarro": {
+          "beam": 9.85
+        },
+        "Chelsea Hallinan": {
+          "beam": 9.9
+        },
+        "Haley Fichiera": {
+          "floor": 9.825
+        },
+        "WilliamsJessica Scha\ufb00er": {
+          "floor": 9.75
+        }
+      },
+      "California": {
+        "Sage Melkonian": {
+          "vault": 9.8,
+          "bars": 9.85,
+          "beam": 9.8,
+          "floor": 9.675
+        },
+        "Tonya Paulsson": {
+          "vault": 9.775,
+          "bars": 9.925,
+          "floor": 9.75
+        },
+        "Annalise Newman-Achee": {
+          "vault": 9.85,
+          "bars": 9.8,
+          "beam": 9.9,
+          "floor": 9.65
+        },
+        "Jayden Silvers": {
+          "vault": 9.8,
+          "floor": 9.75
+        },
+        "Casey Brown": {
+          "vault": 9.65,
+          "bars": 9.85
+        },
+        "Kyen Mayhew": {
+          "vault": 9.75,
+          "beam": 9.775,
+          "floor": 9.85
+        },
+        "Miki Aderinto": {
+          "bars": 9.85,
+          "beam": 9.75
+        },
+        "Mya Wiley": {
+          "bars": 9.8
+        },
+        "Sarah Lee": {
+          "beam": 9.6
+        },
+        "Abbey Scanlon": {
+          "beam": 9.8
+        },
+        "CJ Keuneke": {
+          "floor": 9.7
+        }
+      },
+      "UCLA": {
+        "Tiana Sumanasekera": {
+          "vault": 9.8,
+          "beam": 9.95,
+          "floor": 9.85
+        },
+        "Madisyn Anyimi": {
+          "vault": 9.8
+        },
+        "Katelyn Rosen": {
+          "vault": 9.8,
+          "bars": 9.775,
+          "beam": 9.825,
+          "floor": 9.675
+        },
+        "Riley Jenkins": {
+          "vault": 9.825
+        },
+        "Ashlee Sullivan": {
+          "vault": 9.825,
+          "bars": 9.85,
+          "floor": 9.775
+        },
+        "Jordan Chiles": {
+          "vault": 9.9,
+          "bars": 9.925,
+          "beam": 9.975,
+          "floor": 9.925
+        },
+        "Sydney Barros": {
+          "bars": 9.8
+        },
+        "Mika Webster-Longin": {
+          "bars": 9.85,
+          "beam": 9.8,
+          "floor": 9.825
+        },
+        "Nola Matthews": {
+          "bars": 9.8,
+          "beam": 9.85,
+          "floor": 9.7
+        },
+        "Ciena Alipio": {
+          "beam": 9.925
+        }
+      }
     },
-    "distanceMiles": 0,
-    "elevationFt": 230,
-    "city": "Corvallis, OR",
-    "weather": {
-      "tempHighF": 52.2,
-      "tempLowF": 41.6,
-      "precipIn": 8.5,
-      "description": "Drizzle",
-      "emoji": "\ud83c\udf26\ufe0f"
+    "competitorLineups": {
+      "Washington": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Caitlin Mc",
+            "score": 9.625
+          },
+          {
+            "position": 2,
+            "name": "WilliamsKristin Lin",
+            "score": 9.725
+          },
+          {
+            "position": 3,
+            "name": "Lilly Tubbs",
+            "score": 9.725
+          },
+          {
+            "position": 4,
+            "name": "Jessica Scha\ufb00er",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Kira Bolden",
+            "score": 9.725
+          },
+          {
+            "position": 6,
+            "name": "Mary McDonough",
+            "score": 9.775
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Caitlin Mc",
+            "score": 9.725
+          },
+          {
+            "position": 2,
+            "name": "WilliamsKristin Lin",
+            "score": 9.675
+          },
+          {
+            "position": 3,
+            "name": "Olivia Oppegard",
+            "score": 9.725
+          },
+          {
+            "position": 4,
+            "name": "Deiah Moody",
+            "score": 9.825
+          },
+          {
+            "position": 5,
+            "name": "Mary Mc",
+            "score": 9.775
+          },
+          {
+            "position": 6,
+            "name": "DonoughLilly Tubbs",
+            "score": 9.15
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Olivia Oppegard",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Deiah Moody",
+            "score": 9.825
+          },
+          {
+            "position": 3,
+            "name": "Kristin Lin",
+            "score": 9.825
+          },
+          {
+            "position": 4,
+            "name": "Lilly Tubbs",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Lana Navarro",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Chelsea Hallinan",
+            "score": 9.9
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Haley Fichiera",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Kira Bolden",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Caitlin Mc",
+            "score": 9.825
+          },
+          {
+            "position": 4,
+            "name": "WilliamsJessica Scha\ufb00er",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Kristin Lin",
+            "score": 9.775
+          },
+          {
+            "position": 6,
+            "name": "Mary McDonough",
+            "score": 9.5
+          }
+        ]
+      },
+      "California": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Sage Melkonian",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Tonya Paulsson",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Annalise Newman-Achee",
+            "score": 9.85
+          },
+          {
+            "position": 4,
+            "name": "Jayden Silvers",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Casey Brown",
+            "score": 9.65
+          },
+          {
+            "position": 6,
+            "name": "Kyen Mayhew",
+            "score": 9.75
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Miki Aderinto",
+            "score": 9.85
+          },
+          {
+            "position": 2,
+            "name": "Annalise Newman-Achee",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Mya Wiley",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Sage Melkonian",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Casey Brown",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Tonya Paulsson",
+            "score": 9.925
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Kyen Mayhew",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Sarah Lee",
+            "score": 9.6
+          },
+          {
+            "position": 3,
+            "name": "Sage Melkonian",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Miki Aderinto",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Abbey Scanlon",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Annalise Newman-Achee",
+            "score": 9.9
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Jayden Silvers",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Annalise Newman-Achee",
+            "score": 9.65
+          },
+          {
+            "position": 3,
+            "name": "Sage Melkonian",
+            "score": 9.675
+          },
+          {
+            "position": 4,
+            "name": "Tonya Paulsson",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "CJ Keuneke",
+            "score": 9.7
+          },
+          {
+            "position": 6,
+            "name": "Kyen Mayhew",
+            "score": 9.85
+          }
+        ]
+      },
+      "UCLA": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Tiana Sumanasekera",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Madisyn Anyimi",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Katelyn Rosen",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Riley Jenkins",
+            "score": 9.825
+          },
+          {
+            "position": 5,
+            "name": "Ashlee Sullivan",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Jordan Chiles",
+            "score": 9.9
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Katelyn Rosen",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Sydney Barros",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Mika Webster-Longin",
+            "score": 9.85
+          },
+          {
+            "position": 4,
+            "name": "Nola Matthews",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Ashlee Sullivan",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Jordan Chiles",
+            "score": 9.925
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Katelyn Rosen",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Nola Matthews",
+            "score": 9.85
+          },
+          {
+            "position": 3,
+            "name": "Tiana Sumanasekera",
+            "score": 9.95
+          },
+          {
+            "position": 4,
+            "name": "Mika Webster-Longin",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Jordan Chiles",
+            "score": 9.975
+          },
+          {
+            "position": 6,
+            "name": "Ciena Alipio",
+            "score": 9.925
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Katelyn Rosen",
+            "score": 9.675
+          },
+          {
+            "position": 2,
+            "name": "Mika Webster-Longin",
+            "score": 9.825
+          },
+          {
+            "position": 3,
+            "name": "Nola Matthews",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Tiana Sumanasekera",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Ashlee Sullivan",
+            "score": 9.775
+          },
+          {
+            "position": 6,
+            "name": "Jordan Chiles",
+            "score": 9.925
+          }
+        ]
+      }
     }
   },
   {
@@ -644,23 +1170,549 @@
         "floor": 48.675
       }
     ],
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.497,
-      "name": "Full Moon",
-      "emoji": "\ud83c\udf15",
-      "fullness": 1.0
+    "competitorAthletes": {
+      "Washington": {
+        "Caitlin Mc": {
+          "vault": 9.625,
+          "bars": 9.725,
+          "floor": 9.825
+        },
+        "WilliamsKristin Lin": {
+          "vault": 9.725,
+          "bars": 9.675
+        },
+        "Lilly Tubbs": {
+          "vault": 9.725,
+          "beam": 9.875
+        },
+        "Jessica Scha\ufb00er": {
+          "vault": 9.725
+        },
+        "Kira Bolden": {
+          "vault": 9.725,
+          "floor": 9.775
+        },
+        "Mary McDonough": {
+          "vault": 9.775,
+          "floor": 9.5
+        },
+        "Olivia Oppegard": {
+          "bars": 9.725,
+          "beam": 9.825
+        },
+        "Deiah Moody": {
+          "bars": 9.825,
+          "beam": 9.825
+        },
+        "Mary Mc": {
+          "bars": 9.775
+        },
+        "DonoughLilly Tubbs": {
+          "bars": 9.15
+        },
+        "Kristin Lin": {
+          "beam": 9.825,
+          "floor": 9.775
+        },
+        "Lana Navarro": {
+          "beam": 9.85
+        },
+        "Chelsea Hallinan": {
+          "beam": 9.9
+        },
+        "Haley Fichiera": {
+          "floor": 9.825
+        },
+        "WilliamsJessica Scha\ufb00er": {
+          "floor": 9.75
+        }
+      },
+      "California": {
+        "Sage Melkonian": {
+          "vault": 9.8,
+          "bars": 9.85,
+          "beam": 9.8,
+          "floor": 9.675
+        },
+        "Tonya Paulsson": {
+          "vault": 9.775,
+          "bars": 9.925,
+          "floor": 9.75
+        },
+        "Annalise Newman-Achee": {
+          "vault": 9.85,
+          "bars": 9.8,
+          "beam": 9.9,
+          "floor": 9.65
+        },
+        "Jayden Silvers": {
+          "vault": 9.8,
+          "floor": 9.75
+        },
+        "Casey Brown": {
+          "vault": 9.65,
+          "bars": 9.85
+        },
+        "Kyen Mayhew": {
+          "vault": 9.75,
+          "beam": 9.775,
+          "floor": 9.85
+        },
+        "Miki Aderinto": {
+          "bars": 9.85,
+          "beam": 9.75
+        },
+        "Mya Wiley": {
+          "bars": 9.8
+        },
+        "Sarah Lee": {
+          "beam": 9.6
+        },
+        "Abbey Scanlon": {
+          "beam": 9.8
+        },
+        "CJ Keuneke": {
+          "floor": 9.7
+        }
+      },
+      "UCLA": {
+        "Tiana Sumanasekera": {
+          "vault": 9.8,
+          "beam": 9.95,
+          "floor": 9.85
+        },
+        "Madisyn Anyimi": {
+          "vault": 9.8
+        },
+        "Katelyn Rosen": {
+          "vault": 9.8,
+          "bars": 9.775,
+          "beam": 9.825,
+          "floor": 9.675
+        },
+        "Riley Jenkins": {
+          "vault": 9.825
+        },
+        "Ashlee Sullivan": {
+          "vault": 9.825,
+          "bars": 9.85,
+          "floor": 9.775
+        },
+        "Jordan Chiles": {
+          "vault": 9.9,
+          "bars": 9.925,
+          "beam": 9.975,
+          "floor": 9.925
+        },
+        "Sydney Barros": {
+          "bars": 9.8
+        },
+        "Mika Webster-Longin": {
+          "bars": 9.85,
+          "beam": 9.8,
+          "floor": 9.825
+        },
+        "Nola Matthews": {
+          "bars": 9.8,
+          "beam": 9.85,
+          "floor": 9.7
+        },
+        "Ciena Alipio": {
+          "beam": 9.925
+        }
+      }
     },
-    "distanceMiles": 0,
-    "elevationFt": 230,
-    "city": "Corvallis, OR",
-    "weather": {
-      "tempHighF": 52.2,
-      "tempLowF": 41.6,
-      "precipIn": 8.5,
-      "description": "Drizzle",
-      "emoji": "\ud83c\udf26\ufe0f"
+    "competitorLineups": {
+      "Washington": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Caitlin Mc",
+            "score": 9.625
+          },
+          {
+            "position": 2,
+            "name": "WilliamsKristin Lin",
+            "score": 9.725
+          },
+          {
+            "position": 3,
+            "name": "Lilly Tubbs",
+            "score": 9.725
+          },
+          {
+            "position": 4,
+            "name": "Jessica Scha\ufb00er",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Kira Bolden",
+            "score": 9.725
+          },
+          {
+            "position": 6,
+            "name": "Mary McDonough",
+            "score": 9.775
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Caitlin Mc",
+            "score": 9.725
+          },
+          {
+            "position": 2,
+            "name": "WilliamsKristin Lin",
+            "score": 9.675
+          },
+          {
+            "position": 3,
+            "name": "Olivia Oppegard",
+            "score": 9.725
+          },
+          {
+            "position": 4,
+            "name": "Deiah Moody",
+            "score": 9.825
+          },
+          {
+            "position": 5,
+            "name": "Mary Mc",
+            "score": 9.775
+          },
+          {
+            "position": 6,
+            "name": "DonoughLilly Tubbs",
+            "score": 9.15
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Olivia Oppegard",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Deiah Moody",
+            "score": 9.825
+          },
+          {
+            "position": 3,
+            "name": "Kristin Lin",
+            "score": 9.825
+          },
+          {
+            "position": 4,
+            "name": "Lilly Tubbs",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Lana Navarro",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Chelsea Hallinan",
+            "score": 9.9
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Haley Fichiera",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Kira Bolden",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Caitlin Mc",
+            "score": 9.825
+          },
+          {
+            "position": 4,
+            "name": "WilliamsJessica Scha\ufb00er",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Kristin Lin",
+            "score": 9.775
+          },
+          {
+            "position": 6,
+            "name": "Mary McDonough",
+            "score": 9.5
+          }
+        ]
+      },
+      "California": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Sage Melkonian",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Tonya Paulsson",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Annalise Newman-Achee",
+            "score": 9.85
+          },
+          {
+            "position": 4,
+            "name": "Jayden Silvers",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Casey Brown",
+            "score": 9.65
+          },
+          {
+            "position": 6,
+            "name": "Kyen Mayhew",
+            "score": 9.75
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Miki Aderinto",
+            "score": 9.85
+          },
+          {
+            "position": 2,
+            "name": "Annalise Newman-Achee",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Mya Wiley",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Sage Melkonian",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Casey Brown",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Tonya Paulsson",
+            "score": 9.925
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Kyen Mayhew",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Sarah Lee",
+            "score": 9.6
+          },
+          {
+            "position": 3,
+            "name": "Sage Melkonian",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Miki Aderinto",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Abbey Scanlon",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Annalise Newman-Achee",
+            "score": 9.9
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Jayden Silvers",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Annalise Newman-Achee",
+            "score": 9.65
+          },
+          {
+            "position": 3,
+            "name": "Sage Melkonian",
+            "score": 9.675
+          },
+          {
+            "position": 4,
+            "name": "Tonya Paulsson",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "CJ Keuneke",
+            "score": 9.7
+          },
+          {
+            "position": 6,
+            "name": "Kyen Mayhew",
+            "score": 9.85
+          }
+        ]
+      },
+      "UCLA": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Tiana Sumanasekera",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Madisyn Anyimi",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Katelyn Rosen",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Riley Jenkins",
+            "score": 9.825
+          },
+          {
+            "position": 5,
+            "name": "Ashlee Sullivan",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Jordan Chiles",
+            "score": 9.9
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Katelyn Rosen",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Sydney Barros",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Mika Webster-Longin",
+            "score": 9.85
+          },
+          {
+            "position": 4,
+            "name": "Nola Matthews",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Ashlee Sullivan",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Jordan Chiles",
+            "score": 9.925
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Katelyn Rosen",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Nola Matthews",
+            "score": 9.85
+          },
+          {
+            "position": 3,
+            "name": "Tiana Sumanasekera",
+            "score": 9.95
+          },
+          {
+            "position": 4,
+            "name": "Mika Webster-Longin",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Jordan Chiles",
+            "score": 9.975
+          },
+          {
+            "position": 6,
+            "name": "Ciena Alipio",
+            "score": 9.925
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Katelyn Rosen",
+            "score": 9.675
+          },
+          {
+            "position": 2,
+            "name": "Mika Webster-Longin",
+            "score": 9.825
+          },
+          {
+            "position": 3,
+            "name": "Nola Matthews",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Tiana Sumanasekera",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Ashlee Sullivan",
+            "score": 9.775
+          },
+          {
+            "position": 6,
+            "name": "Jordan Chiles",
+            "score": 9.925
+          }
+        ]
+      }
     }
   },
   {
@@ -976,23 +2028,549 @@
         "floor": 48.675
       }
     ],
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.497,
-      "name": "Full Moon",
-      "emoji": "\ud83c\udf15",
-      "fullness": 1.0
+    "competitorAthletes": {
+      "Washington": {
+        "Caitlin Mc": {
+          "vault": 9.625,
+          "bars": 9.725,
+          "floor": 9.825
+        },
+        "WilliamsKristin Lin": {
+          "vault": 9.725,
+          "bars": 9.675
+        },
+        "Lilly Tubbs": {
+          "vault": 9.725,
+          "beam": 9.875
+        },
+        "Jessica Scha\ufb00er": {
+          "vault": 9.725
+        },
+        "Kira Bolden": {
+          "vault": 9.725,
+          "floor": 9.775
+        },
+        "Mary McDonough": {
+          "vault": 9.775,
+          "floor": 9.5
+        },
+        "Olivia Oppegard": {
+          "bars": 9.725,
+          "beam": 9.825
+        },
+        "Deiah Moody": {
+          "bars": 9.825,
+          "beam": 9.825
+        },
+        "Mary Mc": {
+          "bars": 9.775
+        },
+        "DonoughLilly Tubbs": {
+          "bars": 9.15
+        },
+        "Kristin Lin": {
+          "beam": 9.825,
+          "floor": 9.775
+        },
+        "Lana Navarro": {
+          "beam": 9.85
+        },
+        "Chelsea Hallinan": {
+          "beam": 9.9
+        },
+        "Haley Fichiera": {
+          "floor": 9.825
+        },
+        "WilliamsJessica Scha\ufb00er": {
+          "floor": 9.75
+        }
+      },
+      "California": {
+        "Sage Melkonian": {
+          "vault": 9.8,
+          "bars": 9.85,
+          "beam": 9.8,
+          "floor": 9.675
+        },
+        "Tonya Paulsson": {
+          "vault": 9.775,
+          "bars": 9.925,
+          "floor": 9.75
+        },
+        "Annalise Newman-Achee": {
+          "vault": 9.85,
+          "bars": 9.8,
+          "beam": 9.9,
+          "floor": 9.65
+        },
+        "Jayden Silvers": {
+          "vault": 9.8,
+          "floor": 9.75
+        },
+        "Casey Brown": {
+          "vault": 9.65,
+          "bars": 9.85
+        },
+        "Kyen Mayhew": {
+          "vault": 9.75,
+          "beam": 9.775,
+          "floor": 9.85
+        },
+        "Miki Aderinto": {
+          "bars": 9.85,
+          "beam": 9.75
+        },
+        "Mya Wiley": {
+          "bars": 9.8
+        },
+        "Sarah Lee": {
+          "beam": 9.6
+        },
+        "Abbey Scanlon": {
+          "beam": 9.8
+        },
+        "CJ Keuneke": {
+          "floor": 9.7
+        }
+      },
+      "UCLA": {
+        "Tiana Sumanasekera": {
+          "vault": 9.8,
+          "beam": 9.95,
+          "floor": 9.85
+        },
+        "Madisyn Anyimi": {
+          "vault": 9.8
+        },
+        "Katelyn Rosen": {
+          "vault": 9.8,
+          "bars": 9.775,
+          "beam": 9.825,
+          "floor": 9.675
+        },
+        "Riley Jenkins": {
+          "vault": 9.825
+        },
+        "Ashlee Sullivan": {
+          "vault": 9.825,
+          "bars": 9.85,
+          "floor": 9.775
+        },
+        "Jordan Chiles": {
+          "vault": 9.9,
+          "bars": 9.925,
+          "beam": 9.975,
+          "floor": 9.925
+        },
+        "Sydney Barros": {
+          "bars": 9.8
+        },
+        "Mika Webster-Longin": {
+          "bars": 9.85,
+          "beam": 9.8,
+          "floor": 9.825
+        },
+        "Nola Matthews": {
+          "bars": 9.8,
+          "beam": 9.85,
+          "floor": 9.7
+        },
+        "Ciena Alipio": {
+          "beam": 9.925
+        }
+      }
     },
-    "distanceMiles": 0,
-    "elevationFt": 230,
-    "city": "Corvallis, OR",
-    "weather": {
-      "tempHighF": 52.2,
-      "tempLowF": 41.6,
-      "precipIn": 8.5,
-      "description": "Drizzle",
-      "emoji": "\ud83c\udf26\ufe0f"
+    "competitorLineups": {
+      "Washington": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Caitlin Mc",
+            "score": 9.625
+          },
+          {
+            "position": 2,
+            "name": "WilliamsKristin Lin",
+            "score": 9.725
+          },
+          {
+            "position": 3,
+            "name": "Lilly Tubbs",
+            "score": 9.725
+          },
+          {
+            "position": 4,
+            "name": "Jessica Scha\ufb00er",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Kira Bolden",
+            "score": 9.725
+          },
+          {
+            "position": 6,
+            "name": "Mary McDonough",
+            "score": 9.775
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Caitlin Mc",
+            "score": 9.725
+          },
+          {
+            "position": 2,
+            "name": "WilliamsKristin Lin",
+            "score": 9.675
+          },
+          {
+            "position": 3,
+            "name": "Olivia Oppegard",
+            "score": 9.725
+          },
+          {
+            "position": 4,
+            "name": "Deiah Moody",
+            "score": 9.825
+          },
+          {
+            "position": 5,
+            "name": "Mary Mc",
+            "score": 9.775
+          },
+          {
+            "position": 6,
+            "name": "DonoughLilly Tubbs",
+            "score": 9.15
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Olivia Oppegard",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Deiah Moody",
+            "score": 9.825
+          },
+          {
+            "position": 3,
+            "name": "Kristin Lin",
+            "score": 9.825
+          },
+          {
+            "position": 4,
+            "name": "Lilly Tubbs",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Lana Navarro",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Chelsea Hallinan",
+            "score": 9.9
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Haley Fichiera",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Kira Bolden",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Caitlin Mc",
+            "score": 9.825
+          },
+          {
+            "position": 4,
+            "name": "WilliamsJessica Scha\ufb00er",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Kristin Lin",
+            "score": 9.775
+          },
+          {
+            "position": 6,
+            "name": "Mary McDonough",
+            "score": 9.5
+          }
+        ]
+      },
+      "California": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Sage Melkonian",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Tonya Paulsson",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Annalise Newman-Achee",
+            "score": 9.85
+          },
+          {
+            "position": 4,
+            "name": "Jayden Silvers",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Casey Brown",
+            "score": 9.65
+          },
+          {
+            "position": 6,
+            "name": "Kyen Mayhew",
+            "score": 9.75
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Miki Aderinto",
+            "score": 9.85
+          },
+          {
+            "position": 2,
+            "name": "Annalise Newman-Achee",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Mya Wiley",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Sage Melkonian",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Casey Brown",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Tonya Paulsson",
+            "score": 9.925
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Kyen Mayhew",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Sarah Lee",
+            "score": 9.6
+          },
+          {
+            "position": 3,
+            "name": "Sage Melkonian",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Miki Aderinto",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Abbey Scanlon",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Annalise Newman-Achee",
+            "score": 9.9
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Jayden Silvers",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Annalise Newman-Achee",
+            "score": 9.65
+          },
+          {
+            "position": 3,
+            "name": "Sage Melkonian",
+            "score": 9.675
+          },
+          {
+            "position": 4,
+            "name": "Tonya Paulsson",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "CJ Keuneke",
+            "score": 9.7
+          },
+          {
+            "position": 6,
+            "name": "Kyen Mayhew",
+            "score": 9.85
+          }
+        ]
+      },
+      "UCLA": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Tiana Sumanasekera",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Madisyn Anyimi",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Katelyn Rosen",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Riley Jenkins",
+            "score": 9.825
+          },
+          {
+            "position": 5,
+            "name": "Ashlee Sullivan",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Jordan Chiles",
+            "score": 9.9
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Katelyn Rosen",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Sydney Barros",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Mika Webster-Longin",
+            "score": 9.85
+          },
+          {
+            "position": 4,
+            "name": "Nola Matthews",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Ashlee Sullivan",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Jordan Chiles",
+            "score": 9.925
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Katelyn Rosen",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Nola Matthews",
+            "score": 9.85
+          },
+          {
+            "position": 3,
+            "name": "Tiana Sumanasekera",
+            "score": 9.95
+          },
+          {
+            "position": 4,
+            "name": "Mika Webster-Longin",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Jordan Chiles",
+            "score": 9.975
+          },
+          {
+            "position": 6,
+            "name": "Ciena Alipio",
+            "score": 9.925
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Katelyn Rosen",
+            "score": 9.675
+          },
+          {
+            "position": 2,
+            "name": "Mika Webster-Longin",
+            "score": 9.825
+          },
+          {
+            "position": 3,
+            "name": "Nola Matthews",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Tiana Sumanasekera",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Ashlee Sullivan",
+            "score": 9.775
+          },
+          {
+            "position": 6,
+            "name": "Jordan Chiles",
+            "score": 9.925
+          }
+        ]
+      }
     }
   },
   {
@@ -1268,25 +2846,189 @@
         }
       ]
     },
-    "attendance": "4,002",
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.7,
-      "name": "Last Quarter",
-      "emoji": "\ud83c\udf17",
-      "fullness": 0.808
+    "competitorAthletes": {
+      "BYU": {
+        "Daisy Stephenson": {
+          "vault": 9.8,
+          "floor": 8.95
+        },
+        "Mya Kirkham": {
+          "vault": 9.75,
+          "bars": 9.8
+        },
+        "Ava Jorgensen": {
+          "vault": 9.8,
+          "bars": 9.875,
+          "beam": 9.75
+        },
+        "Deb Silva": {
+          "vault": 9.7,
+          "bars": 9.85,
+          "beam": 8.625,
+          "floor": 9.8
+        },
+        "Kylie Eaquinto": {
+          "vault": 9.825,
+          "bars": 9.85,
+          "floor": 9.9
+        },
+        "Scarlett Sonnenberg": {
+          "vault": 9.55,
+          "beam": 9.625,
+          "floor": 9.875
+        },
+        "Addilyn Glazier": {
+          "bars": 9.725
+        },
+        "Alilah Alvarado": {
+          "bars": 9.775
+        },
+        "Hazel Smith": {
+          "beam": 9.65
+        },
+        "Chloee Hoke": {
+          "beam": 9.825,
+          "floor": 9.65
+        },
+        "Brynlee Andersen-Broekman": {
+          "beam": 9.875,
+          "floor": 9.7
+        }
+      }
     },
-    "distanceMiles": 800,
-    "elevationFt": 4549,
-    "city": "Provo, UT",
-    "weather": {
-      "tempHighF": 27.7,
-      "tempLowF": 21.5,
-      "precipIn": 0.1,
-      "description": "Snow",
-      "emoji": "\u2744\ufe0f"
-    }
+    "competitorLineups": {
+      "BYU": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Daisy Stephenson",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Mya Kirkham",
+            "score": 9.75
+          },
+          {
+            "position": 3,
+            "name": "Ava Jorgensen",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Deb Silva",
+            "score": 9.7
+          },
+          {
+            "position": 5,
+            "name": "Kylie Eaquinto",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Scarlett Sonnenberg",
+            "score": 9.55
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Mya Kirkham",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Addilyn Glazier",
+            "score": 9.725
+          },
+          {
+            "position": 3,
+            "name": "Deb Silva",
+            "score": 9.85
+          },
+          {
+            "position": 4,
+            "name": "Kylie Eaquinto",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Ava Jorgensen",
+            "score": 9.875
+          },
+          {
+            "position": 6,
+            "name": "Alilah Alvarado",
+            "score": 9.775
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Deb Silva",
+            "score": 8.625
+          },
+          {
+            "position": 2,
+            "name": "Hazel Smith",
+            "score": 9.65
+          },
+          {
+            "position": 3,
+            "name": "Ava Jorgensen",
+            "score": 9.75
+          },
+          {
+            "position": 4,
+            "name": "Chloee Hoke",
+            "score": 9.825
+          },
+          {
+            "position": 5,
+            "name": "Scarlett Sonnenberg",
+            "score": 9.625
+          },
+          {
+            "position": 6,
+            "name": "Brynlee Andersen-Broekman",
+            "score": 9.875
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Chloee Hoke",
+            "score": 9.65
+          },
+          {
+            "position": 2,
+            "name": "Daisy Stephenson",
+            "score": 8.95
+          },
+          {
+            "position": 3,
+            "name": "Brynlee Andersen-Broekman",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Scarlett Sonnenberg",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Deb Silva",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Kylie Eaquinto",
+            "score": 9.9
+          }
+        ]
+      }
+    },
+    "attendance": "4,002"
   },
   {
     "id": "sac-state-jan-16",
@@ -1550,25 +3292,195 @@
         }
       ]
     },
-    "attendance": "3,310",
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.937,
-      "name": "Waning Crescent",
-      "emoji": "\ud83c\udf18",
-      "fullness": 0.195
+    "competitorAthletes": {
+      "Sac State": {
+        "Lexi Frank": {
+          "vault": 9.7
+        },
+        "Rose Wilson": {
+          "vault": 9.725
+        },
+        "Cadence Gaumont": {
+          "vault": 9.0,
+          "floor": 9.725
+        },
+        "Sarah Lutrel": {
+          "vault": 9.7,
+          "bars": 9.575,
+          "beam": 9.125,
+          "floor": 9.8
+        },
+        "Rylin Zimmerman": {
+          "vault": 9.75,
+          "beam": 9.075,
+          "floor": 9.775
+        },
+        "Kayla Herrera": {
+          "vault": 9.5
+        },
+        "Makayla Townsend": {
+          "bars": 9.625
+        },
+        "Maliyah James": {
+          "bars": 9.5
+        },
+        "Jillianne Lastra": {
+          "bars": 9.675
+        },
+        "Kara Houghton": {
+          "bars": 9.8,
+          "beam": 9.65,
+          "floor": 9.825
+        },
+        "McKenna Carnesi": {
+          "bars": 9.825
+        },
+        "Athena Jones": {
+          "beam": 9.675,
+          "floor": 9.825
+        },
+        "Kaela Copeland": {
+          "beam": 9.7,
+          "floor": 9.65
+        },
+        "Kaitlyn Driessen": {
+          "beam": 9.7
+        }
+      }
     },
-    "distanceMiles": 0,
-    "elevationFt": 230,
-    "city": "Corvallis, OR",
-    "weather": {
-      "tempHighF": 50.8,
-      "tempLowF": 38.8,
-      "precipIn": 0.0,
-      "description": "Clear sky",
-      "emoji": "\u2600\ufe0f"
-    }
+    "competitorLineups": {
+      "Sac State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Lexi Frank",
+            "score": 9.7
+          },
+          {
+            "position": 2,
+            "name": "Rose Wilson",
+            "score": 9.725
+          },
+          {
+            "position": 3,
+            "name": "Cadence Gaumont",
+            "score": 9.0
+          },
+          {
+            "position": 4,
+            "name": "Sarah Lutrel",
+            "score": 9.7
+          },
+          {
+            "position": 5,
+            "name": "Rylin Zimmerman",
+            "score": 9.75
+          },
+          {
+            "position": 6,
+            "name": "Kayla Herrera",
+            "score": 9.5
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Sarah Lutrel",
+            "score": 9.575
+          },
+          {
+            "position": 2,
+            "name": "Makayla Townsend",
+            "score": 9.625
+          },
+          {
+            "position": 3,
+            "name": "Maliyah James",
+            "score": 9.5
+          },
+          {
+            "position": 4,
+            "name": "Jillianne Lastra",
+            "score": 9.675
+          },
+          {
+            "position": 5,
+            "name": "Kara Houghton",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "McKenna Carnesi",
+            "score": 9.825
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Athena Jones",
+            "score": 9.675
+          },
+          {
+            "position": 2,
+            "name": "Kaela Copeland",
+            "score": 9.7
+          },
+          {
+            "position": 3,
+            "name": "Rylin Zimmerman",
+            "score": 9.075
+          },
+          {
+            "position": 4,
+            "name": "Kaitlyn Driessen",
+            "score": 9.7
+          },
+          {
+            "position": 5,
+            "name": "Sarah Lutrel",
+            "score": 9.125
+          },
+          {
+            "position": 6,
+            "name": "Kara Houghton",
+            "score": 9.65
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Rylin Zimmerman",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Kaela Copeland",
+            "score": 9.65
+          },
+          {
+            "position": 3,
+            "name": "Athena Jones",
+            "score": 9.825
+          },
+          {
+            "position": 4,
+            "name": "Sarah Lutrel",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Kara Houghton",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Cadence Gaumont",
+            "score": 9.725
+          }
+        ]
+      }
+    },
+    "attendance": "3,310"
   },
   {
     "id": "utah-state-jan-25",
@@ -1825,25 +3737,199 @@
         }
       ]
     },
-    "attendance": "3,651",
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.242,
-      "name": "First Quarter",
-      "emoji": "\ud83c\udf13",
-      "fullness": 0.689
+    "competitorAthletes": {
+      "Utah State": {
+        "Mya Witte": {
+          "vault": 9.75,
+          "beam": 9.85
+        },
+        "Lundyn Vander": {
+          "vault": 9.625
+        },
+        "ToolenAnabelle Dewey": {
+          "vault": 9.725
+        },
+        "Chelsea Southam": {
+          "vault": 9.65,
+          "floor": 9.875
+        },
+        "Nyla Morabito": {
+          "vault": 9.85,
+          "beam": 9.75
+        },
+        "Alianna Valdez": {
+          "vault": 9.725,
+          "beam": 9.85
+        },
+        "Sydney Jelen": {
+          "bars": 9.8,
+          "beam": 9.875
+        },
+        "Charley Laufer": {
+          "bars": 9.8
+        },
+        "Avery Bibbey": {
+          "bars": 9.775
+        },
+        "Isabella Vater": {
+          "bars": 9.25,
+          "floor": 9.875
+        },
+        "Olivia Orengo": {
+          "bars": 9.75,
+          "beam": 9.8,
+          "floor": 9.825
+        },
+        "Lundyn VanderToolen": {
+          "bars": 9.875
+        },
+        "Kaylie Medrano": {
+          "beam": 9.775
+        },
+        "Sienna Yelle": {
+          "floor": 9.825
+        },
+        "Anabelle Dewey": {
+          "floor": 9.825
+        },
+        "Mara Gruber": {
+          "floor": 9.8
+        }
+      }
     },
-    "distanceMiles": 0,
-    "elevationFt": 230,
-    "city": "Corvallis, OR",
-    "weather": {
-      "tempHighF": 39.9,
-      "tempLowF": 22.5,
-      "precipIn": 0.0,
-      "description": "Partly cloudy",
-      "emoji": "\u26c5"
-    }
+    "competitorLineups": {
+      "Utah State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Mya Witte",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Lundyn Vander",
+            "score": 9.625
+          },
+          {
+            "position": 3,
+            "name": "ToolenAnabelle Dewey",
+            "score": 9.725
+          },
+          {
+            "position": 4,
+            "name": "Chelsea Southam",
+            "score": 9.65
+          },
+          {
+            "position": 5,
+            "name": "Nyla Morabito",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Alianna Valdez",
+            "score": 9.725
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Sydney Jelen",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Charley Laufer",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Avery Bibbey",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Isabella Vater",
+            "score": 9.25
+          },
+          {
+            "position": 5,
+            "name": "Olivia Orengo",
+            "score": 9.75
+          },
+          {
+            "position": 6,
+            "name": "Lundyn VanderToolen",
+            "score": 9.875
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Sydney Jelen",
+            "score": 9.875
+          },
+          {
+            "position": 2,
+            "name": "Alianna Valdez",
+            "score": 9.85
+          },
+          {
+            "position": 3,
+            "name": "Olivia Orengo",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Kaylie Medrano",
+            "score": 9.775
+          },
+          {
+            "position": 5,
+            "name": "Nyla Morabito",
+            "score": 9.75
+          },
+          {
+            "position": 6,
+            "name": "Mya Witte",
+            "score": 9.85
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Olivia Orengo",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Sienna Yelle",
+            "score": 9.825
+          },
+          {
+            "position": 3,
+            "name": "Chelsea Southam",
+            "score": 9.875
+          },
+          {
+            "position": 4,
+            "name": "Anabelle Dewey",
+            "score": 9.825
+          },
+          {
+            "position": 5,
+            "name": "Isabella Vater",
+            "score": 9.875
+          },
+          {
+            "position": 6,
+            "name": "Mara Gruber",
+            "score": 9.8
+          }
+        ]
+      }
+    },
+    "attendance": "3,651"
   },
   {
     "id": "alabama-jan-30",
@@ -1983,25 +4069,9 @@
         }
       }
     ],
-    "imageBasedPdf": true,
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.411,
-      "name": "Waxing Gibbous",
-      "emoji": "\ud83c\udf14",
-      "fullness": 0.962
-    },
-    "distanceMiles": 2300,
-    "elevationFt": 200,
-    "city": "Tuscaloosa, AL",
-    "weather": {
-      "tempHighF": 53.2,
-      "tempLowF": 29.6,
-      "precipIn": 0.0,
-      "description": "Partly cloudy",
-      "emoji": "\u26c5"
-    }
+    "competitorAthletes": {},
+    "competitorLineups": {},
+    "imageBasedPdf": true
   },
   {
     "id": "boise-state-quad-san-jose-state-feb-6",
@@ -2304,25 +4374,543 @@
         "floor": 48.55
       }
     ],
-    "attendance": "2,677",
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.648,
-      "name": "Waning Gibbous",
-      "emoji": "\ud83c\udf16",
-      "fullness": 0.893
+    "competitorAthletes": {
+      "Boise State": {
+        "Sydney Kho": {
+          "vault": 9.75,
+          "beam": 9.7
+        },
+        "Miraya Nero": {
+          "vault": 9.775,
+          "bars": 8.825,
+          "beam": 9.775,
+          "floor": 9.775
+        },
+        "Bridget Kemp": {
+          "vault": 9.775,
+          "floor": 9.775
+        },
+        "Noelle Ball": {
+          "vault": 9.75,
+          "bars": 9.725
+        },
+        "Isabella Delarosa": {
+          "vault": 9.8,
+          "beam": 9.725
+        },
+        "Carly Buell": {
+          "bars": 9.8
+        },
+        "Mahleea Werline": {
+          "bars": 9.725
+        },
+        "Kristina Shchennikova": {
+          "bars": 9.875,
+          "beam": 9.675
+        },
+        "Kylee Hamby": {
+          "bars": 9.85
+        },
+        "Brantley Lucas": {
+          "beam": 9.075
+        },
+        "Sydney Leitch": {
+          "beam": 9.75,
+          "floor": 9.775
+        },
+        "Delaney Reeves": {
+          "floor": 9.8
+        },
+        "Anna Ferguson": {
+          "floor": 9.725
+        },
+        "Blake Pascal": {
+          "floor": 9.775
+        }
+      },
+      "San Jose State": {
+        "Devyn Valuch": {
+          "vault": 9.775,
+          "beam": 9.575
+        },
+        "Samantha Macasu": {
+          "vault": 9.75,
+          "bars": 9.8,
+          "beam": 9.675
+        },
+        "Ava Johnson": {
+          "vault": 9.85,
+          "floor": 9.8
+        },
+        "Kaviana Jurries": {
+          "vault": 9.875,
+          "bars": 9.825,
+          "floor": 9.55
+        },
+        "Sophie Patterson": {
+          "vault": 9.875,
+          "bars": 9.75,
+          "beam": 9.75
+        },
+        "Mikaela Pitts": {
+          "vault": 9.825
+        },
+        "Olivia Reardon": {
+          "bars": 8.975
+        },
+        "Genesis Pe": {
+          "bars": 9.75,
+          "floor": 9.725
+        },
+        "BenitoVictoria Kisch": {
+          "bars": 9.85
+        },
+        "Marissa Ashton": {
+          "beam": 9.8,
+          "floor": 9.725
+        },
+        "Mia Nelson": {
+          "beam": 9.725,
+          "floor": 9.7
+        },
+        "Genesis PeBenito": {
+          "beam": 9.8
+        },
+        "BenitoKaylee Larson": {
+          "floor": 9.6
+        }
+      },
+      "UC Davis": {
+        "Molly Osborne": {
+          "vault": 9.625,
+          "bars": 9.7,
+          "beam": 9.675,
+          "floor": 9.55
+        },
+        "Avah Reichow": {
+          "vault": 9.25,
+          "beam": 9.2,
+          "floor": 9.8
+        },
+        "Chloe Gann": {
+          "vault": 9.7
+        },
+        "Amelia Moneymaker": {
+          "vault": 9.8,
+          "bars": 9.8,
+          "beam": 9.475,
+          "floor": 9.7
+        },
+        "Alana Kim": {
+          "vault": 9.7,
+          "beam": 9.5,
+          "floor": 9.775
+        },
+        "Jehaan Poonja": {
+          "bars": 8.825,
+          "beam": 9.75
+        },
+        "McKenna Knecht": {
+          "bars": 9.65
+        },
+        "Milla Gideon": {
+          "bars": 9.875
+        },
+        "Adia Friesen": {
+          "bars": 9.625
+        },
+        "Cady Chiu": {
+          "beam": 9.35,
+          "floor": 9.45
+        },
+        "Avery Marshall": {
+          "floor": 9.725
+        }
+      }
     },
-    "distanceMiles": 400,
-    "elevationFt": 2730,
-    "city": "Boise, ID",
-    "weather": {
-      "tempHighF": 49.5,
-      "tempLowF": 30.9,
-      "precipIn": 0.0,
-      "description": "Partly cloudy",
-      "emoji": "\u26c5"
-    }
+    "competitorLineups": {
+      "Boise State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Sydney Kho",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Miraya Nero",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Bridget Kemp",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Noelle Ball",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Isabella Delarosa",
+            "score": 9.8
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Carly Buell",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Noelle Ball",
+            "score": 9.725
+          },
+          {
+            "position": 3,
+            "name": "Miraya Nero",
+            "score": 8.825
+          },
+          {
+            "position": 4,
+            "name": "Mahleea Werline",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Kristina Shchennikova",
+            "score": 9.875
+          },
+          {
+            "position": 6,
+            "name": "Kylee Hamby",
+            "score": 9.85
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Brantley Lucas",
+            "score": 9.075
+          },
+          {
+            "position": 2,
+            "name": "Isabella Delarosa",
+            "score": 9.725
+          },
+          {
+            "position": 3,
+            "name": "Miraya Nero",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Kristina Shchennikova",
+            "score": 9.675
+          },
+          {
+            "position": 5,
+            "name": "Sydney Kho",
+            "score": 9.7
+          },
+          {
+            "position": 6,
+            "name": "Sydney Leitch",
+            "score": 9.75
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Sydney Leitch",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Miraya Nero",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Delaney Reeves",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Anna Ferguson",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Bridget Kemp",
+            "score": 9.775
+          },
+          {
+            "position": 6,
+            "name": "Blake Pascal",
+            "score": 9.775
+          }
+        ]
+      },
+      "San Jose State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Devyn Valuch",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Samantha Macasu",
+            "score": 9.75
+          },
+          {
+            "position": 3,
+            "name": "Ava Johnson",
+            "score": 9.85
+          },
+          {
+            "position": 4,
+            "name": "Kaviana Jurries",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Sophie Patterson",
+            "score": 9.875
+          },
+          {
+            "position": 6,
+            "name": "Mikaela Pitts",
+            "score": 9.825
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Sophie Patterson",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Olivia Reardon",
+            "score": 8.975
+          },
+          {
+            "position": 3,
+            "name": "Genesis Pe",
+            "score": 9.75
+          },
+          {
+            "position": 4,
+            "name": "BenitoVictoria Kisch",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Samantha Macasu",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Kaviana Jurries",
+            "score": 9.825
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Marissa Ashton",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Samantha Macasu",
+            "score": 9.675
+          },
+          {
+            "position": 3,
+            "name": "Devyn Valuch",
+            "score": 9.575
+          },
+          {
+            "position": 4,
+            "name": "Mia Nelson",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Sophie Patterson",
+            "score": 9.75
+          },
+          {
+            "position": 6,
+            "name": "Genesis PeBenito",
+            "score": 9.8
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Marissa Ashton",
+            "score": 9.725
+          },
+          {
+            "position": 2,
+            "name": "Kaviana Jurries",
+            "score": 9.55
+          },
+          {
+            "position": 3,
+            "name": "Mia Nelson",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Genesis Pe",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "BenitoKaylee Larson",
+            "score": 9.6
+          },
+          {
+            "position": 6,
+            "name": "Ava Johnson",
+            "score": 9.8
+          }
+        ]
+      },
+      "UC Davis": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Molly Osborne",
+            "score": 9.625
+          },
+          {
+            "position": 2,
+            "name": "Avah Reichow",
+            "score": 9.25
+          },
+          {
+            "position": 3,
+            "name": "Chloe Gann",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Amelia Moneymaker",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Alana Kim",
+            "score": 9.7
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Jehaan Poonja",
+            "score": 8.825
+          },
+          {
+            "position": 2,
+            "name": "McKenna Knecht",
+            "score": 9.65
+          },
+          {
+            "position": 3,
+            "name": "Molly Osborne",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Milla Gideon",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Amelia Moneymaker",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Adia Friesen",
+            "score": 9.625
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Jehaan Poonja",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Alana Kim",
+            "score": 9.5
+          },
+          {
+            "position": 3,
+            "name": "Cady Chiu",
+            "score": 9.35
+          },
+          {
+            "position": 4,
+            "name": "Molly Osborne",
+            "score": 9.675
+          },
+          {
+            "position": 5,
+            "name": "Avah Reichow",
+            "score": 9.2
+          },
+          {
+            "position": 6,
+            "name": "Amelia Moneymaker",
+            "score": 9.475
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Alana Kim",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Cady Chiu",
+            "score": 9.45
+          },
+          {
+            "position": 3,
+            "name": "Molly Osborne",
+            "score": 9.55
+          },
+          {
+            "position": 4,
+            "name": "Avery Marshall",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Avah Reichow",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Amelia Moneymaker",
+            "score": 9.7
+          }
+        ]
+      }
+    },
+    "attendance": "2,677"
   },
   {
     "id": "boise-state-quad-boise-state-feb-6",
@@ -2625,25 +5213,543 @@
         "floor": 48.55
       }
     ],
-    "attendance": "2,677",
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.648,
-      "name": "Waning Gibbous",
-      "emoji": "\ud83c\udf16",
-      "fullness": 0.893
+    "competitorAthletes": {
+      "Boise State": {
+        "Sydney Kho": {
+          "vault": 9.75,
+          "beam": 9.7
+        },
+        "Miraya Nero": {
+          "vault": 9.775,
+          "bars": 8.825,
+          "beam": 9.775,
+          "floor": 9.775
+        },
+        "Bridget Kemp": {
+          "vault": 9.775,
+          "floor": 9.775
+        },
+        "Noelle Ball": {
+          "vault": 9.75,
+          "bars": 9.725
+        },
+        "Isabella Delarosa": {
+          "vault": 9.8,
+          "beam": 9.725
+        },
+        "Carly Buell": {
+          "bars": 9.8
+        },
+        "Mahleea Werline": {
+          "bars": 9.725
+        },
+        "Kristina Shchennikova": {
+          "bars": 9.875,
+          "beam": 9.675
+        },
+        "Kylee Hamby": {
+          "bars": 9.85
+        },
+        "Brantley Lucas": {
+          "beam": 9.075
+        },
+        "Sydney Leitch": {
+          "beam": 9.75,
+          "floor": 9.775
+        },
+        "Delaney Reeves": {
+          "floor": 9.8
+        },
+        "Anna Ferguson": {
+          "floor": 9.725
+        },
+        "Blake Pascal": {
+          "floor": 9.775
+        }
+      },
+      "San Jose State": {
+        "Devyn Valuch": {
+          "vault": 9.775,
+          "beam": 9.575
+        },
+        "Samantha Macasu": {
+          "vault": 9.75,
+          "bars": 9.8,
+          "beam": 9.675
+        },
+        "Ava Johnson": {
+          "vault": 9.85,
+          "floor": 9.8
+        },
+        "Kaviana Jurries": {
+          "vault": 9.875,
+          "bars": 9.825,
+          "floor": 9.55
+        },
+        "Sophie Patterson": {
+          "vault": 9.875,
+          "bars": 9.75,
+          "beam": 9.75
+        },
+        "Mikaela Pitts": {
+          "vault": 9.825
+        },
+        "Olivia Reardon": {
+          "bars": 8.975
+        },
+        "Genesis Pe": {
+          "bars": 9.75,
+          "floor": 9.725
+        },
+        "BenitoVictoria Kisch": {
+          "bars": 9.85
+        },
+        "Marissa Ashton": {
+          "beam": 9.8,
+          "floor": 9.725
+        },
+        "Mia Nelson": {
+          "beam": 9.725,
+          "floor": 9.7
+        },
+        "Genesis PeBenito": {
+          "beam": 9.8
+        },
+        "BenitoKaylee Larson": {
+          "floor": 9.6
+        }
+      },
+      "UC Davis": {
+        "Molly Osborne": {
+          "vault": 9.625,
+          "bars": 9.7,
+          "beam": 9.675,
+          "floor": 9.55
+        },
+        "Avah Reichow": {
+          "vault": 9.25,
+          "beam": 9.2,
+          "floor": 9.8
+        },
+        "Chloe Gann": {
+          "vault": 9.7
+        },
+        "Amelia Moneymaker": {
+          "vault": 9.8,
+          "bars": 9.8,
+          "beam": 9.475,
+          "floor": 9.7
+        },
+        "Alana Kim": {
+          "vault": 9.7,
+          "beam": 9.5,
+          "floor": 9.775
+        },
+        "Jehaan Poonja": {
+          "bars": 8.825,
+          "beam": 9.75
+        },
+        "McKenna Knecht": {
+          "bars": 9.65
+        },
+        "Milla Gideon": {
+          "bars": 9.875
+        },
+        "Adia Friesen": {
+          "bars": 9.625
+        },
+        "Cady Chiu": {
+          "beam": 9.35,
+          "floor": 9.45
+        },
+        "Avery Marshall": {
+          "floor": 9.725
+        }
+      }
     },
-    "distanceMiles": 400,
-    "elevationFt": 2730,
-    "city": "Boise, ID",
-    "weather": {
-      "tempHighF": 49.5,
-      "tempLowF": 30.9,
-      "precipIn": 0.0,
-      "description": "Partly cloudy",
-      "emoji": "\u26c5"
-    }
+    "competitorLineups": {
+      "Boise State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Sydney Kho",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Miraya Nero",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Bridget Kemp",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Noelle Ball",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Isabella Delarosa",
+            "score": 9.8
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Carly Buell",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Noelle Ball",
+            "score": 9.725
+          },
+          {
+            "position": 3,
+            "name": "Miraya Nero",
+            "score": 8.825
+          },
+          {
+            "position": 4,
+            "name": "Mahleea Werline",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Kristina Shchennikova",
+            "score": 9.875
+          },
+          {
+            "position": 6,
+            "name": "Kylee Hamby",
+            "score": 9.85
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Brantley Lucas",
+            "score": 9.075
+          },
+          {
+            "position": 2,
+            "name": "Isabella Delarosa",
+            "score": 9.725
+          },
+          {
+            "position": 3,
+            "name": "Miraya Nero",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Kristina Shchennikova",
+            "score": 9.675
+          },
+          {
+            "position": 5,
+            "name": "Sydney Kho",
+            "score": 9.7
+          },
+          {
+            "position": 6,
+            "name": "Sydney Leitch",
+            "score": 9.75
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Sydney Leitch",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Miraya Nero",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Delaney Reeves",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Anna Ferguson",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Bridget Kemp",
+            "score": 9.775
+          },
+          {
+            "position": 6,
+            "name": "Blake Pascal",
+            "score": 9.775
+          }
+        ]
+      },
+      "San Jose State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Devyn Valuch",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Samantha Macasu",
+            "score": 9.75
+          },
+          {
+            "position": 3,
+            "name": "Ava Johnson",
+            "score": 9.85
+          },
+          {
+            "position": 4,
+            "name": "Kaviana Jurries",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Sophie Patterson",
+            "score": 9.875
+          },
+          {
+            "position": 6,
+            "name": "Mikaela Pitts",
+            "score": 9.825
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Sophie Patterson",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Olivia Reardon",
+            "score": 8.975
+          },
+          {
+            "position": 3,
+            "name": "Genesis Pe",
+            "score": 9.75
+          },
+          {
+            "position": 4,
+            "name": "BenitoVictoria Kisch",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Samantha Macasu",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Kaviana Jurries",
+            "score": 9.825
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Marissa Ashton",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Samantha Macasu",
+            "score": 9.675
+          },
+          {
+            "position": 3,
+            "name": "Devyn Valuch",
+            "score": 9.575
+          },
+          {
+            "position": 4,
+            "name": "Mia Nelson",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Sophie Patterson",
+            "score": 9.75
+          },
+          {
+            "position": 6,
+            "name": "Genesis PeBenito",
+            "score": 9.8
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Marissa Ashton",
+            "score": 9.725
+          },
+          {
+            "position": 2,
+            "name": "Kaviana Jurries",
+            "score": 9.55
+          },
+          {
+            "position": 3,
+            "name": "Mia Nelson",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Genesis Pe",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "BenitoKaylee Larson",
+            "score": 9.6
+          },
+          {
+            "position": 6,
+            "name": "Ava Johnson",
+            "score": 9.8
+          }
+        ]
+      },
+      "UC Davis": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Molly Osborne",
+            "score": 9.625
+          },
+          {
+            "position": 2,
+            "name": "Avah Reichow",
+            "score": 9.25
+          },
+          {
+            "position": 3,
+            "name": "Chloe Gann",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Amelia Moneymaker",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Alana Kim",
+            "score": 9.7
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Jehaan Poonja",
+            "score": 8.825
+          },
+          {
+            "position": 2,
+            "name": "McKenna Knecht",
+            "score": 9.65
+          },
+          {
+            "position": 3,
+            "name": "Molly Osborne",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Milla Gideon",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Amelia Moneymaker",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Adia Friesen",
+            "score": 9.625
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Jehaan Poonja",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Alana Kim",
+            "score": 9.5
+          },
+          {
+            "position": 3,
+            "name": "Cady Chiu",
+            "score": 9.35
+          },
+          {
+            "position": 4,
+            "name": "Molly Osborne",
+            "score": 9.675
+          },
+          {
+            "position": 5,
+            "name": "Avah Reichow",
+            "score": 9.2
+          },
+          {
+            "position": 6,
+            "name": "Amelia Moneymaker",
+            "score": 9.475
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Alana Kim",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Cady Chiu",
+            "score": 9.45
+          },
+          {
+            "position": 3,
+            "name": "Molly Osborne",
+            "score": 9.55
+          },
+          {
+            "position": 4,
+            "name": "Avery Marshall",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Avah Reichow",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Amelia Moneymaker",
+            "score": 9.7
+          }
+        ]
+      }
+    },
+    "attendance": "2,677"
   },
   {
     "id": "boise-state-quad-uc-davis-feb-6",
@@ -2946,25 +6052,543 @@
         "floor": 48.55
       }
     ],
-    "attendance": "2,677",
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.648,
-      "name": "Waning Gibbous",
-      "emoji": "\ud83c\udf16",
-      "fullness": 0.893
+    "competitorAthletes": {
+      "Boise State": {
+        "Sydney Kho": {
+          "vault": 9.75,
+          "beam": 9.7
+        },
+        "Miraya Nero": {
+          "vault": 9.775,
+          "bars": 8.825,
+          "beam": 9.775,
+          "floor": 9.775
+        },
+        "Bridget Kemp": {
+          "vault": 9.775,
+          "floor": 9.775
+        },
+        "Noelle Ball": {
+          "vault": 9.75,
+          "bars": 9.725
+        },
+        "Isabella Delarosa": {
+          "vault": 9.8,
+          "beam": 9.725
+        },
+        "Carly Buell": {
+          "bars": 9.8
+        },
+        "Mahleea Werline": {
+          "bars": 9.725
+        },
+        "Kristina Shchennikova": {
+          "bars": 9.875,
+          "beam": 9.675
+        },
+        "Kylee Hamby": {
+          "bars": 9.85
+        },
+        "Brantley Lucas": {
+          "beam": 9.075
+        },
+        "Sydney Leitch": {
+          "beam": 9.75,
+          "floor": 9.775
+        },
+        "Delaney Reeves": {
+          "floor": 9.8
+        },
+        "Anna Ferguson": {
+          "floor": 9.725
+        },
+        "Blake Pascal": {
+          "floor": 9.775
+        }
+      },
+      "San Jose State": {
+        "Devyn Valuch": {
+          "vault": 9.775,
+          "beam": 9.575
+        },
+        "Samantha Macasu": {
+          "vault": 9.75,
+          "bars": 9.8,
+          "beam": 9.675
+        },
+        "Ava Johnson": {
+          "vault": 9.85,
+          "floor": 9.8
+        },
+        "Kaviana Jurries": {
+          "vault": 9.875,
+          "bars": 9.825,
+          "floor": 9.55
+        },
+        "Sophie Patterson": {
+          "vault": 9.875,
+          "bars": 9.75,
+          "beam": 9.75
+        },
+        "Mikaela Pitts": {
+          "vault": 9.825
+        },
+        "Olivia Reardon": {
+          "bars": 8.975
+        },
+        "Genesis Pe": {
+          "bars": 9.75,
+          "floor": 9.725
+        },
+        "BenitoVictoria Kisch": {
+          "bars": 9.85
+        },
+        "Marissa Ashton": {
+          "beam": 9.8,
+          "floor": 9.725
+        },
+        "Mia Nelson": {
+          "beam": 9.725,
+          "floor": 9.7
+        },
+        "Genesis PeBenito": {
+          "beam": 9.8
+        },
+        "BenitoKaylee Larson": {
+          "floor": 9.6
+        }
+      },
+      "UC Davis": {
+        "Molly Osborne": {
+          "vault": 9.625,
+          "bars": 9.7,
+          "beam": 9.675,
+          "floor": 9.55
+        },
+        "Avah Reichow": {
+          "vault": 9.25,
+          "beam": 9.2,
+          "floor": 9.8
+        },
+        "Chloe Gann": {
+          "vault": 9.7
+        },
+        "Amelia Moneymaker": {
+          "vault": 9.8,
+          "bars": 9.8,
+          "beam": 9.475,
+          "floor": 9.7
+        },
+        "Alana Kim": {
+          "vault": 9.7,
+          "beam": 9.5,
+          "floor": 9.775
+        },
+        "Jehaan Poonja": {
+          "bars": 8.825,
+          "beam": 9.75
+        },
+        "McKenna Knecht": {
+          "bars": 9.65
+        },
+        "Milla Gideon": {
+          "bars": 9.875
+        },
+        "Adia Friesen": {
+          "bars": 9.625
+        },
+        "Cady Chiu": {
+          "beam": 9.35,
+          "floor": 9.45
+        },
+        "Avery Marshall": {
+          "floor": 9.725
+        }
+      }
     },
-    "distanceMiles": 400,
-    "elevationFt": 2730,
-    "city": "Boise, ID",
-    "weather": {
-      "tempHighF": 49.5,
-      "tempLowF": 30.9,
-      "precipIn": 0.0,
-      "description": "Partly cloudy",
-      "emoji": "\u26c5"
-    }
+    "competitorLineups": {
+      "Boise State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Sydney Kho",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Miraya Nero",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Bridget Kemp",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Noelle Ball",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Isabella Delarosa",
+            "score": 9.8
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Carly Buell",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Noelle Ball",
+            "score": 9.725
+          },
+          {
+            "position": 3,
+            "name": "Miraya Nero",
+            "score": 8.825
+          },
+          {
+            "position": 4,
+            "name": "Mahleea Werline",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Kristina Shchennikova",
+            "score": 9.875
+          },
+          {
+            "position": 6,
+            "name": "Kylee Hamby",
+            "score": 9.85
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Brantley Lucas",
+            "score": 9.075
+          },
+          {
+            "position": 2,
+            "name": "Isabella Delarosa",
+            "score": 9.725
+          },
+          {
+            "position": 3,
+            "name": "Miraya Nero",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Kristina Shchennikova",
+            "score": 9.675
+          },
+          {
+            "position": 5,
+            "name": "Sydney Kho",
+            "score": 9.7
+          },
+          {
+            "position": 6,
+            "name": "Sydney Leitch",
+            "score": 9.75
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Sydney Leitch",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Miraya Nero",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Delaney Reeves",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Anna Ferguson",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Bridget Kemp",
+            "score": 9.775
+          },
+          {
+            "position": 6,
+            "name": "Blake Pascal",
+            "score": 9.775
+          }
+        ]
+      },
+      "San Jose State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Devyn Valuch",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Samantha Macasu",
+            "score": 9.75
+          },
+          {
+            "position": 3,
+            "name": "Ava Johnson",
+            "score": 9.85
+          },
+          {
+            "position": 4,
+            "name": "Kaviana Jurries",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Sophie Patterson",
+            "score": 9.875
+          },
+          {
+            "position": 6,
+            "name": "Mikaela Pitts",
+            "score": 9.825
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Sophie Patterson",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Olivia Reardon",
+            "score": 8.975
+          },
+          {
+            "position": 3,
+            "name": "Genesis Pe",
+            "score": 9.75
+          },
+          {
+            "position": 4,
+            "name": "BenitoVictoria Kisch",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Samantha Macasu",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Kaviana Jurries",
+            "score": 9.825
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Marissa Ashton",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Samantha Macasu",
+            "score": 9.675
+          },
+          {
+            "position": 3,
+            "name": "Devyn Valuch",
+            "score": 9.575
+          },
+          {
+            "position": 4,
+            "name": "Mia Nelson",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Sophie Patterson",
+            "score": 9.75
+          },
+          {
+            "position": 6,
+            "name": "Genesis PeBenito",
+            "score": 9.8
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Marissa Ashton",
+            "score": 9.725
+          },
+          {
+            "position": 2,
+            "name": "Kaviana Jurries",
+            "score": 9.55
+          },
+          {
+            "position": 3,
+            "name": "Mia Nelson",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Genesis Pe",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "BenitoKaylee Larson",
+            "score": 9.6
+          },
+          {
+            "position": 6,
+            "name": "Ava Johnson",
+            "score": 9.8
+          }
+        ]
+      },
+      "UC Davis": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Molly Osborne",
+            "score": 9.625
+          },
+          {
+            "position": 2,
+            "name": "Avah Reichow",
+            "score": 9.25
+          },
+          {
+            "position": 3,
+            "name": "Chloe Gann",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Amelia Moneymaker",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Alana Kim",
+            "score": 9.7
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Jehaan Poonja",
+            "score": 8.825
+          },
+          {
+            "position": 2,
+            "name": "McKenna Knecht",
+            "score": 9.65
+          },
+          {
+            "position": 3,
+            "name": "Molly Osborne",
+            "score": 9.7
+          },
+          {
+            "position": 4,
+            "name": "Milla Gideon",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Amelia Moneymaker",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Adia Friesen",
+            "score": 9.625
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Jehaan Poonja",
+            "score": 9.75
+          },
+          {
+            "position": 2,
+            "name": "Alana Kim",
+            "score": 9.5
+          },
+          {
+            "position": 3,
+            "name": "Cady Chiu",
+            "score": 9.35
+          },
+          {
+            "position": 4,
+            "name": "Molly Osborne",
+            "score": 9.675
+          },
+          {
+            "position": 5,
+            "name": "Avah Reichow",
+            "score": 9.2
+          },
+          {
+            "position": 6,
+            "name": "Amelia Moneymaker",
+            "score": 9.475
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Alana Kim",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Cady Chiu",
+            "score": 9.45
+          },
+          {
+            "position": 3,
+            "name": "Molly Osborne",
+            "score": 9.55
+          },
+          {
+            "position": 4,
+            "name": "Avery Marshall",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Avah Reichow",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Amelia Moneymaker",
+            "score": 9.7
+          }
+        ]
+      }
+    },
+    "attendance": "2,677"
   },
   {
     "id": "southern-utah-feb-14",
@@ -3228,25 +6852,195 @@
         }
       ]
     },
-    "attendance": "3,954",
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.919,
-      "name": "Waning Crescent",
-      "emoji": "\ud83c\udf18",
-      "fullness": 0.251
+    "competitorAthletes": {
+      "Southern Utah": {
+        "Mackenzie Kelly": {
+          "vault": 9.85
+        },
+        "Elliot Bringhurst": {
+          "vault": 9.825,
+          "beam": 9.25
+        },
+        "Kayla Pardue": {
+          "vault": 9.825
+        },
+        "Niya Randolph": {
+          "vault": 9.85,
+          "bars": 9.875,
+          "beam": 9.85,
+          "floor": 9.925
+        },
+        "Berlin Hall": {
+          "vault": 9.725,
+          "floor": 9.9
+        },
+        "Sage Paladino": {
+          "vault": 9.7
+        },
+        "Alex Routsis": {
+          "bars": 9.775
+        },
+        "Mia Hampton": {
+          "bars": 9.85,
+          "beam": 9.9,
+          "floor": 9.9
+        },
+        "Ariel Collum": {
+          "bars": 9.875
+        },
+        "Maria Ferguson": {
+          "bars": 8.25,
+          "beam": 9.75
+        },
+        "Rylee Miller": {
+          "bars": 9.85,
+          "beam": 9.825,
+          "floor": 9.825
+        },
+        "Emma Nipper": {
+          "beam": 9.75
+        },
+        "Alyssa Fernandez": {
+          "floor": 9.825
+        },
+        "Carilia Martinez": {
+          "floor": 9.9
+        }
+      }
     },
-    "distanceMiles": 0,
-    "elevationFt": 230,
-    "city": "Corvallis, OR",
-    "weather": {
-      "tempHighF": 46.0,
-      "tempLowF": 37.8,
-      "precipIn": 3.8,
-      "description": "Drizzle",
-      "emoji": "\ud83c\udf26\ufe0f"
-    }
+    "competitorLineups": {
+      "Southern Utah": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Mackenzie Kelly",
+            "score": 9.85
+          },
+          {
+            "position": 2,
+            "name": "Elliot Bringhurst",
+            "score": 9.825
+          },
+          {
+            "position": 3,
+            "name": "Kayla Pardue",
+            "score": 9.825
+          },
+          {
+            "position": 4,
+            "name": "Niya Randolph",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Berlin Hall",
+            "score": 9.725
+          },
+          {
+            "position": 6,
+            "name": "Sage Paladino",
+            "score": 9.7
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Alex Routsis",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Mia Hampton",
+            "score": 9.85
+          },
+          {
+            "position": 3,
+            "name": "Ariel Collum",
+            "score": 9.875
+          },
+          {
+            "position": 4,
+            "name": "Maria Ferguson",
+            "score": 8.25
+          },
+          {
+            "position": 5,
+            "name": "Niya Randolph",
+            "score": 9.875
+          },
+          {
+            "position": 6,
+            "name": "Rylee Miller",
+            "score": 9.85
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Niya Randolph",
+            "score": 9.85
+          },
+          {
+            "position": 2,
+            "name": "Mia Hampton",
+            "score": 9.9
+          },
+          {
+            "position": 3,
+            "name": "Elliot Bringhurst",
+            "score": 9.25
+          },
+          {
+            "position": 4,
+            "name": "Rylee Miller",
+            "score": 9.825
+          },
+          {
+            "position": 5,
+            "name": "Emma Nipper",
+            "score": 9.75
+          },
+          {
+            "position": 6,
+            "name": "Maria Ferguson",
+            "score": 9.75
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Mia Hampton",
+            "score": 9.9
+          },
+          {
+            "position": 2,
+            "name": "Rylee Miller",
+            "score": 9.825
+          },
+          {
+            "position": 3,
+            "name": "Alyssa Fernandez",
+            "score": 9.825
+          },
+          {
+            "position": 4,
+            "name": "Carilia Martinez",
+            "score": 9.9
+          },
+          {
+            "position": 5,
+            "name": "Berlin Hall",
+            "score": 9.9
+          },
+          {
+            "position": 6,
+            "name": "Niya Randolph",
+            "score": 9.925
+          }
+        ]
+      }
+    },
+    "attendance": "3,954"
   },
   {
     "id": "twu-quad-twu-feb-22",
@@ -3549,23 +7343,551 @@
         "floor": 48.825
       }
     ],
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.19,
-      "name": "First Quarter",
-      "emoji": "\ud83c\udf13",
-      "fullness": 0.563
+    "competitorAthletes": {
+      "TWU": {
+        "Alaina Reid": {
+          "vault": 9.775,
+          "bars": 9.75,
+          "beam": 9.85
+        },
+        "Jordan Loock": {
+          "vault": 9.65,
+          "bars": 9.8
+        },
+        "Juliaunna Baker": {
+          "vault": 9.75
+        },
+        "Maddy Murphy": {
+          "vault": 9.725
+        },
+        "Kyleigh Ghanbari": {
+          "vault": 9.825,
+          "beam": 9.65,
+          "floor": 9.7
+        },
+        "Sophia Isbell": {
+          "vault": 9.85,
+          "beam": 9.875,
+          "floor": 9.85
+        },
+        "Bailey Bourgeois": {
+          "bars": 9.825,
+          "floor": 9.8
+        },
+        "Kami Zarlengo": {
+          "bars": 9.75,
+          "floor": 9.775
+        },
+        "Caroline Bowns": {
+          "bars": 9.75
+        },
+        "Brooke Ferrari": {
+          "bars": 9.825
+        },
+        "Sophie Hernandez": {
+          "beam": 9.225,
+          "floor": 9.875
+        },
+        "Sofia Steffan": {
+          "beam": 9.8,
+          "floor": 9.775
+        },
+        "Ruby Goad": {
+          "beam": 9.85
+        }
+      },
+      "Kent State": {
+        "Mya Migliore": {
+          "vault": 9.725,
+          "beam": 9.35
+        },
+        "Zoe Rankin": {
+          "vault": 9.675,
+          "beam": 8.95,
+          "floor": 9.625
+        },
+        "Sophia Balko": {
+          "vault": 9.825,
+          "bars": 9.8
+        },
+        "Jersey Bingman": {
+          "vault": 9.85,
+          "floor": 8.975
+        },
+        "Taylor Archambeau": {
+          "vault": 9.725,
+          "bars": 9.775
+        },
+        "Charlie Behner": {
+          "vault": 9.8,
+          "bars": 9.75,
+          "floor": 9.85
+        },
+        "Lana Mast": {
+          "bars": 9.775
+        },
+        "Heidi Schultz": {
+          "bars": 9.85,
+          "beam": 9.8,
+          "floor": 9.725
+        },
+        "Nastia Rudnitskaya": {
+          "bars": 9.8,
+          "floor": 9.8
+        },
+        "Nene Alvine": {
+          "beam": 9.625
+        },
+        "Dani Fuertez": {
+          "beam": 9.725,
+          "floor": 9.825
+        },
+        "Gabby Riley": {
+          "beam": 9.825
+        }
+      },
+      "Arizona State": {
+        "Safia El Mammann": {
+          "vault": 9.825,
+          "beam": 9.775
+        },
+        "Robyn Wilson": {
+          "vault": 9.775
+        },
+        "Delanie Kelly": {
+          "vault": 9.8,
+          "floor": 9.825
+        },
+        "Lilia Purler": {
+          "vault": 9.8
+        },
+        "Kimberly Smith": {
+          "vault": 9.85,
+          "bars": 9.9,
+          "beam": 9.775,
+          "floor": 9.725
+        },
+        "Halle Gregoire": {
+          "vault": 9.775,
+          "floor": 9.85
+        },
+        "Reese Grolla": {
+          "bars": 9.425,
+          "beam": 9.775
+        },
+        "Adele Ossi": {
+          "bars": 9.575,
+          "beam": 9.7
+        },
+        "Halle Braaflat": {
+          "bars": 9.25,
+          "floor": 9.775
+        },
+        "Isabella Kowan": {
+          "bars": 9.75,
+          "beam": 9.075
+        },
+        "Kylee Bromley": {
+          "bars": 9.825,
+          "floor": 9.875
+        },
+        "Kayla Lee": {
+          "beam": 9.875,
+          "floor": 9.8
+        }
+      }
     },
-    "distanceMiles": 1900,
-    "elevationFt": 634,
-    "city": "Denton, TX",
-    "weather": {
-      "tempHighF": 55.2,
-      "tempLowF": 36.4,
-      "precipIn": 0.0,
-      "description": "Partly cloudy",
-      "emoji": "\u26c5"
+    "competitorLineups": {
+      "TWU": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Alaina Reid",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Jordan Loock",
+            "score": 9.65
+          },
+          {
+            "position": 3,
+            "name": "Juliaunna Baker",
+            "score": 9.75
+          },
+          {
+            "position": 4,
+            "name": "Maddy Murphy",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Kyleigh Ghanbari",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Sophia Isbell",
+            "score": 9.85
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Bailey Bourgeois",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Kami Zarlengo",
+            "score": 9.75
+          },
+          {
+            "position": 3,
+            "name": "Jordan Loock",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Alaina Reid",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Caroline Bowns",
+            "score": 9.75
+          },
+          {
+            "position": 6,
+            "name": "Brooke Ferrari",
+            "score": 9.825
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Sophie Hernandez",
+            "score": 9.225
+          },
+          {
+            "position": 2,
+            "name": "Alaina Reid",
+            "score": 9.85
+          },
+          {
+            "position": 3,
+            "name": "Sofia Steffan",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Kyleigh Ghanbari",
+            "score": 9.65
+          },
+          {
+            "position": 5,
+            "name": "Ruby Goad",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Sophia Isbell",
+            "score": 9.875
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Kami Zarlengo",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Bailey Bourgeois",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Sofia Steffan",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Sophie Hernandez",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Kyleigh Ghanbari",
+            "score": 9.7
+          },
+          {
+            "position": 6,
+            "name": "Sophia Isbell",
+            "score": 9.85
+          }
+        ]
+      },
+      "Kent State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Mya Migliore",
+            "score": 9.725
+          },
+          {
+            "position": 2,
+            "name": "Zoe Rankin",
+            "score": 9.675
+          },
+          {
+            "position": 3,
+            "name": "Sophia Balko",
+            "score": 9.825
+          },
+          {
+            "position": 4,
+            "name": "Jersey Bingman",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Taylor Archambeau",
+            "score": 9.725
+          },
+          {
+            "position": 6,
+            "name": "Charlie Behner",
+            "score": 9.8
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Lana Mast",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Sophia Balko",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Taylor Archambeau",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Heidi Schultz",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Nastia Rudnitskaya",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Charlie Behner",
+            "score": 9.75
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Mya Migliore",
+            "score": 9.35
+          },
+          {
+            "position": 2,
+            "name": "Zoe Rankin",
+            "score": 8.95
+          },
+          {
+            "position": 3,
+            "name": "Nene Alvine",
+            "score": 9.625
+          },
+          {
+            "position": 4,
+            "name": "Dani Fuertez",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Gabby Riley",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Heidi Schultz",
+            "score": 9.8
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Zoe Rankin",
+            "score": 9.625
+          },
+          {
+            "position": 2,
+            "name": "Nastia Rudnitskaya",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Jersey Bingman",
+            "score": 8.975
+          },
+          {
+            "position": 4,
+            "name": "Dani Fuertez",
+            "score": 9.825
+          },
+          {
+            "position": 5,
+            "name": "Heidi Schultz",
+            "score": 9.725
+          },
+          {
+            "position": 6,
+            "name": "Charlie Behner",
+            "score": 9.85
+          }
+        ]
+      },
+      "Arizona State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Safia El Mammann",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Robyn Wilson",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Delanie Kelly",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Lilia Purler",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Kimberly Smith",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Halle Gregoire",
+            "score": 9.775
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Reese Grolla",
+            "score": 9.425
+          },
+          {
+            "position": 2,
+            "name": "Adele Ossi",
+            "score": 9.575
+          },
+          {
+            "position": 3,
+            "name": "Halle Braaflat",
+            "score": 9.25
+          },
+          {
+            "position": 4,
+            "name": "Isabella Kowan",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Kylee Bromley",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Kimberly Smith",
+            "score": 9.9
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Reese Grolla",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Adele Ossi",
+            "score": 9.7
+          },
+          {
+            "position": 3,
+            "name": "Safia El Mammann",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Isabella Kowan",
+            "score": 9.075
+          },
+          {
+            "position": 5,
+            "name": "Kayla Lee",
+            "score": 9.875
+          },
+          {
+            "position": 6,
+            "name": "Kimberly Smith",
+            "score": 9.775
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Kayla Lee",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Halle Braaflat",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Kylee Bromley",
+            "score": 9.875
+          },
+          {
+            "position": 4,
+            "name": "Halle Gregoire",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Delanie Kelly",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Kimberly Smith",
+            "score": 9.725
+          }
+        ]
+      }
     }
   },
   {
@@ -3869,23 +8191,551 @@
         "floor": 48.825
       }
     ],
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.19,
-      "name": "First Quarter",
-      "emoji": "\ud83c\udf13",
-      "fullness": 0.563
+    "competitorAthletes": {
+      "TWU": {
+        "Alaina Reid": {
+          "vault": 9.775,
+          "bars": 9.75,
+          "beam": 9.85
+        },
+        "Jordan Loock": {
+          "vault": 9.65,
+          "bars": 9.8
+        },
+        "Juliaunna Baker": {
+          "vault": 9.75
+        },
+        "Maddy Murphy": {
+          "vault": 9.725
+        },
+        "Kyleigh Ghanbari": {
+          "vault": 9.825,
+          "beam": 9.65,
+          "floor": 9.7
+        },
+        "Sophia Isbell": {
+          "vault": 9.85,
+          "beam": 9.875,
+          "floor": 9.85
+        },
+        "Bailey Bourgeois": {
+          "bars": 9.825,
+          "floor": 9.8
+        },
+        "Kami Zarlengo": {
+          "bars": 9.75,
+          "floor": 9.775
+        },
+        "Caroline Bowns": {
+          "bars": 9.75
+        },
+        "Brooke Ferrari": {
+          "bars": 9.825
+        },
+        "Sophie Hernandez": {
+          "beam": 9.225,
+          "floor": 9.875
+        },
+        "Sofia Steffan": {
+          "beam": 9.8,
+          "floor": 9.775
+        },
+        "Ruby Goad": {
+          "beam": 9.85
+        }
+      },
+      "Kent State": {
+        "Mya Migliore": {
+          "vault": 9.725,
+          "beam": 9.35
+        },
+        "Zoe Rankin": {
+          "vault": 9.675,
+          "beam": 8.95,
+          "floor": 9.625
+        },
+        "Sophia Balko": {
+          "vault": 9.825,
+          "bars": 9.8
+        },
+        "Jersey Bingman": {
+          "vault": 9.85,
+          "floor": 8.975
+        },
+        "Taylor Archambeau": {
+          "vault": 9.725,
+          "bars": 9.775
+        },
+        "Charlie Behner": {
+          "vault": 9.8,
+          "bars": 9.75,
+          "floor": 9.85
+        },
+        "Lana Mast": {
+          "bars": 9.775
+        },
+        "Heidi Schultz": {
+          "bars": 9.85,
+          "beam": 9.8,
+          "floor": 9.725
+        },
+        "Nastia Rudnitskaya": {
+          "bars": 9.8,
+          "floor": 9.8
+        },
+        "Nene Alvine": {
+          "beam": 9.625
+        },
+        "Dani Fuertez": {
+          "beam": 9.725,
+          "floor": 9.825
+        },
+        "Gabby Riley": {
+          "beam": 9.825
+        }
+      },
+      "Arizona State": {
+        "Safia El Mammann": {
+          "vault": 9.825,
+          "beam": 9.775
+        },
+        "Robyn Wilson": {
+          "vault": 9.775
+        },
+        "Delanie Kelly": {
+          "vault": 9.8,
+          "floor": 9.825
+        },
+        "Lilia Purler": {
+          "vault": 9.8
+        },
+        "Kimberly Smith": {
+          "vault": 9.85,
+          "bars": 9.9,
+          "beam": 9.775,
+          "floor": 9.725
+        },
+        "Halle Gregoire": {
+          "vault": 9.775,
+          "floor": 9.85
+        },
+        "Reese Grolla": {
+          "bars": 9.425,
+          "beam": 9.775
+        },
+        "Adele Ossi": {
+          "bars": 9.575,
+          "beam": 9.7
+        },
+        "Halle Braaflat": {
+          "bars": 9.25,
+          "floor": 9.775
+        },
+        "Isabella Kowan": {
+          "bars": 9.75,
+          "beam": 9.075
+        },
+        "Kylee Bromley": {
+          "bars": 9.825,
+          "floor": 9.875
+        },
+        "Kayla Lee": {
+          "beam": 9.875,
+          "floor": 9.8
+        }
+      }
     },
-    "distanceMiles": 1900,
-    "elevationFt": 634,
-    "city": "Denton, TX",
-    "weather": {
-      "tempHighF": 55.2,
-      "tempLowF": 36.4,
-      "precipIn": 0.0,
-      "description": "Partly cloudy",
-      "emoji": "\u26c5"
+    "competitorLineups": {
+      "TWU": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Alaina Reid",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Jordan Loock",
+            "score": 9.65
+          },
+          {
+            "position": 3,
+            "name": "Juliaunna Baker",
+            "score": 9.75
+          },
+          {
+            "position": 4,
+            "name": "Maddy Murphy",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Kyleigh Ghanbari",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Sophia Isbell",
+            "score": 9.85
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Bailey Bourgeois",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Kami Zarlengo",
+            "score": 9.75
+          },
+          {
+            "position": 3,
+            "name": "Jordan Loock",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Alaina Reid",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Caroline Bowns",
+            "score": 9.75
+          },
+          {
+            "position": 6,
+            "name": "Brooke Ferrari",
+            "score": 9.825
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Sophie Hernandez",
+            "score": 9.225
+          },
+          {
+            "position": 2,
+            "name": "Alaina Reid",
+            "score": 9.85
+          },
+          {
+            "position": 3,
+            "name": "Sofia Steffan",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Kyleigh Ghanbari",
+            "score": 9.65
+          },
+          {
+            "position": 5,
+            "name": "Ruby Goad",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Sophia Isbell",
+            "score": 9.875
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Kami Zarlengo",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Bailey Bourgeois",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Sofia Steffan",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Sophie Hernandez",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Kyleigh Ghanbari",
+            "score": 9.7
+          },
+          {
+            "position": 6,
+            "name": "Sophia Isbell",
+            "score": 9.85
+          }
+        ]
+      },
+      "Kent State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Mya Migliore",
+            "score": 9.725
+          },
+          {
+            "position": 2,
+            "name": "Zoe Rankin",
+            "score": 9.675
+          },
+          {
+            "position": 3,
+            "name": "Sophia Balko",
+            "score": 9.825
+          },
+          {
+            "position": 4,
+            "name": "Jersey Bingman",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Taylor Archambeau",
+            "score": 9.725
+          },
+          {
+            "position": 6,
+            "name": "Charlie Behner",
+            "score": 9.8
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Lana Mast",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Sophia Balko",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Taylor Archambeau",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Heidi Schultz",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Nastia Rudnitskaya",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Charlie Behner",
+            "score": 9.75
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Mya Migliore",
+            "score": 9.35
+          },
+          {
+            "position": 2,
+            "name": "Zoe Rankin",
+            "score": 8.95
+          },
+          {
+            "position": 3,
+            "name": "Nene Alvine",
+            "score": 9.625
+          },
+          {
+            "position": 4,
+            "name": "Dani Fuertez",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Gabby Riley",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Heidi Schultz",
+            "score": 9.8
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Zoe Rankin",
+            "score": 9.625
+          },
+          {
+            "position": 2,
+            "name": "Nastia Rudnitskaya",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Jersey Bingman",
+            "score": 8.975
+          },
+          {
+            "position": 4,
+            "name": "Dani Fuertez",
+            "score": 9.825
+          },
+          {
+            "position": 5,
+            "name": "Heidi Schultz",
+            "score": 9.725
+          },
+          {
+            "position": 6,
+            "name": "Charlie Behner",
+            "score": 9.85
+          }
+        ]
+      },
+      "Arizona State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Safia El Mammann",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Robyn Wilson",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Delanie Kelly",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Lilia Purler",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Kimberly Smith",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Halle Gregoire",
+            "score": 9.775
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Reese Grolla",
+            "score": 9.425
+          },
+          {
+            "position": 2,
+            "name": "Adele Ossi",
+            "score": 9.575
+          },
+          {
+            "position": 3,
+            "name": "Halle Braaflat",
+            "score": 9.25
+          },
+          {
+            "position": 4,
+            "name": "Isabella Kowan",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Kylee Bromley",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Kimberly Smith",
+            "score": 9.9
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Reese Grolla",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Adele Ossi",
+            "score": 9.7
+          },
+          {
+            "position": 3,
+            "name": "Safia El Mammann",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Isabella Kowan",
+            "score": 9.075
+          },
+          {
+            "position": 5,
+            "name": "Kayla Lee",
+            "score": 9.875
+          },
+          {
+            "position": 6,
+            "name": "Kimberly Smith",
+            "score": 9.775
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Kayla Lee",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Halle Braaflat",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Kylee Bromley",
+            "score": 9.875
+          },
+          {
+            "position": 4,
+            "name": "Halle Gregoire",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Delanie Kelly",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Kimberly Smith",
+            "score": 9.725
+          }
+        ]
+      }
     }
   },
   {
@@ -4189,23 +9039,551 @@
         "floor": 48.825
       }
     ],
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.19,
-      "name": "First Quarter",
-      "emoji": "\ud83c\udf13",
-      "fullness": 0.563
+    "competitorAthletes": {
+      "TWU": {
+        "Alaina Reid": {
+          "vault": 9.775,
+          "bars": 9.75,
+          "beam": 9.85
+        },
+        "Jordan Loock": {
+          "vault": 9.65,
+          "bars": 9.8
+        },
+        "Juliaunna Baker": {
+          "vault": 9.75
+        },
+        "Maddy Murphy": {
+          "vault": 9.725
+        },
+        "Kyleigh Ghanbari": {
+          "vault": 9.825,
+          "beam": 9.65,
+          "floor": 9.7
+        },
+        "Sophia Isbell": {
+          "vault": 9.85,
+          "beam": 9.875,
+          "floor": 9.85
+        },
+        "Bailey Bourgeois": {
+          "bars": 9.825,
+          "floor": 9.8
+        },
+        "Kami Zarlengo": {
+          "bars": 9.75,
+          "floor": 9.775
+        },
+        "Caroline Bowns": {
+          "bars": 9.75
+        },
+        "Brooke Ferrari": {
+          "bars": 9.825
+        },
+        "Sophie Hernandez": {
+          "beam": 9.225,
+          "floor": 9.875
+        },
+        "Sofia Steffan": {
+          "beam": 9.8,
+          "floor": 9.775
+        },
+        "Ruby Goad": {
+          "beam": 9.85
+        }
+      },
+      "Kent State": {
+        "Mya Migliore": {
+          "vault": 9.725,
+          "beam": 9.35
+        },
+        "Zoe Rankin": {
+          "vault": 9.675,
+          "beam": 8.95,
+          "floor": 9.625
+        },
+        "Sophia Balko": {
+          "vault": 9.825,
+          "bars": 9.8
+        },
+        "Jersey Bingman": {
+          "vault": 9.85,
+          "floor": 8.975
+        },
+        "Taylor Archambeau": {
+          "vault": 9.725,
+          "bars": 9.775
+        },
+        "Charlie Behner": {
+          "vault": 9.8,
+          "bars": 9.75,
+          "floor": 9.85
+        },
+        "Lana Mast": {
+          "bars": 9.775
+        },
+        "Heidi Schultz": {
+          "bars": 9.85,
+          "beam": 9.8,
+          "floor": 9.725
+        },
+        "Nastia Rudnitskaya": {
+          "bars": 9.8,
+          "floor": 9.8
+        },
+        "Nene Alvine": {
+          "beam": 9.625
+        },
+        "Dani Fuertez": {
+          "beam": 9.725,
+          "floor": 9.825
+        },
+        "Gabby Riley": {
+          "beam": 9.825
+        }
+      },
+      "Arizona State": {
+        "Safia El Mammann": {
+          "vault": 9.825,
+          "beam": 9.775
+        },
+        "Robyn Wilson": {
+          "vault": 9.775
+        },
+        "Delanie Kelly": {
+          "vault": 9.8,
+          "floor": 9.825
+        },
+        "Lilia Purler": {
+          "vault": 9.8
+        },
+        "Kimberly Smith": {
+          "vault": 9.85,
+          "bars": 9.9,
+          "beam": 9.775,
+          "floor": 9.725
+        },
+        "Halle Gregoire": {
+          "vault": 9.775,
+          "floor": 9.85
+        },
+        "Reese Grolla": {
+          "bars": 9.425,
+          "beam": 9.775
+        },
+        "Adele Ossi": {
+          "bars": 9.575,
+          "beam": 9.7
+        },
+        "Halle Braaflat": {
+          "bars": 9.25,
+          "floor": 9.775
+        },
+        "Isabella Kowan": {
+          "bars": 9.75,
+          "beam": 9.075
+        },
+        "Kylee Bromley": {
+          "bars": 9.825,
+          "floor": 9.875
+        },
+        "Kayla Lee": {
+          "beam": 9.875,
+          "floor": 9.8
+        }
+      }
     },
-    "distanceMiles": 1900,
-    "elevationFt": 634,
-    "city": "Denton, TX",
-    "weather": {
-      "tempHighF": 55.2,
-      "tempLowF": 36.4,
-      "precipIn": 0.0,
-      "description": "Partly cloudy",
-      "emoji": "\u26c5"
+    "competitorLineups": {
+      "TWU": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Alaina Reid",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Jordan Loock",
+            "score": 9.65
+          },
+          {
+            "position": 3,
+            "name": "Juliaunna Baker",
+            "score": 9.75
+          },
+          {
+            "position": 4,
+            "name": "Maddy Murphy",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Kyleigh Ghanbari",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Sophia Isbell",
+            "score": 9.85
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Bailey Bourgeois",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Kami Zarlengo",
+            "score": 9.75
+          },
+          {
+            "position": 3,
+            "name": "Jordan Loock",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Alaina Reid",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Caroline Bowns",
+            "score": 9.75
+          },
+          {
+            "position": 6,
+            "name": "Brooke Ferrari",
+            "score": 9.825
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Sophie Hernandez",
+            "score": 9.225
+          },
+          {
+            "position": 2,
+            "name": "Alaina Reid",
+            "score": 9.85
+          },
+          {
+            "position": 3,
+            "name": "Sofia Steffan",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Kyleigh Ghanbari",
+            "score": 9.65
+          },
+          {
+            "position": 5,
+            "name": "Ruby Goad",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Sophia Isbell",
+            "score": 9.875
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Kami Zarlengo",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Bailey Bourgeois",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Sofia Steffan",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Sophie Hernandez",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Kyleigh Ghanbari",
+            "score": 9.7
+          },
+          {
+            "position": 6,
+            "name": "Sophia Isbell",
+            "score": 9.85
+          }
+        ]
+      },
+      "Kent State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Mya Migliore",
+            "score": 9.725
+          },
+          {
+            "position": 2,
+            "name": "Zoe Rankin",
+            "score": 9.675
+          },
+          {
+            "position": 3,
+            "name": "Sophia Balko",
+            "score": 9.825
+          },
+          {
+            "position": 4,
+            "name": "Jersey Bingman",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Taylor Archambeau",
+            "score": 9.725
+          },
+          {
+            "position": 6,
+            "name": "Charlie Behner",
+            "score": 9.8
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Lana Mast",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Sophia Balko",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Taylor Archambeau",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Heidi Schultz",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Nastia Rudnitskaya",
+            "score": 9.8
+          },
+          {
+            "position": 6,
+            "name": "Charlie Behner",
+            "score": 9.75
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Mya Migliore",
+            "score": 9.35
+          },
+          {
+            "position": 2,
+            "name": "Zoe Rankin",
+            "score": 8.95
+          },
+          {
+            "position": 3,
+            "name": "Nene Alvine",
+            "score": 9.625
+          },
+          {
+            "position": 4,
+            "name": "Dani Fuertez",
+            "score": 9.725
+          },
+          {
+            "position": 5,
+            "name": "Gabby Riley",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Heidi Schultz",
+            "score": 9.8
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Zoe Rankin",
+            "score": 9.625
+          },
+          {
+            "position": 2,
+            "name": "Nastia Rudnitskaya",
+            "score": 9.8
+          },
+          {
+            "position": 3,
+            "name": "Jersey Bingman",
+            "score": 8.975
+          },
+          {
+            "position": 4,
+            "name": "Dani Fuertez",
+            "score": 9.825
+          },
+          {
+            "position": 5,
+            "name": "Heidi Schultz",
+            "score": 9.725
+          },
+          {
+            "position": 6,
+            "name": "Charlie Behner",
+            "score": 9.85
+          }
+        ]
+      },
+      "Arizona State": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Safia El Mammann",
+            "score": 9.825
+          },
+          {
+            "position": 2,
+            "name": "Robyn Wilson",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Delanie Kelly",
+            "score": 9.8
+          },
+          {
+            "position": 4,
+            "name": "Lilia Purler",
+            "score": 9.8
+          },
+          {
+            "position": 5,
+            "name": "Kimberly Smith",
+            "score": 9.85
+          },
+          {
+            "position": 6,
+            "name": "Halle Gregoire",
+            "score": 9.775
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Reese Grolla",
+            "score": 9.425
+          },
+          {
+            "position": 2,
+            "name": "Adele Ossi",
+            "score": 9.575
+          },
+          {
+            "position": 3,
+            "name": "Halle Braaflat",
+            "score": 9.25
+          },
+          {
+            "position": 4,
+            "name": "Isabella Kowan",
+            "score": 9.75
+          },
+          {
+            "position": 5,
+            "name": "Kylee Bromley",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Kimberly Smith",
+            "score": 9.9
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Reese Grolla",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Adele Ossi",
+            "score": 9.7
+          },
+          {
+            "position": 3,
+            "name": "Safia El Mammann",
+            "score": 9.775
+          },
+          {
+            "position": 4,
+            "name": "Isabella Kowan",
+            "score": 9.075
+          },
+          {
+            "position": 5,
+            "name": "Kayla Lee",
+            "score": 9.875
+          },
+          {
+            "position": 6,
+            "name": "Kimberly Smith",
+            "score": 9.775
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Kayla Lee",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Halle Braaflat",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Kylee Bromley",
+            "score": 9.875
+          },
+          {
+            "position": 4,
+            "name": "Halle Gregoire",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Delanie Kelly",
+            "score": 9.825
+          },
+          {
+            "position": 6,
+            "name": "Kimberly Smith",
+            "score": 9.725
+          }
+        ]
+      }
     }
   },
   {
@@ -4470,25 +9848,193 @@
         }
       ]
     },
-    "attendance": "3,617",
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.36,
-      "name": "Waxing Gibbous",
-      "emoji": "\ud83c\udf14",
-      "fullness": 0.904
+    "competitorAthletes": {
+      "Stanford": {
+        "Levi Jung-Ruivivar": {
+          "vault": 9.725,
+          "bars": 9.925,
+          "beam": 9.925,
+          "floor": 9.9
+        },
+        "Jaime Dugan": {
+          "vault": 9.775
+        },
+        "Summer Gronski": {
+          "vault": 9.925
+        },
+        "Ui Soma": {
+          "vault": 9.95,
+          "bars": 9.95
+        },
+        "Anna Roberts": {
+          "vault": 10.0,
+          "bars": 9.975,
+          "beam": 9.95,
+          "floor": 9.95
+        },
+        "Taralyn Nguyen": {
+          "vault": 9.95,
+          "floor": 9.925
+        },
+        "Ava Sorrento": {
+          "bars": 9.9
+        },
+        "Sienna Robinson": {
+          "bars": 9.85,
+          "beam": 8.8,
+          "floor": 9.875
+        },
+        "Ana Barbosu": {
+          "bars": 9.725
+        },
+        "Claire Dean": {
+          "beam": 9.8,
+          "floor": 9.775
+        },
+        "Temple Landry": {
+          "beam": 9.875
+        },
+        "Jennifer Williams": {
+          "beam": 9.85
+        },
+        "Alana Walker": {
+          "floor": 9.9
+        }
+      }
     },
-    "distanceMiles": 0,
-    "elevationFt": 230,
-    "city": "Corvallis, OR",
-    "weather": {
-      "tempHighF": 53.6,
-      "tempLowF": 30.4,
-      "precipIn": 0.0,
-      "description": "Partly cloudy",
-      "emoji": "\u26c5"
-    }
+    "competitorLineups": {
+      "Stanford": {
+        "vault": [
+          {
+            "position": 1,
+            "name": "Levi Jung-Ruivivar",
+            "score": 9.725
+          },
+          {
+            "position": 2,
+            "name": "Jaime Dugan",
+            "score": 9.775
+          },
+          {
+            "position": 3,
+            "name": "Summer Gronski",
+            "score": 9.925
+          },
+          {
+            "position": 4,
+            "name": "Ui Soma",
+            "score": 9.95
+          },
+          {
+            "position": 5,
+            "name": "Anna Roberts",
+            "score": 10.0
+          },
+          {
+            "position": 6,
+            "name": "Taralyn Nguyen",
+            "score": 9.95
+          }
+        ],
+        "bars": [
+          {
+            "position": 1,
+            "name": "Levi Jung-Ruivivar",
+            "score": 9.925
+          },
+          {
+            "position": 2,
+            "name": "Ava Sorrento",
+            "score": 9.9
+          },
+          {
+            "position": 3,
+            "name": "Sienna Robinson",
+            "score": 9.85
+          },
+          {
+            "position": 4,
+            "name": "Anna Roberts",
+            "score": 9.975
+          },
+          {
+            "position": 5,
+            "name": "Ana Barbosu",
+            "score": 9.725
+          },
+          {
+            "position": 6,
+            "name": "Ui Soma",
+            "score": 9.95
+          }
+        ],
+        "beam": [
+          {
+            "position": 1,
+            "name": "Claire Dean",
+            "score": 9.8
+          },
+          {
+            "position": 2,
+            "name": "Temple Landry",
+            "score": 9.875
+          },
+          {
+            "position": 3,
+            "name": "Sienna Robinson",
+            "score": 8.8
+          },
+          {
+            "position": 4,
+            "name": "Jennifer Williams",
+            "score": 9.85
+          },
+          {
+            "position": 5,
+            "name": "Anna Roberts",
+            "score": 9.95
+          },
+          {
+            "position": 6,
+            "name": "Levi Jung-Ruivivar",
+            "score": 9.925
+          }
+        ],
+        "floor": [
+          {
+            "position": 1,
+            "name": "Claire Dean",
+            "score": 9.775
+          },
+          {
+            "position": 2,
+            "name": "Levi Jung-Ruivivar",
+            "score": 9.9
+          },
+          {
+            "position": 3,
+            "name": "Alana Walker",
+            "score": 9.9
+          },
+          {
+            "position": 4,
+            "name": "Sienna Robinson",
+            "score": 9.875
+          },
+          {
+            "position": 5,
+            "name": "Taralyn Nguyen",
+            "score": 9.925
+          },
+          {
+            "position": 6,
+            "name": "Anna Roberts",
+            "score": 9.95
+          }
+        ]
+      }
+    },
+    "attendance": "3,617"
   },
   {
     "id": "utah-state-mar-6",
@@ -4620,24 +10166,8 @@
         }
       }
     ],
-    "imageBasedPdf": true,
-    "status": "final",
-    "lastRefreshed": "2026-03-08T17:41:16Z",
-    "moonPhase": {
-      "phase": 0.597,
-      "name": "Waning Gibbous",
-      "emoji": "\ud83c\udf16",
-      "fullness": 0.954
-    },
-    "distanceMiles": 750,
-    "elevationFt": 4780,
-    "city": "Logan, UT",
-    "weather": {
-      "tempHighF": 40.8,
-      "tempLowF": 26.3,
-      "precipIn": 1.3,
-      "description": "Snow",
-      "emoji": "\u2744\ufe0f"
-    }
+    "competitorAthletes": {},
+    "competitorLineups": {},
+    "imageBasedPdf": true
   }
 ]
