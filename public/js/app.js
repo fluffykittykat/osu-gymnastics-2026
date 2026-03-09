@@ -1575,9 +1575,9 @@
         rows = lineup.map(entry => {
           const isTop = entry.score === topScore;
           return `
-            <tr>
+            <tr class="lineup-row">
               <td style="color:#aaa;font-size:0.75rem;font-family:monospace;width:1.5rem;">${entry.position}</td>
-              <td><span class="clickable-name" data-gymnast="${entry.name}">${entry.name}</span></td>
+              <td><span class="clickable-name lineup-gymnast" data-gymnast="${entry.name}" data-event="${event}" data-meet="${meet.id}">${entry.name}</span></td>
               <td class="score-cell${isTop ? ' score-top' : ''}">${entry.score.toFixed(3)}</td>
             </tr>`;
         }).join('');
@@ -1586,9 +1586,9 @@
         const eventAthletes = meet.athletes
           .filter(a => a.scores[event] !== undefined);
         rows = eventAthletes.map((a, i) => `
-          <tr>
+          <tr class="lineup-row">
             <td>${i + 1}</td>
-            <td><span class="clickable-name" data-gymnast="${a.name}">${a.name}</span></td>
+            <td><span class="clickable-name lineup-gymnast" data-gymnast="${a.name}" data-event="${event}" data-meet="${meet.id}">${a.name}</span></td>
             <td class="score-cell">${a.scores[event].toFixed(3)}</td>
           </tr>`).join('');
       }
@@ -1664,6 +1664,7 @@
           <div class="team-score"><div class="team-name">Opponent</div><div class="score" style="font-size:2rem;">${meet.opponentScore.toFixed(3)}</div></div>
         </div>
       </div>
+      ${(()=>{try{return renderMeetSpotlight(meet);}catch(e){return '';}})()}
       ${teamsTable}
       ${meet.recap ? (() => {
         const paragraphs = meet.recap.split(/(\r?\n[\s\u00a0]*\r?\n|\r\n\u00a0\s*\r\n)/).filter(p => p.trim() && !/^\s*$/.test(p));
@@ -1691,6 +1692,220 @@
     if (toggle) {
       toggle.addEventListener('click', toggleAutoRefresh);
     }
+  }
+
+  // ===== Performance Panel + Spotlight =====
+
+  function getGymnastEventHistory(name, event) {
+    const history = [];
+    meets.forEach(m => {
+      if (!m.athletes) return;
+      const athlete = m.athletes.find(a => a.name === name);
+      if (athlete && athlete.scores[event] !== undefined) {
+        history.push({ date: m.date, score: athlete.scores[event], meetId: m.id });
+      }
+    });
+    return history.sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  function buildSparkline(scores) {
+    if (!scores || scores.length === 0) return '';
+    const min = Math.min(...scores);
+    const max = Math.max(...scores);
+    const range = max - min || 0.1;
+    const w = 8, gap = 2, h = 28;
+    const bars = scores.map((s, i) => {
+      const barH = Math.max(3, Math.round(((s - min) / range) * (h - 6)) + 6);
+      const x = i * (w + gap);
+      const y = h - barH;
+      return `<rect x="${x}" y="${y}" width="${w}" height="${barH}" rx="1" fill="var(--orange)" opacity="0.75"><title>${s.toFixed(3)}</title></rect>`;
+    });
+    const totalW = scores.length * (w + gap) - gap;
+    return `<svg width="${totalW}" height="${h}" style="vertical-align:middle;display:inline-block">${bars.join('')}</svg>`;
+  }
+
+  function buildPerformancePanel(name, event, meetId) {
+    const meet = meets.find(m => m.id === meetId);
+    if (!meet) return '';
+
+    // Today's score
+    let todayScore = null;
+    if (meet.lineups && meet.lineups[event]) {
+      const entry = meet.lineups[event].find(e => e.name === name);
+      if (entry) todayScore = entry.score;
+    }
+    if (todayScore === null && meet.athletes) {
+      const athlete = meet.athletes.find(a => a.name === name);
+      if (athlete && athlete.scores[event] !== undefined) todayScore = athlete.scores[event];
+    }
+    if (todayScore === null) return '';
+
+    // Season history up to (and including) this meet
+    const allHistory = getGymnastEventHistory(name, event);
+    const history = allHistory.filter(h => h.date <= meet.date);
+    const seasonScores = history.map(h => h.score);
+    const seasonAvg = seasonScores.length > 0 ? seasonScores.reduce((a, b) => a + b, 0) / seasonScores.length : null;
+    const delta = seasonAvg !== null ? todayScore - seasonAvg : null;
+
+    // Rank among competitors on this event
+    const competitors = [];
+    if (meet.lineups && meet.lineups[event] && meet.lineups[event].length > 0) {
+      meet.lineups[event].forEach(e => competitors.push({ name: e.name, score: e.score }));
+    } else if (meet.athletes) {
+      meet.athletes.filter(a => a.scores[event] !== undefined).forEach(a => {
+        competitors.push({ name: a.name, score: a.scores[event] });
+      });
+    }
+    competitors.sort((a, b) => b.score - a.score);
+    const rank = competitors.findIndex(c => c.name === name) + 1;
+    const total = competitors.length;
+    let rankText = '';
+    if (rank > 0 && total > 0) {
+      const sfx = rank === 1 ? 'st' : rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th';
+      rankText = `${rank}${sfx} of ${total} competing`;
+    }
+
+    // Last 5 scores sparkline
+    const last5 = history.slice(-5).map(h => h.score);
+    const sparkSvg = buildSparkline(last5);
+
+    const deltaClass = delta !== null ? (delta >= 0 ? 'delta-pos' : 'delta-neg') : '';
+    const deltaText = delta !== null ? `${delta >= 0 ? '+' : ''}${delta.toFixed(3)}` : '—';
+    const avgText = seasonAvg !== null ? seasonAvg.toFixed(3) : '—';
+
+    return `
+      <tr class="perf-panel-row">
+        <td colspan="3" style="padding:0;border:none;">
+          <div class="perf-panel">
+            <div class="perf-panel-top">
+              <div class="perf-panel-delta ${deltaClass}">${deltaText}</div>
+              <div class="perf-panel-stats">
+                <span class="perf-stat">Season avg: <strong>${avgText}</strong></span>
+                <span class="perf-stat">Today: <strong>${todayScore.toFixed(3)}</strong></span>
+                ${rankText ? `<span class="perf-stat">Rank: <strong>${rankText}</strong></span>` : ''}
+              </div>
+            </div>
+            ${sparkSvg ? `<div class="perf-sparkline"><span class="perf-spark-label">Last ${last5.length}</span>${sparkSvg}</div>` : ''}
+            <div class="perf-panel-footer">
+              <span class="clickable-name" data-gymnast="${name}" style="cursor:pointer;color:var(--orange);font-size:0.8rem;">Full profile →</span>
+            </div>
+          </div>
+        </td>
+      </tr>`;
+  }
+
+  function togglePerformancePanel(nameEl) {
+    const name = nameEl.dataset.gymnast;
+    const event = nameEl.dataset.event;
+    const meetId = nameEl.dataset.meet;
+    const row = nameEl.closest('tr');
+    if (!row) return;
+
+    // Toggle off if already open
+    const next = row.nextElementSibling;
+    if (next && next.classList.contains('perf-panel-row')) {
+      next.remove();
+      return;
+    }
+
+    // Close any other open panels
+    document.querySelectorAll('.perf-panel-row').forEach(p => p.remove());
+
+    const panelHtml = buildPerformancePanel(name, event, meetId);
+    if (!panelHtml) return;
+    row.insertAdjacentHTML('afterend', panelHtml);
+  }
+
+  function renderMeetSpotlight(meet) {
+    if (!meet.athletes || meet.athletes.length === 0) return '';
+    if (meet.status === 'upcoming') return '';
+
+    const callouts = [];
+    const allEvents = ['vault', 'bars', 'beam', 'floor'];
+    const seen = {};
+
+    meet.athletes.forEach(athlete => {
+      allEvents.forEach(ev => {
+        if (callouts.length >= 3) return;
+        const todayScore = athlete.scores[ev];
+        if (todayScore === undefined) return;
+
+        const allHistory = getGymnastEventHistory(athlete.name, ev);
+        const prevHistory = allHistory.filter(h => h.date < meet.date);
+        if (prevHistory.length < 2) return;
+
+        const prevScores = prevHistory.map(h => h.score);
+        const seasonMax = Math.max(...prevScores);
+        const seasonMin = Math.min(...prevScores);
+        const seasonAvg = prevScores.reduce((a, b) => a + b, 0) / prevScores.length;
+
+        // Best day of the season
+        if (todayScore > seasonMax && !seen[athlete.name + '_best']) {
+          seen[athlete.name + '_best'] = true;
+          callouts.push({ emoji: '🔥', text: `${athlete.name} — season-high ${todayScore.toFixed(3)} on ${EVENT_NAMES[ev]}` });
+        }
+        // Off day (season low, gap > 0.1 from avg)
+        if (callouts.length < 3 && todayScore < seasonMin && (seasonAvg - todayScore) > 0.1 && !seen[athlete.name + '_off']) {
+          seen[athlete.name + '_off'] = true;
+          callouts.push({ emoji: '📉', text: `${athlete.name} — off day on ${EVENT_NAMES[ev]} (${todayScore.toFixed(3)} vs ${seasonAvg.toFixed(3)} avg)` });
+        }
+        // Consistent (within 0.025 of season avg)
+        if (callouts.length < 3 && Math.abs(todayScore - seasonAvg) <= 0.025 && !seen[athlete.name + '_consistent']) {
+          seen[athlete.name + '_consistent'] = true;
+          callouts.push({ emoji: '🎯', text: `${athlete.name} — on target: ${todayScore.toFixed(3)} on ${EVENT_NAMES[ev]} (avg ${seasonAvg.toFixed(3)})` });
+        }
+        // Comeback (below avg last personal meet, above avg this meet)
+        if (callouts.length < 3 && !seen[athlete.name + '_comeback'] && prevHistory.length >= 1) {
+          const lastPrev = prevHistory[prevHistory.length - 1];
+          const prevSeasonBefore = prevHistory.slice(0, -1);
+          if (prevSeasonBefore.length >= 1) {
+            const prevAvg = prevSeasonBefore.reduce((a, h) => a + h.score, 0) / prevSeasonBefore.length;
+            if (lastPrev.score < prevAvg && todayScore > seasonAvg) {
+              seen[athlete.name + '_comeback'] = true;
+              callouts.push({ emoji: '⚡', text: `${athlete.name} — bounce-back on ${EVENT_NAMES[ev]} after below-avg last outing` });
+            }
+          }
+        }
+      });
+    });
+
+    // Clutch: top scorer in a close event (gap ≤ 0.1)
+    if (callouts.length < 3) {
+      allEvents.forEach(ev => {
+        if (callouts.length >= 3) return;
+        const evData = meet.events && meet.events[ev];
+        if (!evData) return;
+        const gap = Math.abs(evData.osu - evData.opponent);
+        if (gap > 0.1) return;
+        let topEntry = null;
+        if (meet.lineups && meet.lineups[ev] && meet.lineups[ev].length > 0) {
+          topEntry = meet.lineups[ev].reduce((best, e) => (!best || e.score > best.score) ? e : best, null);
+        } else {
+          const ev_athletes = meet.athletes.filter(a => a.scores[ev] !== undefined);
+          if (ev_athletes.length > 0) {
+            const top = ev_athletes.reduce((best, a) => (!best || a.scores[ev] > best.scores[ev]) ? a : best, null);
+            if (top) topEntry = { name: top.name, score: top.scores[ev] };
+          }
+        }
+        if (topEntry && !seen[topEntry.name + '_clutch']) {
+          seen[topEntry.name + '_clutch'] = true;
+          callouts.push({ emoji: '🏅', text: `${topEntry.name} — clutch ${topEntry.score.toFixed(3)} in tight ${EVENT_NAMES[ev]} (margin ${gap.toFixed(3)})` });
+        }
+      });
+    }
+
+    if (callouts.length === 0) return '';
+
+    const cards = callouts.slice(0, 3).map(c => `
+      <div class="spotlight-card">
+        <span class="spotlight-emoji">${c.emoji}</span>
+        <span class="spotlight-text">${c.text}</span>
+      </div>`).join('');
+
+    return `
+      <div class="spotlight-section">
+        <div class="spotlight-grid">${cards}</div>
+      </div>`;
   }
 
   // ===== Gymnasts =====
@@ -3595,6 +3810,10 @@
       const nameEl = e.target.closest('.clickable-name');
       if (nameEl) {
         e.preventDefault();
+        if (nameEl.classList.contains('lineup-gymnast')) {
+          togglePerformancePanel(nameEl);
+          return;
+        }
         showView('gymnasts');
         showGymnastProfile(nameEl.dataset.gymnast);
         return;

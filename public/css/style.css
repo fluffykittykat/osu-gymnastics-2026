@@ -2298,3 +2298,83 @@ main {
 .ctx-favorable { background: rgba(46,204,113,0.12); border-color: #2ecc71; color: #2ecc71; }
 .ctx-unfavorable { background: rgba(231,76,60,0.12); border-color: #e74c3c; color: #e74c3c; }
 .ctx-neutral { background: rgba(255,255,255,0.05); color: #666; }
+
+/* ===== Performance Panel ===== */
+.lineup-row td { cursor: pointer; }
+.lineup-row:hover td { background: rgba(255,107,53,0.06); }
+.perf-panel-row td { background: var(--card) !important; }
+.perf-panel {
+  background: rgba(255,107,53,0.07);
+  border-left: 3px solid var(--orange);
+  border-radius: 0 0 6px 6px;
+  padding: 10px 12px 8px;
+  margin: 0;
+}
+.perf-panel-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.perf-panel-delta {
+  font-family: Oswald, sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.delta-pos { color: #2ecc71; }
+.delta-neg { color: #e74c3c; }
+.perf-panel-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.perf-stat {
+  font-size: 0.78rem;
+  color: #ccc;
+}
+.perf-stat strong { color: #fff; }
+.perf-sparkline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.perf-spark-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.perf-panel-footer {
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* ===== Meet Spotlight ===== */
+.spotlight-section { margin-bottom: 1rem; }
+.spotlight-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0;
+}
+.spotlight-card {
+  background: var(--card);
+  border-left: 3px solid var(--orange);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 220px;
+}
+.spotlight-emoji { font-size: 1rem; flex-shrink: 0; }
+.spotlight-text { color: #ddd; line-height: 1.3; }
+@media (max-width: 480px) {
+  .spotlight-card { min-width: 0; flex: 1 1 100%; }
+  .perf-panel-delta { font-size: 1.3rem; }
+}
