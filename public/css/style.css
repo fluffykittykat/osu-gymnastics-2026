@@ -2378,3 +2378,20 @@ main {
   .spotlight-card { min-width: 0; flex: 1 1 100%; }
   .perf-panel-delta { font-size: 1.3rem; }
 }
+
+/* Athlete hero card responsive */
+@media (max-width: 600px) {
+  .athlete-hero-card {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center;
+  }
+  .athlete-hero-card > div:first-child {
+    width: 180px !important;
+    height: 240px !important;
+  }
+  .athlete-hero-card > div:last-child {
+    align-items: center;
+    min-height: auto !important;
+  }
+}

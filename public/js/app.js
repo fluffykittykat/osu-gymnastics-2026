@@ -2108,43 +2108,59 @@
       return `<tr><td>${formatDate(m.date)}</td><td><span class="clickable-meet" data-meet-id="${m.meetId}">${m.opponent}</span>${haBadge}</td>${cells}${aa}</tr>`;
     }).join('');
 
-    // Gymnast banner photo — large hero style
+    // Athlete profile hero card — portrait photo + info
     const gymnPhoto = photos[p.name];
-    const gymnBannerHtml = gymnPhoto ? `
-      <div class="gymnast-photo-banner" style="position:relative;width:100%;height:260px;overflow:hidden;border-radius:12px 12px 0 0;margin-bottom:0;">
-        <img src="${gymnPhoto}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;object-position:center top;" loading="lazy">
-        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(13,13,13,1) 0%,rgba(13,13,13,0.3) 50%,transparent 80%)"></div>
-        <div style="position:absolute;bottom:1rem;left:1rem;right:1rem;">
-          <div style="font-family:Oswald;font-size:1.8rem;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.9);line-height:1.1">${p.name}</div>
-          ${(()=>{
-            const pb = bios[p.name]||{};
-            const chips = [];
-            if(pb.position) chips.push(`<span style="background:var(--orange-dark);color:#fff;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.7rem;font-weight:700">${pb.position}</span>`);
-            if(pb.classYear) chips.push(`<span style="background:rgba(255,255,255,0.15);color:#ddd;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.7rem">${pb.classYear}</span>`);
-            if(pb.hometown) chips.push(`<span style="color:rgba(255,255,255,0.7);font-size:0.7rem">📍 ${pb.hometown}</span>`);
-            return chips.length ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.4rem;align-items:center">${chips.join('')}</div>` : '';
-          })()}
-        </div>
+    const pb = bios[p.name]||{};
+
+    // Build badge pills
+    const heroPills = [];
+    if(pb.position) heroPills.push(`<span style="background:#D73F09;color:#fff;padding:0.2rem 0.6rem;border-radius:4px;font-size:0.75rem;font-weight:700;letter-spacing:0.03em">${pb.position}</span>`);
+    if(pb.classYear) heroPills.push(`<span style="background:rgba(255,255,255,0.12);color:#ccc;padding:0.2rem 0.6rem;border-radius:4px;font-size:0.75rem;font-weight:600">${pb.classYear}</span>`);
+
+    // Build info rows
+    const heroInfoRows = [];
+    if(pb.hometown) heroInfoRows.push(`<div style="color:rgba(255,255,255,0.7);font-size:0.85rem">📍 ${pb.hometown}</div>`);
+    if(pb.height) heroInfoRows.push(`<div style="color:rgba(255,255,255,0.7);font-size:0.85rem">📏 ${pb.height}</div>`);
+    if(pb.major) heroInfoRows.push(`<div style="color:rgba(255,255,255,0.7);font-size:0.85rem">🎓 ${pb.major}</div>`);
+    if(pb.highSchool) heroInfoRows.push(`<div style="color:rgba(255,255,255,0.7);font-size:0.85rem">🏫 ${pb.highSchool}</div>`);
+
+    // Best scores mini stat boxes
+    const heroStatEvents = ['vault','bars','beam','floor'].filter(e => p.bests[e] !== undefined);
+    const heroStatsHtml = heroStatEvents.length ? `
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem">
+        ${heroStatEvents.map(e => `
+          <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:0.35rem 0.6rem;text-align:center;min-width:60px">
+            <div style="font-size:0.6rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.05em;font-weight:600">${{vault:'VT',bars:'UB',beam:'BB',floor:'FX'}[e]}</div>
+            <div style="font-size:0.95rem;font-weight:700;color:#D73F09;font-family:Oswald">${p.bests[e].toFixed(3)}</div>
+          </div>`).join('')}
+        ${p.bests.aa !== undefined ? `
+          <div style="background:rgba(215,63,9,0.15);border:1px solid rgba(215,63,9,0.3);border-radius:6px;padding:0.35rem 0.6rem;text-align:center;min-width:60px">
+            <div style="font-size:0.6rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.05em;font-weight:600">AA</div>
+            <div style="font-size:0.95rem;font-weight:700;color:#fff;font-family:Oswald">${p.bests.aa.toFixed(3)}</div>
+          </div>` : ''}
       </div>` : '';
+
+    const heroCardHtml = `
+      <div class="athlete-hero-card" style="display:flex;gap:1.5rem;padding:1.25rem;background:linear-gradient(135deg,#1a1a1a 0%,#0d0d0d 100%);border-radius:12px;border:1px solid rgba(255,255,255,0.08);align-items:flex-start">
+        ${gymnPhoto ? `
+        <div style="flex-shrink:0;width:200px;height:280px;border-radius:10px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.08)">
+          <img src="${gymnPhoto}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;object-position:center;" loading="lazy">
+        </div>` : ''}
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;min-height:${gymnPhoto ? '280px' : 'auto'};padding:0.25rem 0">
+          <div style="font-family:Oswald;font-size:2rem;font-weight:700;color:#fff;line-height:1.1;letter-spacing:0.01em">${p.name}</div>
+          <div style="color:rgba(255,255,255,0.45);font-size:0.8rem;margin-top:0.3rem;font-weight:500;text-transform:uppercase;letter-spacing:0.08em">Oregon State Gymnastics</div>
+          ${heroPills.length ? `<div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.6rem;align-items:center">${heroPills.join('')}</div>` : ''}
+          ${heroInfoRows.length ? `<div style="display:flex;flex-direction:column;gap:0.25rem;margin-top:0.75rem">${heroInfoRows.join('')}</div>` : ''}
+          <div style="color:var(--text-muted);font-size:0.8rem;margin-top:0.6rem;border-top:1px solid rgba(255,255,255,0.08);padding-top:0.6rem">${p.totalMeets} competition days</div>
+          ${heroStatsHtml}
+        </div>
+      </div>`;
 
     detail.innerHTML = `
       <div class="gymnast-profile">
         <button class="back-btn" id="backToGymnasts">← Back to Gymnasts</button>
-        ${gymnBannerHtml}
-        <div class="profile-header" style="${gymnPhoto ? 'border-radius:0 0 12px 12px;margin-top:0;padding-top:0.75rem' : ''}">
-          ${!gymnPhoto ? `<div class="profile-name">${p.name}</div>` : ''}
-          <div style="color:var(--text-muted);margin-top:0.25rem;">${p.totalMeets} competition days • Oregon State</div>
-          ${(()=>{
-            const pb = bios[p.name]||{};
-            const pills = [];
-            if(!gymnPhoto && pb.position) pills.push(`<span class="bio-pill bio-pill-pos">${pb.position}</span>`);
-            if(!gymnPhoto && pb.classYear) pills.push(`<span class="bio-pill">${pb.classYear}</span>`);
-            if(!gymnPhoto && pb.hometown) pills.push(`<span class="bio-pill">📍 ${pb.hometown}</span>`);
-            if(pb.height) pills.push(`<span class="bio-pill">📏 ${pb.height}</span>`);
-            if(pb.major) pills.push(`<span class="bio-pill">🎓 ${pb.major}</span>`);
-            if(pb.highSchool) pills.push(`<span class="bio-pill">🏫 ${pb.highSchool}</span>`);
-            return pills.length ? `<div class="bio-pills">${pills.join('')}</div>` : '';
-          })()}
+        ${heroCardHtml}
+        <div class="profile-header" style="margin-top:0.75rem">
           <div class="profile-stats-grid">${statsGrid}</div>
         </div>
         ${sparklines}
