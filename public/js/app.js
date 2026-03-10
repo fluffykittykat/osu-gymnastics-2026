@@ -2112,7 +2112,7 @@
     const gymnPhoto = photos[p.name];
     const gymnBannerHtml = gymnPhoto ? `
       <div class="gymnast-photo-banner" style="position:relative;width:100%;height:260px;overflow:hidden;border-radius:12px 12px 0 0;margin-bottom:0;">
-        <img src="${gymnPhoto}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;object-position:center center;" loading="lazy">
+        <img src="${gymnPhoto}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;object-position:center top;" loading="lazy">
         <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(13,13,13,1) 0%,rgba(13,13,13,0.3) 50%,transparent 80%)"></div>
         <div style="position:absolute;bottom:1rem;left:1rem;right:1rem;">
           <div style="font-family:Oswald;font-size:1.8rem;font-weight:700;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.9);line-height:1.1">${p.name}</div>
