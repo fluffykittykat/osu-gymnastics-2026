@@ -45,6 +45,22 @@
     return meets.some(m => m.status === 'in_progress');
   }
 
+  // ===== Shared Stats Helpers =====
+  function mean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
+  function stddev(arr) {
+    if (arr.length < 2) return 0;
+    const m = mean(arr);
+    return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1));
+  }
+  function pearson(xs, ys) {
+    const n = xs.length; if (n < 3) return null;
+    const mx = mean(xs), my = mean(ys);
+    const num = xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
+    const den = Math.sqrt(xs.reduce((s,x)=>s+Math.pow(x-mx,2),0)*ys.reduce((s,y)=>s+Math.pow(y-my,2),0));
+    return den === 0 ? null : num/den;
+  }
+  function fmt(n, dp=3) { return n!=null&&!isNaN(n) ? n.toFixed(dp) : '—'; }
+
   // ===== Toast Notifications =====
   function showToast(message, type = 'default', duration = 4000) {
     const container = document.getElementById('toastContainer');
@@ -479,8 +495,6 @@
   // ===== Hot Takes Generator =====
   function renderHotTakes() {
     const takes = [];
-    function mean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
-    function fmt(n, dp=3) { return n!=null ? n.toFixed(dp) : '—'; }
 
     // Unique competition days
     const compDays = [];
@@ -1129,7 +1143,7 @@
     const summaryColor = osuRank === 1 ? '#4caf50' : osuRank === 2 ? '#ff9800' : '#ef5350';
 
     content.innerHTML = `
-      <button class="back-btn" onclick="showView('${_meetDetailOrigin}')">← Back</button>
+      <button class="back-btn" id="backFromQuadOverview">← Back</button>
       ${quadNav}
       ${heroHtml}
 
@@ -1172,6 +1186,8 @@
         </div>
       </div>
     `;
+
+    document.getElementById('backFromQuadOverview').addEventListener('click', () => showView(_meetDetailOrigin));
   }
 
   // ===== Meet Detail =====
@@ -2029,7 +2045,7 @@
         bio.hometown ? `<span style="background:#222;color:#aaa;padding:0.2rem 0.7rem;border-radius:999px;font-size:0.75rem">📍 ${bio.hometown}</span>` : '',
       ].filter(Boolean).join(' ');
       detail.innerHTML = `
-        <button class="back-btn" onclick="showView('gymnasts')">← Back to Roster</button>
+        <button class="back-btn" id="backFromBioOnly">← Back to Roster</button>
         <div class="gymnast-profile-header">
           ${photoHtml}
           <div>
@@ -2040,6 +2056,10 @@
             ${bio.aspiration ? `<div style="margin-top:0.5rem;color:#bbb;font-style:italic;font-size:0.85rem">"${bio.aspiration}"</div>` : ''}
           </div>
         </div>`;
+      document.getElementById('backFromBioOnly').addEventListener('click', () => {
+        detail.style.display = 'none';
+        document.getElementById('gymnastCards').style.display = 'grid';
+      });
       return;
     }
 
@@ -2613,12 +2633,6 @@
   // ===== Insights =====
   function renderInsights() {
     // --- helpers ---
-    function mean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : 0; }
-    function stddev(arr) {
-      if (arr.length < 2) return 0;
-      const m = mean(arr);
-      return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1)); // sample stddev (Bessel's correction)
-    }
     function linReg(pts) {
       const n = pts.length;
       if (n < 2) return {slope:0};
@@ -2626,14 +2640,6 @@
       const sxy=pts.reduce((s,p)=>s+p.x*p.y,0), sx2=pts.reduce((s,p)=>s+p.x*p.x,0);
       return {slope:(n*sxy-sx*sy)/(n*sx2-sx*sx)||0};
     }
-    function pearson(xs,ys) {
-      const n=xs.length; if(n<3) return null;
-      const mx=mean(xs),my=mean(ys);
-      const num=xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
-      const den=Math.sqrt(xs.reduce((s,x)=>s+(x-mx)**2,0)*ys.reduce((s,y)=>s+(y-my)**2,0));
-      return den===0?null:num/den;
-    }
-    function fmt(n) { return typeof n==='number' ? n.toFixed(3) : '—'; }
     function fmtDiff(n) { if (typeof n !== 'number' || isNaN(n)) return '—'; return (n>=0?'+':'')+n.toFixed(3); }
 
     const EVS = ['vault','bars','beam','floor'];
@@ -3071,15 +3077,6 @@
 
   // ===== Deep Cuts: Factor × Event Correlation Matrix =====
   function renderDeepCuts() {
-    function mean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
-    function pearson(xs, ys) {
-      const n = xs.length; if (n < 3) return null;
-      const mx = mean(xs), my = mean(ys);
-      const num = xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
-      const den = Math.sqrt(xs.reduce((s,x)=>s+Math.pow(x-mx,2),0)*ys.reduce((s,y)=>s+Math.pow(y-my,2),0));
-      return den === 0 ? null : num/den;
-    }
-    function fmt(n, dp=3) { return n!=null&&!isNaN(n) ? n.toFixed(dp) : '—'; }
     function fmtR(r) { return r==null ? '—' : (r>=0?'+':'')+r.toFixed(2); }
     function rColor(r) {
       if (r == null) return '#333';
@@ -3426,19 +3423,10 @@
 // ===== Season Wild Stats =====
   function renderSeasonWildStats() {
     // ── Shared stats helpers ────────────────────────────────────────────────
-    function mean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
     function sd(arr) {
       if(arr.length < 2) return null;
       const m = mean(arr);
       return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1));
-    }
-    function pearson(xs, ys) {
-      const n = xs.length;
-      if(n < 3) return null;
-      const mx = mean(xs), my = mean(ys);
-      const num = xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
-      const den = Math.sqrt(xs.reduce((s,x)=>s+Math.pow(x-mx,2),0)*ys.reduce((s,y)=>s+Math.pow(y-my,2),0));
-      return den===0 ? null : num/den;
     }
     function corrStrength(r) {
       const a = Math.abs(r);

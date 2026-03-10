@@ -12,6 +12,7 @@ import re
 import hashlib
 import urllib.request
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 
 # Import the existing parser functions
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -24,10 +25,8 @@ CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data
 
 
 def get_today_pt():
-    """Get today's date in Pacific Time (UTC-8 or UTC-7 during DST)."""
-    # Approximate PT as UTC-8 (PST); close enough for date comparison
-    pt_offset = timedelta(hours=-8)
-    return (datetime.now(timezone.utc) + pt_offset).strftime("%Y-%m-%d")
+    """Get today's date in Pacific Time (handles PST/PDT automatically)."""
+    return datetime.now(ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d")
 
 
 def get_cache_key(url):
@@ -134,7 +133,15 @@ def refresh():
         if should_refetch_pdf(info, existing_meets_map):
             pdf_path = os.path.join(DOWNLOAD_DIR, f"{info['id']}.pdf")
             try:
-                urllib.request.urlretrieve(info["url"], pdf_path)
+                for attempt in range(3):
+                    try:
+                        urllib.request.urlretrieve(info["url"], pdf_path)
+                        break
+                    except Exception:
+                        if attempt == 2:
+                            raise
+                        import time
+                        time.sleep(2 * (attempt + 1))
                 pdfs_refetched += 1
                 # Cache it
                 cache_key = get_cache_key(info["url"])
@@ -142,16 +149,21 @@ def refresh():
                 if not os.path.exists(cache_path):
                     import shutil
                     shutil.copy2(pdf_path, cache_path)
-            except Exception:
-                pass  # Use existing PDF if download fails
+            except Exception as e:
+                print(f"  WARNING: Failed to re-download {info['id']}: {e}", file=sys.stderr)
 
         # Parse the meet
         try:
             data = parse_meet_pdf(info)
-        except Exception:
+        except Exception as e:
+            print(f"  ERROR: Failed to parse {info['id']}: {e}", file=sys.stderr)
             data = None
 
         if data is None:
+            # Preserve existing data if parse fails (don't drop the meet)
+            existing = existing_meets_map.get(info["id"])
+            if existing:
+                all_meets.append(existing)
             continue
 
         # Determine status

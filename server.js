@@ -28,11 +28,15 @@ function loadMeetsData() {
 loadMeetsData();
 
 // Serve index.html with injected asset version for automatic cache-busting
-app.get('/', (req, res) => {
-  let html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
-  html = html.replace(/\?v=[^"']*/g, `?v=${ASSET_VERSION}`);
-  res.setHeader('Content-Type', 'text/html');
-  res.send(html);
+app.get('/', async (req, res) => {
+  try {
+    let html = await fs.promises.readFile(path.join(__dirname, 'public', 'index.html'), 'utf8');
+    html = html.replace(/\?v=[^"']*/g, `?v=${ASSET_VERSION}`);
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send('Failed to load page');
+  }
 });
 
 app.use(express.static('public', {
@@ -44,26 +48,26 @@ app.use(express.static('public', {
   }
 }));
 
-app.get('/api/bios', (req, res) => {
+app.get('/api/bios', async (req, res) => {
   try {
-    const bios = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/bios.json'), 'utf8'));
-    res.json(bios);
+    const raw = await fs.promises.readFile(path.join(__dirname, 'data/bios.json'), 'utf8');
+    res.json(JSON.parse(raw));
   } catch (e) { res.json({}); }
 });
 
-app.get('/api/photos', (req, res) => {
+app.get('/api/photos', async (req, res) => {
   try {
-    const photos = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/photos.json'), 'utf8'));
-    res.json(photos);
+    const raw = await fs.promises.readFile(path.join(__dirname, 'data/photos.json'), 'utf8');
+    res.json(JSON.parse(raw));
   } catch (e) {
     res.json({});
   }
 });
 
-app.get('/api/meet-photos', (req, res) => {
+app.get('/api/meet-photos', async (req, res) => {
   try {
-    const meetPhotos = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/meet_photos.json'), 'utf8'));
-    res.json(meetPhotos);
+    const raw = await fs.promises.readFile(path.join(__dirname, 'data/meet_photos.json'), 'utf8');
+    res.json(JSON.parse(raw));
   } catch (e) {
     res.json({});
   }
@@ -87,7 +91,16 @@ app.get('/api/competitor-scores', (req, res) => {
   })));
 });
 
+let refreshInProgress = false;
+
 app.post('/api/refresh', async (req, res) => {
+  if (REFRESH_SECRET && req.headers['x-refresh-secret'] !== REFRESH_SECRET) {
+    return res.status(403).json({ success: false, error: 'Forbidden' });
+  }
+  if (refreshInProgress) {
+    return res.status(429).json({ success: false, error: 'Refresh already in progress' });
+  }
+  refreshInProgress = true;
   try {
     const result = await new Promise((resolve, reject) => {
       exec('python3 scripts/refresh_data.py', {
@@ -114,6 +127,8 @@ app.post('/api/refresh', async (req, res) => {
   } catch (err) {
     console.error('Refresh failed:', err.message);
     res.status(500).json({ success: false, error: err.message });
+  } finally {
+    refreshInProgress = false;
   }
 });
 
@@ -123,6 +138,10 @@ app.get('/healthz', (req, res) => {
 });
 
 const PORT = process.env.PORT || 8888;
+const REFRESH_SECRET = process.env.REFRESH_SECRET;
 app.listen(PORT, () => {
   console.log(`🤸 OSU Gymnastics 2026 running on http://localhost:${PORT}`);
+  if (!REFRESH_SECRET) {
+    console.warn('WARNING: REFRESH_SECRET env var is not set — POST /api/refresh is unprotected');
+  }
 });

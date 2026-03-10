@@ -482,7 +482,7 @@ def parse_meet_pdf(meet_info):
             "isHome": meet_info["isHome"], "result": hc["result"],
             "osuScore": hc["osuScore"], "opponentScore": hc["opponentScore"],
             "events": hc["events"], "athletes": hc["athletes"],
-            "competitorAthletes": {}, "competitorLineups": {},
+            "lineups": {}, "competitorAthletes": {}, "competitorLineups": {},
         }
         if meet_info.get("imageBasedPdf"):
             record["imageBasedPdf"] = True
@@ -570,7 +570,7 @@ def parse_meet_pdf(meet_info):
                 continue
             opp_slug = re.sub(r"[^a-z0-9]+", "-", opp_name.lower()).strip("-")
             record_id = f"{id_prefix}-{opp_slug}-{date_slug}"
-            result = "W" if osu["total"] > opp_data["total"] else "L"
+            result = "W" if osu["total"] > opp_data["total"] else ("T" if osu["total"] == opp_data["total"] else "L")
             record = {
                 "id": record_id,
                 "date": meet_info["date"],
@@ -606,7 +606,7 @@ def parse_meet_pdf(meet_info):
             opp_events = {e: od[e] for e in ["vault", "bars", "beam", "floor"]}
         else:
             opp_score, opp_events = 0, {"vault": 0, "bars": 0, "beam": 0, "floor": 0}
-        result = "W" if osu["total"] > opp_score else "L"
+        result = "W" if osu["total"] > opp_score else ("T" if osu["total"] == opp_score else "L")
 
         meet_data = {
             "id": meet_info["id"], "date": meet_info["date"],
