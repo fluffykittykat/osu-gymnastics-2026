@@ -515,7 +515,7 @@
     takes.push({
       icon: '📋', color: '#f39c12',
       title: 'The Record Is Complicated',
-      body: `The 6-10 W-L is based on individual matchup math from quad meets. By competition day, OSU won <strong>${dayWins} of ${dayTotal}</strong> meets — a <strong>${(dayWins/dayTotal*100).toFixed(0)}%</strong> day-win rate. The headline number isn't the whole story.`
+      body: `The ${wins}-${losses} W-L is based on individual matchup math from quad meets. By competition day, OSU won <strong>${dayWins} of ${dayTotal}</strong> meets — a <strong>${(dayWins/dayTotal*100).toFixed(0)}%</strong> day-win rate. The headline number isn't the whole story.`
     });
 
     // 2. Moon correlation
@@ -642,7 +642,7 @@
       takes.push({
         icon: '🔥', color: '#e74c3c',
         title: `${h.name.split(' ')[0]} Is the Hottest Gymnast on the Roster Right Now`,
-        body: `Over her last 3 meets, <strong class="clickable-name" data-gymnast="${h.name}">${h.name}</strong> is averaging <strong>${fmt(h.last)}</strong>/event — that's <strong>+${fmt(h.diff)}</strong> above her <strong>${fmt(h.season)}</strong> season average. Peak season form. If Denver is next, bet on her.`
+        body: `Over her last 3 meets, <strong class="clickable-name" data-gymnast="${h.name}">${h.name}</strong> is averaging <strong>${fmt(h.last)}</strong>/event — that's <strong>+${fmt(h.diff)}</strong> above her <strong>${fmt(h.season)}</strong> season average. Peak season form heading into postseason.`
       });
     }
 
@@ -3226,9 +3226,10 @@
 
     // ── Home state proximity effect ─────────────────────────────────────────
     const venueStateMap = {
-      '2026-01-03': 'CA', '2026-01-09': 'OR', '2026-01-17': 'OR',
-      '2026-01-25': 'UT', '2026-01-30': 'AL', '2026-02-06': 'ID',
-      '2026-02-13': 'TX', '2026-02-21': 'OR', '2026-03-06': 'UT', '2026-03-14': 'OR',
+      '2026-01-03': 'WA', '2026-01-09': 'UT', '2026-01-16': 'OR',
+      '2026-01-25': 'OR', '2026-01-30': 'AL', '2026-02-06': 'ID',
+      '2026-02-14': 'OR', '2026-02-22': 'TX', '2026-02-27': 'OR',
+      '2026-03-06': 'UT', '2026-03-14': 'OR',
     };
     const proxData = { near: [], far: [] }; // scores when gymnast is near/far from home
     const proxByGymnast = {};

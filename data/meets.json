@@ -855,9 +855,7 @@
           }
         ]
       }
-    },
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    }
   },
   {
     "id": "best-of-west-california-jan-3",
@@ -1715,9 +1713,7 @@
           }
         ]
       }
-    },
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    }
   },
   {
     "id": "best-of-west-washington-jan-3",
@@ -2575,9 +2571,7 @@
           }
         ]
       }
-    },
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    }
   },
   {
     "id": "byu-jan-9",
@@ -3034,9 +3028,7 @@
         ]
       }
     },
-    "attendance": "4,002",
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    "attendance": "4,002"
   },
   {
     "id": "sac-state-jan-16",
@@ -3488,9 +3480,7 @@
         ]
       }
     },
-    "attendance": "3,310",
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    "attendance": "3,310"
   },
   {
     "id": "utah-state-jan-25",
@@ -3939,9 +3929,7 @@
         ]
       }
     },
-    "attendance": "3,651",
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    "attendance": "3,651"
   },
   {
     "id": "alabama-jan-30",
@@ -4084,9 +4072,7 @@
     "lineups": {},
     "competitorAthletes": {},
     "competitorLineups": {},
-    "imageBasedPdf": true,
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    "imageBasedPdf": true
   },
   {
     "id": "boise-state-quad-san-jose-state-feb-6",
@@ -4925,9 +4911,7 @@
         ]
       }
     },
-    "attendance": "2,677",
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    "attendance": "2,677"
   },
   {
     "id": "boise-state-quad-boise-state-feb-6",
@@ -5766,9 +5750,7 @@
         ]
       }
     },
-    "attendance": "2,677",
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    "attendance": "2,677"
   },
   {
     "id": "boise-state-quad-uc-davis-feb-6",
@@ -6607,9 +6589,7 @@
         ]
       }
     },
-    "attendance": "2,677",
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    "attendance": "2,677"
   },
   {
     "id": "southern-utah-feb-14",
@@ -7061,9 +7041,7 @@
         ]
       }
     },
-    "attendance": "3,954",
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    "attendance": "3,954"
   },
   {
     "id": "twu-quad-twu-feb-22",
@@ -7911,9 +7889,7 @@
           }
         ]
       }
-    },
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    }
   },
   {
     "id": "twu-quad-arizona-state-feb-22",
@@ -8761,9 +8737,7 @@
           }
         ]
       }
-    },
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    }
   },
   {
     "id": "twu-quad-kent-state-feb-22",
@@ -9611,9 +9585,7 @@
           }
         ]
       }
-    },
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    }
   },
   {
     "id": "stanford-feb-27",
@@ -10063,9 +10035,7 @@
         ]
       }
     },
-    "attendance": "3,617",
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    "attendance": "3,617"
   },
   {
     "id": "utah-state-mar-6",
@@ -10200,9 +10170,7 @@
     "lineups": {},
     "competitorAthletes": {},
     "competitorLineups": {},
-    "imageBasedPdf": true,
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    "imageBasedPdf": true
   },
   {
     "id": "denver-mar-14",
@@ -10233,10 +10201,66 @@
     },
     "athletes": [
       {
+        "name": "Olivia Buckner",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.875,
+          "beam": 9.675,
+          "floor": 9.85
+        }
+      },
+      {
+        "name": "Francesca Caso",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.8
+        }
+      },
+      {
+        "name": "Kaylee Cheek",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.9
+        }
+      },
+      {
         "name": "Kyanna Crabb",
         "team": "Oregon State",
         "scores": {
           "vault": 9.825
+        }
+      },
+      {
+        "name": "Taylor DeVries",
+        "team": "Oregon State",
+        "scores": {
+          "bars": 9.9,
+          "floor": 9.8
+        }
+      },
+      {
+        "name": "Sophia Esposito",
+        "team": "Oregon State",
+        "scores": {
+          "vault": 9.9,
+          "bars": 9.85,
+          "beam": 9.875,
+          "floor": 9.95,
+          "aa": 39.575
+        }
+      },
+      {
+        "name": "Mia Heather",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.825
+        }
+      },
+      {
+        "name": "Lauren Letzsch",
+        "team": "Oregon State",
+        "scores": {
+          "beam": 9.1
         }
       },
       {
@@ -10257,45 +10281,11 @@
         }
       },
       {
-        "name": "Olivia Buckner",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.875,
-          "beam": 9.675,
-          "floor": 9.85
-        }
-      },
-      {
         "name": "Camryn Richardson",
         "team": "Oregon State",
         "scores": {
           "vault": 9.85,
           "bars": 9.875
-        }
-      },
-      {
-        "name": "Sophia Esposito",
-        "team": "Oregon State",
-        "scores": {
-          "vault": 9.9,
-          "bars": 9.85,
-          "beam": 9.875,
-          "floor": 9.95
-        }
-      },
-      {
-        "name": "Francesca Caso",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.8
-        }
-      },
-      {
-        "name": "Taylor DeVries",
-        "team": "Oregon State",
-        "scores": {
-          "bars": 9.9,
-          "floor": 9.8
         }
       },
       {
@@ -10306,345 +10296,11 @@
           "beam": 9.8,
           "floor": 9.875
         }
-      },
-      {
-        "name": "Mia Heather",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.825
-        }
-      },
-      {
-        "name": "Kaylee Cheek",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.9
-        }
-      },
-      {
-        "name": "Lauren Letzsch",
-        "team": "Oregon State",
-        "scores": {
-          "beam": 9.1
-        }
       }
     ],
-    "lineups": {
-      "vault": [
-        {
-          "position": 1,
-          "name": "Kyanna Crabb",
-          "score": 9.825
-        },
-        {
-          "position": 2,
-          "name": "Reina Marchal",
-          "score": 9.575
-        },
-        {
-          "position": 3,
-          "name": "Savannah Miller",
-          "score": 9.7
-        },
-        {
-          "position": 4,
-          "name": "Olivia Buckner",
-          "score": 9.875
-        },
-        {
-          "position": 5,
-          "name": "Camryn Richardson",
-          "score": 9.85
-        },
-        {
-          "position": 6,
-          "name": "Sophia Esposito",
-          "score": 9.9
-        }
-      ],
-      "bars": [
-        {
-          "position": 1,
-          "name": "Savannah Miller",
-          "score": 9.85
-        },
-        {
-          "position": 2,
-          "name": "Francesca Caso",
-          "score": 9.8
-        },
-        {
-          "position": 3,
-          "name": "Taylor DeVries",
-          "score": 9.9
-        },
-        {
-          "position": 4,
-          "name": "Sophia Esposito",
-          "score": 9.85
-        },
-        {
-          "position": 5,
-          "name": "Camryn Richardson",
-          "score": 9.875
-        },
-        {
-          "position": 6,
-          "name": "Ellie Weaver",
-          "score": 9.75
-        }
-      ],
-      "beam": [
-        {
-          "position": 1,
-          "name": "Mia Heather",
-          "score": 9.825
-        },
-        {
-          "position": 2,
-          "name": "Olivia Buckner",
-          "score": 9.675
-        },
-        {
-          "position": 3,
-          "name": "Kaylee Cheek",
-          "score": 9.9
-        },
-        {
-          "position": 4,
-          "name": "Ellie Weaver",
-          "score": 9.8
-        },
-        {
-          "position": 5,
-          "name": "Lauren Letzsch",
-          "score": 9.1
-        },
-        {
-          "position": 6,
-          "name": "Sophia Esposito",
-          "score": 9.875
-        }
-      ],
-      "floor": [
-        {
-          "position": 1,
-          "name": "Taylor DeVries",
-          "score": 9.8
-        },
-        {
-          "position": 2,
-          "name": "Olivia Buckner",
-          "score": 9.85
-        },
-        {
-          "position": 3,
-          "name": "Ellie Weaver",
-          "score": 9.875
-        },
-        {
-          "position": 4,
-          "name": "Reina Marchal",
-          "score": 9.875
-        },
-        {
-          "position": 5,
-          "name": "Savannah Miller",
-          "score": 9.875
-        },
-        {
-          "position": 6,
-          "name": "Sophia Esposito",
-          "score": 9.95
-        }
-      ]
-    },
-    "competitorAthletes": {
-      "Denver": {
-        "Amanda Hargraves": {
-          "vault": 9.5,
-          "beam": 9.8,
-          "floor": 9.85
-        },
-        "Sevana Kasparian": {
-          "vault": 9.825
-        },
-        "Maddison Reidenbach": {
-          "vault": 9.875,
-          "bars": 9.85,
-          "beam": 9.6,
-          "floor": 9.875
-        },
-        "Addie Hewitt": {
-          "vault": 9.825
-        },
-        "Mila Brusch": {
-          "vault": 9.8,
-          "bars": 9.8
-        },
-        "Shyla Bhatia": {
-          "vault": 9.875,
-          "bars": 9.85,
-          "floor": 9.875
-        },
-        "Kaitlynd Kastl": {
-          "bars": 9.725
-        },
-        "Kiley Rorich": {
-          "bars": 9.825,
-          "floor": 9.825
-        },
-        "Cecilia Cooley": {
-          "bars": 9.875,
-          "beam": 8.975,
-          "floor": 9.925
-        },
-        "Megan Aamold": {
-          "beam": 9.075
-        },
-        "Abby Steeley": {
-          "beam": 9.825
-        },
-        "Ashley Gallen": {
-          "beam": 9.1,
-          "floor": 9.85
-        }
-      }
-    },
-    "competitorLineups": {
-      "Denver": {
-        "vault": [
-          {
-            "position": 1,
-            "name": "Amanda Hargraves",
-            "score": 9.5
-          },
-          {
-            "position": 2,
-            "name": "Sevana Kasparian",
-            "score": 9.825
-          },
-          {
-            "position": 3,
-            "name": "Maddison Reidenbach",
-            "score": 9.875
-          },
-          {
-            "position": 4,
-            "name": "Addie Hewitt",
-            "score": 9.825
-          },
-          {
-            "position": 5,
-            "name": "Mila Brusch",
-            "score": 9.8
-          },
-          {
-            "position": 6,
-            "name": "Shyla Bhatia",
-            "score": 9.875
-          }
-        ],
-        "bars": [
-          {
-            "position": 1,
-            "name": "Kaitlynd Kastl",
-            "score": 9.725
-          },
-          {
-            "position": 2,
-            "name": "Maddison Reidenbach",
-            "score": 9.85
-          },
-          {
-            "position": 3,
-            "name": "Kiley Rorich",
-            "score": 9.825
-          },
-          {
-            "position": 4,
-            "name": "Shyla Bhatia",
-            "score": 9.85
-          },
-          {
-            "position": 5,
-            "name": "Mila Brusch",
-            "score": 9.8
-          },
-          {
-            "position": 6,
-            "name": "Cecilia Cooley",
-            "score": 9.875
-          }
-        ],
-        "beam": [
-          {
-            "position": 1,
-            "name": "Megan Aamold",
-            "score": 9.075
-          },
-          {
-            "position": 2,
-            "name": "Abby Steeley",
-            "score": 9.825
-          },
-          {
-            "position": 3,
-            "name": "Ashley Gallen",
-            "score": 9.1
-          },
-          {
-            "position": 4,
-            "name": "Maddison Reidenbach",
-            "score": 9.6
-          },
-          {
-            "position": 5,
-            "name": "Amanda Hargraves",
-            "score": 9.8
-          },
-          {
-            "position": 6,
-            "name": "Cecilia Cooley",
-            "score": 8.975
-          }
-        ],
-        "floor": [
-          {
-            "position": 1,
-            "name": "Ashley Gallen",
-            "score": 9.85
-          },
-          {
-            "position": 2,
-            "name": "Amanda Hargraves",
-            "score": 9.85
-          },
-          {
-            "position": 3,
-            "name": "Kiley Rorich",
-            "score": 9.825
-          },
-          {
-            "position": 4,
-            "name": "Shyla Bhatia",
-            "score": 9.875
-          },
-          {
-            "position": 5,
-            "name": "Maddison Reidenbach",
-            "score": 9.875
-          },
-          {
-            "position": 6,
-            "name": "Cecilia Cooley",
-            "score": 9.925
-          }
-        ]
-      }
-    },
-    "attendance": "3,794",
-    "status": "final",
-    "lastRefreshed": "2026-03-15T00:23:38Z"
+    "lineups": {},
+    "competitorAthletes": {},
+    "competitorLineups": {},
+    "imageBasedPdf": true
   }
 ]

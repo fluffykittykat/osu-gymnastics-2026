@@ -122,6 +122,35 @@ MEETS = [
             ],
         },
     },
+    {
+        "id": "denver-mar-14", "date": "2026-03-14", "opponent": "Denver",
+        "location": "Gill Coliseum, Corvallis, OR", "isHome": True,
+        "imageBasedPdf": True,
+        "url": "",
+        "hardcoded": {
+            "osuScore": 196.925, "opponentScore": 195.175, "result": "W",
+            "events": {
+                "vault": {"osu": 49.150, "opponent": 49.200},
+                "bars": {"osu": 49.275, "opponent": 49.200},
+                "beam": {"osu": 49.075, "opponent": 47.400},
+                "floor": {"osu": 49.425, "opponent": 49.375},
+            },
+            "athletes": [
+                {"name": "Olivia Buckner", "team": "Oregon State", "scores": {"vault": 9.875, "beam": 9.675, "floor": 9.850}},
+                {"name": "Francesca Caso", "team": "Oregon State", "scores": {"bars": 9.800}},
+                {"name": "Kaylee Cheek", "team": "Oregon State", "scores": {"beam": 9.900}},
+                {"name": "Kyanna Crabb", "team": "Oregon State", "scores": {"vault": 9.825}},
+                {"name": "Taylor DeVries", "team": "Oregon State", "scores": {"bars": 9.900, "floor": 9.800}},
+                {"name": "Sophia Esposito", "team": "Oregon State", "scores": {"vault": 9.900, "bars": 9.850, "beam": 9.875, "floor": 9.950, "aa": 39.575}},
+                {"name": "Mia Heather", "team": "Oregon State", "scores": {"beam": 9.825}},
+                {"name": "Lauren Letzsch", "team": "Oregon State", "scores": {"beam": 9.100}},
+                {"name": "Reina Marchal", "team": "Oregon State", "scores": {"vault": 9.575, "floor": 9.875}},
+                {"name": "Savannah Miller", "team": "Oregon State", "scores": {"vault": 9.700, "bars": 9.850, "floor": 9.875}},
+                {"name": "Camryn Richardson", "team": "Oregon State", "scores": {"vault": 9.850, "bars": 9.875}},
+                {"name": "Ellie Weaver", "team": "Oregon State", "scores": {"bars": 9.750, "beam": 9.800, "floor": 9.875}},
+            ],
+        },
+    },
 ]
 
 DOWNLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "pdfs")
@@ -133,6 +162,9 @@ def download_pdfs():
     for meet in MEETS:
         path = os.path.join(DOWNLOAD_DIR, f"{meet['id']}.pdf")
         if not os.path.exists(path):
+            if not meet.get("url"):
+                print(f"Skipping download for {meet['id']} (no URL)")
+                continue
             print(f"Downloading {meet['id']}...")
             urllib.request.urlretrieve(meet["url"], path)
         else:

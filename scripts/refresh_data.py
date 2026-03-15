@@ -130,7 +130,7 @@ def refresh():
 
     for info in MEETS:
         # Check if we should re-fetch the PDF
-        if should_refetch_pdf(info, existing_meets_map):
+        if info.get("url") and should_refetch_pdf(info, existing_meets_map):
             pdf_path = os.path.join(DOWNLOAD_DIR, f"{info['id']}.pdf")
             try:
                 for attempt in range(3):
