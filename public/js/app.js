@@ -1610,7 +1610,7 @@
       }
 
       return `
-        <div class="detail-event-card">
+        <div class="detail-event-card detail-event-clickable" data-event="${event}" data-from-meet="${meet.id}" style="cursor:pointer;">
           <div class="detail-event-title">${EVENT_NAMES[event]}</div>
           <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;">
             <span style="color:var(--orange);font-family:Oswald;font-weight:600;">${osuScore.toFixed(3)}</span>
@@ -2589,6 +2589,219 @@
       </div>`;
 
     document.getElementById('backFromTeam').addEventListener('click', () => showView('season'));
+  }
+
+  // ===== Event Detail Drill-down =====
+  let _eventDetailMeetId = null;
+
+  function showEventDetail(eventKey, fromMeetId) {
+    _eventDetailMeetId = fromMeetId;
+    scrollToTop();
+    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    const view = document.getElementById('view-event');
+    view.style.display = 'block';
+
+    const evName = EVENT_NAMES[eventKey];
+
+    // Gather team scores for this event across all meets, chronologically
+    const seasonData = [];
+    const seenDates = new Set();
+    meets.slice().sort((a, b) => a.date.localeCompare(b.date)).forEach(m => {
+      if (!m.events || !m.events[eventKey] || !m.events[eventKey].osu) return;
+      if (m.events[eventKey].osu <= 0) return;
+      // Deduplicate by date (quad meets share a date)
+      const key = m.date + '|' + m.id;
+      if (seenDates.has(key)) return;
+      seenDates.add(key);
+      seasonData.push({
+        meetId: m.id,
+        date: m.date,
+        opponent: m.opponent,
+        score: m.events[eventKey].osu,
+        oppScore: m.events[eventKey].opponent,
+        result: m.result,
+        osuTotal: m.osuScore,
+        oppTotal: m.opponentScore
+      });
+    });
+
+    const scores = seasonData.map(d => d.score);
+    const seasonAvg = mean(scores);
+    const seasonBest = scores.length ? Math.max(...scores) : null;
+    const seasonWorst = scores.length ? Math.min(...scores) : null;
+    const bestMeet = seasonData.find(d => d.score === seasonBest);
+    const worstMeet = seasonData.find(d => d.score === seasonWorst);
+    const mostRecent = seasonData.length ? seasonData[seasonData.length - 1] : null;
+    const sd = stddev(scores);
+
+    // Trend direction: compare first half to second half
+    const half = Math.floor(scores.length / 2);
+    const firstHalfAvg = mean(scores.slice(0, half));
+    const secondHalfAvg = mean(scores.slice(half));
+    const trendDiff = firstHalfAvg && secondHalfAvg ? secondHalfAvg - firstHalfAvg : 0;
+    const trendArrow = trendDiff > 0.05 ? '↑' : trendDiff < -0.05 ? '↓' : '→';
+    const trendColor = trendDiff > 0.05 ? '#2ecc71' : trendDiff < -0.05 ? '#e74c3c' : '#aaa';
+    const trendLabel = trendDiff > 0.05 ? 'Trending Up' : trendDiff < -0.05 ? 'Trending Down' : 'Steady';
+
+    // Consistency label
+    let consistLabel, consistColor;
+    if (sd < 0.2) { consistLabel = 'Very Consistent'; consistColor = '#2ecc71'; }
+    else if (sd < 0.5) { consistLabel = 'Solid'; consistColor = '#f1c40f'; }
+    else { consistLabel = 'Inconsistent'; consistColor = '#e74c3c'; }
+
+    // Build SVG bar chart
+    const chartHeight = 160;
+    const barWidth = Math.max(20, Math.min(50, Math.floor(600 / Math.max(scores.length, 1)) - 6));
+    const gap = 4;
+    const chartWidth = scores.length * (barWidth + gap) - gap + 60;
+    const minScore = scores.length ? Math.min(...scores) - 0.3 : 47;
+    const maxScore = scores.length ? Math.max(...scores) + 0.1 : 50;
+    const range = maxScore - minScore || 1;
+
+    const bars = seasonData.map((d, i) => {
+      const barH = Math.max(4, ((d.score - minScore) / range) * (chartHeight - 30));
+      const x = 50 + i * (barWidth + gap);
+      const y = chartHeight - barH - 10;
+      const isCurrent = d.meetId === fromMeetId;
+      const fill = isCurrent ? '#D73F09' : 'var(--orange)';
+      const opacity = isCurrent ? '1' : '0.65';
+      const label = formatDate(d.date);
+      return `
+        <g>
+          <rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="3" fill="${fill}" opacity="${opacity}">
+            <title>${d.opponent} (${label}): ${d.score.toFixed(3)}</title>
+          </rect>
+          <text x="${x + barWidth / 2}" y="${y - 4}" text-anchor="middle" fill="${isCurrent ? '#fff' : '#aaa'}" font-size="10" font-family="Oswald">${d.score.toFixed(3)}</text>
+          <text x="${x + barWidth / 2}" y="${chartHeight}" text-anchor="middle" fill="#666" font-size="8" transform="rotate(-45 ${x + barWidth / 2} ${chartHeight})">${label}</text>
+        </g>`;
+    }).join('');
+
+    // Average line
+    const avgY = chartHeight - ((seasonAvg - minScore) / range) * (chartHeight - 30) - 10;
+    const avgLine = seasonAvg ? `
+      <line x1="45" y1="${avgY}" x2="${50 + scores.length * (barWidth + gap)}" y2="${avgY}" stroke="#aaa" stroke-dasharray="4,3" stroke-width="1"/>
+      <text x="42" y="${avgY + 3}" text-anchor="end" fill="#aaa" font-size="9">avg</text>
+    ` : '';
+
+    const chart = `
+      <div class="section-card" style="overflow-x:auto;">
+        <h2 class="section-title">Season Trend</h2>
+        <svg width="${Math.max(chartWidth, 300)}" height="${chartHeight + 30}" style="display:block;margin:0 auto;">
+          ${avgLine}
+          ${bars}
+        </svg>
+      </div>`;
+
+    // Season stats panel
+    const statsPanel = `
+      <div class="section-card">
+        <h2 class="section-title">Season Stats</h2>
+        <div class="event-stats-grid">
+          <div class="event-stat-item">
+            <div class="event-stat-value">${fmt(seasonAvg)}</div>
+            <div class="event-stat-label">Season Average</div>
+          </div>
+          <div class="event-stat-item">
+            <div class="event-stat-value" style="color:#2ecc71">${fmt(seasonBest)}</div>
+            <div class="event-stat-label">Season Best${bestMeet ? ` (vs ${bestMeet.opponent})` : ''}</div>
+          </div>
+          <div class="event-stat-item">
+            <div class="event-stat-value" style="color:#e74c3c">${fmt(seasonWorst)}</div>
+            <div class="event-stat-label">Season Worst${worstMeet ? ` (vs ${worstMeet.opponent})` : ''}</div>
+          </div>
+          <div class="event-stat-item">
+            <div class="event-stat-value">${mostRecent ? fmt(mostRecent.score) : '—'}</div>
+            <div class="event-stat-label">Most Recent</div>
+          </div>
+          <div class="event-stat-item">
+            <div class="event-stat-value" style="color:${trendColor};font-size:1.5rem;">${trendArrow}</div>
+            <div class="event-stat-label" style="color:${trendColor}">${trendLabel}</div>
+          </div>
+          <div class="event-stat-item">
+            <div class="event-stat-value" style="color:${consistColor}">${sd.toFixed(3)}</div>
+            <div class="event-stat-label" style="color:${consistColor}">${consistLabel} (σ)</div>
+          </div>
+        </div>
+      </div>`;
+
+    // All-time leaderboard — top individual scores across all meets
+    const individualScores = [];
+    meets.forEach(m => {
+      if (!m.athletes) return;
+      m.athletes.filter(a => a.team === 'Oregon State').forEach(a => {
+        if (a.scores[eventKey] !== undefined && a.scores[eventKey] > 0) {
+          individualScores.push({
+            name: a.name,
+            score: a.scores[eventKey],
+            date: m.date,
+            opponent: m.opponent,
+            meetId: m.id
+          });
+        }
+      });
+    });
+    individualScores.sort((a, b) => b.score - a.score);
+    const top10 = individualScores.slice(0, 10);
+
+    const leaderboard = `
+      <div class="section-card">
+        <h2 class="section-title">Top Individual Scores — ${evName}</h2>
+        <table class="event-detail-table">
+          <thead><tr><th>#</th><th>Gymnast</th><th>Score</th><th>Meet</th><th>Date</th></tr></thead>
+          <tbody>
+            ${top10.map((s, i) => `
+              <tr${s.meetId === fromMeetId ? ' style="background:rgba(215,63,9,0.1)"' : ''}>
+                <td style="color:${i < 3 ? 'var(--orange)' : '#aaa'};font-weight:${i < 3 ? '700' : '400'}">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</td>
+                <td><span class="clickable-name" data-gymnast="${s.name}">${s.name}</span></td>
+                <td style="color:var(--orange);font-family:Oswald;font-weight:600">${s.score.toFixed(3)}</td>
+                <td>vs ${s.opponent}</td>
+                <td style="color:var(--text-muted)">${formatDate(s.date)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+
+    // Meet-by-meet breakdown
+    const breakdownRows = seasonData.map(d => {
+      const isCurrent = d.meetId === fromMeetId;
+      const won = d.score > d.oppScore;
+      return `
+        <tr${isCurrent ? ' style="background:rgba(215,63,9,0.15)"' : ''}>
+          <td><span class="clickable-meet" data-meet-id="${d.meetId}">${formatDate(d.date)}</span></td>
+          <td>vs ${d.opponent}</td>
+          <td style="color:var(--orange);font-family:Oswald;font-weight:600">${d.score.toFixed(3)}</td>
+          <td style="color:var(--text-muted)">${d.oppScore.toFixed(3)}</td>
+          <td><span style="color:${won ? '#2ecc71' : '#e74c3c'};font-weight:600">${won ? 'W' : 'L'}</span></td>
+        </tr>`;
+    }).join('');
+
+    const breakdown = `
+      <div class="section-card">
+        <h2 class="section-title">Meet-by-Meet Breakdown</h2>
+        <div style="overflow-x:auto;">
+          <table class="event-detail-table">
+            <thead><tr><th>Date</th><th>Opponent</th><th>OSU</th><th>Opp</th><th>Event</th></tr></thead>
+            <tbody>${breakdownRows}</tbody>
+          </table>
+        </div>
+      </div>`;
+
+    document.getElementById('eventDetailContent').innerHTML = `
+      <div class="event-detail-header">
+        <h1 class="event-detail-title">${evName} — Season Performance</h1>
+      </div>
+      ${chart}
+      ${statsPanel}
+      ${leaderboard}
+      ${breakdown}
+    `;
+
+    // Bind back button
+    document.getElementById('backFromEvent').onclick = () => {
+      document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+      document.getElementById('view-meet').style.display = 'block';
+      scrollToTop();
+    };
   }
 
   // ===== Leaderboards =====
@@ -3847,6 +4060,12 @@
       if (quadTab && quadTab.dataset.meetId) {
         e.preventDefault();
         showMeetDetail(quadTab.dataset.meetId);
+        return;
+      }
+      const eventCard = e.target.closest('.detail-event-clickable');
+      if (eventCard && !e.target.closest('.clickable-name')) {
+        e.preventDefault();
+        showEventDetail(eventCard.dataset.event, eventCard.dataset.fromMeet);
         return;
       }
       const recapToggle = e.target.closest('.recap-toggle');
