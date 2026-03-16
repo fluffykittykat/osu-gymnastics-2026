@@ -2786,15 +2786,351 @@
         </div>
       </div>`;
 
+    // ── Media Card for Banner ──
+    const currentMeet = meets.find(m => m.id === fromMeetId);
+    const meetPhotoData = currentMeet ? meetPhotos[currentMeet.date] : null;
+    const meetPhotoUrl = meetPhotoData?.heroImage || null;
+    const mediaCard = `
+      <div class="event-banner-media">
+        ${meetPhotoUrl
+          ? `<img src="${meetPhotoUrl}" alt="${currentMeet?.opponent || 'Meet'}" class="event-banner-img"/>`
+          : `<div class="event-banner-placeholder"><span style="font-size:2.5rem;">🤸</span><div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;">OSU Gymnastics</div></div>`}
+        ${currentMeet ? `<div class="event-banner-caption">${currentMeet.opponent} — ${formatDate(currentMeet.date)}</div>` : ''}
+      </div>`;
+
+    // ── Individual Gymnast Performance Cards ──
+    // Gather per-gymnast data for this event across all meets
+    const sortedMeetsChron = meets.slice().sort((a, b) => a.date.localeCompare(b.date));
+    const gymnastMap = {};
+    const meetDates = seasonData.map(d => d.date + '|' + d.meetId);
+
+    sortedMeetsChron.forEach(m => {
+      if (!m.athletes) return;
+      m.athletes.filter(a => a.team === 'Oregon State').forEach(a => {
+        if (a.scores[eventKey] === undefined || a.scores[eventKey] <= 0) return;
+        if (!gymnastMap[a.name]) gymnastMap[a.name] = [];
+        gymnastMap[a.name].push({
+          date: m.date,
+          meetId: m.id,
+          score: a.scores[eventKey],
+          opponent: m.opponent
+        });
+      });
+    });
+
+    // Deduplicate per gymnast per date
+    Object.keys(gymnastMap).forEach(name => {
+      const seen = new Set();
+      gymnastMap[name] = gymnastMap[name].filter(e => {
+        const k = e.date;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    });
+
+    // Build gymnast stats
+    const gymnastStats = Object.entries(gymnastMap).map(([name, entries]) => {
+      const scores = entries.map(e => e.score);
+      const avg = mean(scores);
+      const best = Math.max(...scores);
+      const bestEntry = entries.find(e => e.score === best);
+      const appearances = entries.length;
+
+      // Linear regression for trend
+      let slope = 0;
+      if (entries.length >= 2) {
+        const pts = entries.map((e, i) => ({ x: i, y: e.score }));
+        const n = pts.length;
+        const sx = pts.reduce((s, p) => s + p.x, 0);
+        const sy = pts.reduce((s, p) => s + p.y, 0);
+        const sxy = pts.reduce((s, p) => s + p.x * p.y, 0);
+        const sx2 = pts.reduce((s, p) => s + p.x * p.x, 0);
+        slope = (n * sxy - sx * sy) / (n * sx2 - sx * sx) || 0;
+      }
+
+      // Improvement = last score - first score (for "most improved" sort)
+      const improvement = entries.length >= 2 ? entries[entries.length - 1].score - entries[0].score : 0;
+
+      return { name, entries, scores, avg, best, bestEntry, appearances, slope, improvement };
+    });
+
+    // Default sort: season avg descending
+    let gymnastSorted = gymnastStats.slice().sort((a, b) => b.avg - a.avg);
+
+    function buildGymnastCards(sortedList, sortMode) {
+      return sortedList.map((g, idx) => {
+        const photoUrl = photos[g.name];
+        const bio = bios[g.name];
+        const initials = g.name.split(' ').map(w => w[0]).join('');
+
+        // Trend label
+        let trendBadge;
+        if (g.slope > 0.015) trendBadge = '<span class="gymnast-trend-badge trend-up">Improving</span>';
+        else if (g.slope < -0.015) trendBadge = '<span class="gymnast-trend-badge trend-down">Declining</span>';
+        else trendBadge = '<span class="gymnast-trend-badge trend-steady">Steady</span>';
+
+        // Build mini sparkline — one bar per meet in seasonData, gray if gymnast didn't compete
+        const sparkBars = seasonData.map((sd, si) => {
+          const entry = g.entries.find(e => e.date === sd.date);
+          const score = entry ? entry.score : null;
+          const minS = 9.0, maxS = 10.0, rangeS = maxS - minS;
+          const barH = score ? Math.max(4, ((score - minS) / rangeS) * 36) : 6;
+          const bw = Math.max(8, Math.min(18, Math.floor(260 / Math.max(seasonData.length, 1)) - 2));
+          const x = si * (bw + 2);
+          const y = 40 - barH;
+          const isPersonalBest = score === g.best;
+          const fill = score === null ? '#3d3228' : isPersonalBest ? '#FFD700' : 'var(--orange)';
+          const opacity = score === null ? '0.4' : isPersonalBest ? '1' : '0.7';
+          const title = score ? `${sd.opponent} (${formatDate(sd.date)}): ${score.toFixed(3)}${isPersonalBest ? ' ★ PB' : ''}` : `${sd.opponent}: DNP`;
+          return `<rect x="${x}" y="${y}" width="${bw}" height="${barH}" rx="2" fill="${fill}" opacity="${opacity}"><title>${title}</title></rect>`;
+        }).join('');
+
+        const sparkWidth = seasonData.length * (Math.max(8, Math.min(18, Math.floor(260 / Math.max(seasonData.length, 1)) - 2)) + 2);
+
+        return `
+          <div class="gymnast-perf-card" style="animation-delay:${idx * 0.05}s">
+            <div class="gymnast-card-left">
+              ${photoUrl
+                ? `<img src="${photoUrl}" alt="${g.name}" class="gymnast-card-photo"/>`
+                : `<div class="gymnast-card-initials">${initials}</div>`}
+            </div>
+            <div class="gymnast-card-body">
+              <div class="gymnast-card-header">
+                <span class="clickable-name gymnast-card-name" data-gymnast="${g.name}">${g.name}</span>
+                ${trendBadge}
+              </div>
+              ${bio ? `<div class="gymnast-card-meta">${bio.classYear || ''} ${bio.hometown ? '· ' + bio.hometown : ''}</div>` : ''}
+              <div class="gymnast-card-sparkline">
+                <svg width="${sparkWidth}" height="42" style="display:block;">
+                  ${sparkBars}
+                </svg>
+              </div>
+              <div class="gymnast-card-stats">
+                <span class="gymnast-stat"><strong>${g.avg.toFixed(3)}</strong> avg</span>
+                <span class="gymnast-stat" style="color:#FFD700"><strong>${g.best.toFixed(3)}</strong> best</span>
+                <span class="gymnast-stat">${g.appearances} meet${g.appearances !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    const gymnastSection = `
+      <div class="section-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+          <h2 class="section-title" style="margin:0;">Gymnast Performance — ${evName}</h2>
+          <div class="gymnast-sort-toggle" id="gymnastSortToggle">
+            <button class="gymnast-sort-btn active" data-sort="avg">By Average</button>
+            <button class="gymnast-sort-btn" data-sort="improved">Most Improved</button>
+          </div>
+        </div>
+        <div class="gymnast-perf-grid" id="gymnastPerfGrid">
+          ${buildGymnastCards(gymnastSorted, 'avg')}
+        </div>
+      </div>`;
+
+    // ── Deep Dive Analytics Section ──
+    function buildDeepDive() {
+      const evKey = eventKey;
+
+      // Home vs Away
+      const homeScores = seasonData.filter(d => {
+        const m = meets.find(mm => mm.id === d.meetId);
+        return m && m.isHome;
+      }).map(d => d.score);
+      const awayScores = seasonData.filter(d => {
+        const m = meets.find(mm => mm.id === d.meetId);
+        return m && !m.isHome;
+      }).map(d => d.score);
+      const homeAvg = homeScores.length ? mean(homeScores) : null;
+      const awayAvg = awayScores.length ? mean(awayScores) : null;
+      const haDiff = homeAvg && awayAvg ? homeAvg - awayAvg : null;
+      const haLabel = haDiff !== null
+        ? (haDiff > 0.05 ? `Home court is worth <strong>+${haDiff.toFixed(3)}</strong> on ${evName}. Gill Coliseum magic is real.`
+          : haDiff < -0.05 ? `OSU actually scores <strong>${Math.abs(haDiff).toFixed(3)}</strong> better on the road for ${evName}. Road warriors!`
+          : `Home and away are basically identical. This team is locked in everywhere.`)
+        : 'Not enough data for a split yet.';
+
+      // Win correlation threshold
+      let winThreshold = null, winPct = null;
+      if (seasonData.length >= 4) {
+        const sorted = seasonData.slice().sort((a, b) => a.score - b.score);
+        const mid = sorted[Math.floor(sorted.length * 0.6)].score;
+        const above = seasonData.filter(d => d.score >= mid);
+        const aboveWins = above.filter(d => d.result === 'W').length;
+        winThreshold = mid;
+        winPct = above.length ? Math.round((aboveWins / above.length) * 100) : 0;
+      }
+
+      // Hot streak
+      let streak = 0, streakType = 'above';
+      for (let i = seasonData.length - 1; i >= 0; i--) {
+        if (seasonData[i].score >= seasonAvg) streak++;
+        else break;
+      }
+      if (streak === 0) {
+        streakType = 'below';
+        for (let i = seasonData.length - 1; i >= 0; i--) {
+          if (seasonData[i].score < seasonAvg) streak++;
+          else break;
+        }
+      }
+      const streakLabel = streakType === 'above'
+        ? (streak >= 4 ? `${streak}-meet heater! OSU has been above average on ${evName} for the last ${streak} meets straight.`
+          : streak >= 2 ? `${streak} meets above average and counting.`
+          : 'Back above average in the latest outing.')
+        : (streak >= 3 ? `Broke through after ${streak} meets below average. Time to bounce back.`
+          : streak >= 1 ? `Dipped below average last time out. Rebound incoming?`
+          : '');
+
+      // Peak performance
+      const peakEntry = individualScores.length ? individualScores[0] : null;
+      const peakLabel = peakEntry
+        ? `Career night: <strong>${peakEntry.name}</strong> dropped a <strong>${peakEntry.score.toFixed(3)}</strong> vs ${peakEntry.opponent} on ${formatDate(peakEntry.date)}`
+        : '';
+
+      // Momentum — last 3 meets vs season avg
+      const last3 = seasonData.slice(-3);
+      const last3Avg = last3.length ? mean(last3.map(d => d.score)) : null;
+      const momDiff = last3Avg ? last3Avg - seasonAvg : 0;
+      let momLabel, momEmoji;
+      if (momDiff > 0.15) { momLabel = 'On fire'; momEmoji = '🔥'; }
+      else if (momDiff > 0.05) { momLabel = 'Building steam'; momEmoji = '📈'; }
+      else if (momDiff > -0.05) { momLabel = 'Steady Eddie'; momEmoji = '💪'; }
+      else if (momDiff > -0.15) { momLabel = 'Cooling off'; momEmoji = '😐'; }
+      else { momLabel = 'Rough patch'; momEmoji = '😬'; }
+
+      // Event MVP
+      const mvpCandidates = gymnastStats.filter(g => g.appearances >= 3)
+        .sort((a, b) => {
+          const scoreA = a.avg * 0.6 + (a.appearances / Math.max(...gymnastStats.map(g => g.appearances))) * 0.4 * 10;
+          const scoreB = b.avg * 0.6 + (b.appearances / Math.max(...gymnastStats.map(g => g.appearances))) * 0.4 * 10;
+          return scoreB - scoreA;
+        });
+      const mvp = mvpCandidates[0];
+      const mvpTitles = [
+        'The Engine', 'The Backbone', 'Captain Consistency', 'The Anchor',
+        'The Workhorse', 'Ms. Reliable', 'The Specialist'
+      ];
+      const mvpTitle = mvp ? mvpTitles[Math.abs(mvp.name.length * 7) % mvpTitles.length] : '';
+
+      // Clutch factor
+      const closeScores = seasonData.filter(d => Math.abs(d.osuTotal - d.oppTotal) <= 0.5).map(d => d.score);
+      const blowoutScores = seasonData.filter(d => Math.abs(d.osuTotal - d.oppTotal) > 1.5).map(d => d.score);
+      const closeAvg = closeScores.length ? mean(closeScores) : null;
+      const blowoutAvg = blowoutScores.length ? mean(blowoutScores) : null;
+      const clutchDiff = closeAvg && blowoutAvg ? closeAvg - blowoutAvg : null;
+
+      return `
+        <div class="section-card deep-dive-section">
+          <h2 class="section-title">Deep Dive — ${evName} Analytics</h2>
+          <div class="deep-dive-grid">
+
+            <div class="deep-dive-card">
+              <div class="deep-dive-icon">🏠</div>
+              <div class="deep-dive-label">Home vs Away</div>
+              <div class="deep-dive-body">
+                ${homeAvg ? `<div class="deep-dive-split"><span>Home: <strong style="color:#2ecc71">${homeAvg.toFixed(3)}</strong> (${homeScores.length} meets)</span><span>Away: <strong style="color:#e74c3c">${awayAvg ? awayAvg.toFixed(3) : '—'}</strong> (${awayScores.length} meets)</span></div>` : ''}
+                <div class="deep-dive-text">${haLabel}</div>
+              </div>
+            </div>
+
+            ${winThreshold !== null ? `
+            <div class="deep-dive-card">
+              <div class="deep-dive-icon">🏆</div>
+              <div class="deep-dive-label">Win Correlation</div>
+              <div class="deep-dive-body">
+                <div class="deep-dive-big">${winPct}%</div>
+                <div class="deep-dive-text">When OSU scores <strong>${winThreshold.toFixed(3)}</strong> or above on ${evName}, they win <strong>${winPct}%</strong> of the time.</div>
+              </div>
+            </div>` : ''}
+
+            <div class="deep-dive-card">
+              <div class="deep-dive-icon">${streakType === 'above' && streak >= 3 ? '🔥' : '📊'}</div>
+              <div class="deep-dive-label">Hot Streak Detector</div>
+              <div class="deep-dive-body">
+                <div class="deep-dive-text">${streakLabel}</div>
+              </div>
+            </div>
+
+            ${peakLabel ? `
+            <div class="deep-dive-card">
+              <div class="deep-dive-icon">⭐</div>
+              <div class="deep-dive-label">Peak Performance</div>
+              <div class="deep-dive-body">
+                <div class="deep-dive-text">${peakLabel}</div>
+              </div>
+            </div>` : ''}
+
+            <div class="deep-dive-card">
+              <div class="deep-dive-icon">${momEmoji}</div>
+              <div class="deep-dive-label">Momentum Arrow</div>
+              <div class="deep-dive-body">
+                <div class="deep-dive-big" style="color:${momDiff > 0.05 ? '#2ecc71' : momDiff < -0.05 ? '#e74c3c' : '#f1c40f'}">${momLabel} ${momEmoji}</div>
+                <div class="deep-dive-text">Last 3 meets avg: <strong>${last3Avg ? last3Avg.toFixed(3) : '—'}</strong> vs season avg <strong>${seasonAvg.toFixed(3)}</strong> (${momDiff >= 0 ? '+' : ''}${momDiff.toFixed(3)})</div>
+              </div>
+            </div>
+
+            ${mvp ? `
+            <div class="deep-dive-card deep-dive-mvp">
+              <div class="deep-dive-icon">👑</div>
+              <div class="deep-dive-label">Event MVP — "${mvpTitle}"</div>
+              <div class="deep-dive-body">
+                <div class="deep-dive-text"><span class="clickable-name" data-gymnast="${mvp.name}"><strong>${mvp.name}</strong></span> — ${mvp.appearances} appearances, <strong>${mvp.avg.toFixed(3)}</strong> avg, <strong>${mvp.best.toFixed(3)}</strong> best. The heartbeat of OSU ${evName}.</div>
+              </div>
+            </div>` : ''}
+
+            ${clutchDiff !== null ? `
+            <div class="deep-dive-card">
+              <div class="deep-dive-icon">🎯</div>
+              <div class="deep-dive-label">Clutch Factor</div>
+              <div class="deep-dive-body">
+                <div class="deep-dive-split"><span>Close meets: <strong>${closeAvg.toFixed(3)}</strong> (${closeScores.length})</span><span>Blowouts: <strong>${blowoutAvg.toFixed(3)}</strong> (${blowoutScores.length})</span></div>
+                <div class="deep-dive-text">${clutchDiff > 0.02
+                  ? `OSU rises to the occasion — <strong>+${clutchDiff.toFixed(3)}</strong> better in nail-biters. Ice in their veins.`
+                  : clutchDiff < -0.02
+                  ? `OSU scores <strong>${Math.abs(clutchDiff).toFixed(3)}</strong> lower in close meets. Pressure is real.`
+                  : `No difference in tight games vs blowouts. Consistent under all conditions.`}</div>
+              </div>
+            </div>` : ''}
+
+          </div>
+        </div>`;
+    }
+
+    const deepDive = buildDeepDive();
+
     document.getElementById('eventDetailContent').innerHTML = `
       <div class="event-detail-header">
-        <h1 class="event-detail-title">${evName} — Season Performance</h1>
+        <div class="event-banner-content">
+          <h1 class="event-detail-title">${evName} — Season Performance</h1>
+        </div>
+        ${mediaCard}
       </div>
       ${chart}
       ${statsPanel}
+      ${gymnastSection}
       ${leaderboard}
       ${breakdown}
+      ${deepDive}
     `;
+
+    // Sort toggle handler
+    const sortToggle = document.getElementById('gymnastSortToggle');
+    if (sortToggle) {
+      sortToggle.addEventListener('click', e => {
+        const btn = e.target.closest('.gymnast-sort-btn');
+        if (!btn) return;
+        sortToggle.querySelectorAll('.gymnast-sort-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const mode = btn.dataset.sort;
+        const sorted = mode === 'improved'
+          ? gymnastStats.slice().sort((a, b) => b.improvement - a.improvement)
+          : gymnastStats.slice().sort((a, b) => b.avg - a.avg);
+        document.getElementById('gymnastPerfGrid').innerHTML = buildGymnastCards(sorted, mode);
+      });
+    }
 
     // Bind back button
     document.getElementById('backFromEvent').onclick = () => {

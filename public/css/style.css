@@ -2407,12 +2407,47 @@ main {
 
 .event-detail-header {
   margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
 }
+.event-banner-content { flex: 1; min-width: 200px; }
 .event-detail-title {
   font-family: 'Oswald', sans-serif;
   font-size: 1.6rem;
   font-weight: 700;
   color: var(--orange);
+}
+.event-banner-media {
+  flex-shrink: 0;
+  width: 180px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.event-banner-img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  display: block;
+}
+.event-banner-placeholder {
+  height: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(215,63,9,0.08);
+}
+.event-banner-caption {
+  padding: 0.4rem 0.5rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: rgba(0,0,0,0.3);
 }
 
 .event-stats-grid {
@@ -2459,11 +2494,182 @@ main {
   background: rgba(255, 255, 255, 0.03);
 }
 
+/* Gymnast Performance Cards */
+.gymnast-perf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.gymnast-perf-card {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: fadeIn 0.4s ease both;
+}
+.gymnast-perf-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(215,63,9,0.15);
+  border-color: rgba(215,63,9,0.3);
+}
+.gymnast-card-left { flex-shrink: 0; }
+.gymnast-card-photo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+  border: 2px solid var(--orange);
+}
+.gymnast-card-initials {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(215,63,9,0.2);
+  color: var(--orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border: 2px solid var(--border);
+}
+.gymnast-card-body { flex: 1; min-width: 0; }
+.gymnast-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.gymnast-card-name { font-weight: 600; font-size: 0.95rem; }
+.gymnast-card-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+.gymnast-card-sparkline { margin: 0.4rem 0; overflow-x: auto; }
+.gymnast-card-stats {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.gymnast-card-stats strong {
+  color: var(--text);
+  font-family: 'Oswald', sans-serif;
+}
+.gymnast-trend-badge {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.trend-up { background: rgba(46,204,113,0.15); color: #2ecc71; }
+.trend-down { background: rgba(231,76,60,0.15); color: #e74c3c; }
+.trend-steady { background: rgba(170,170,170,0.12); color: #aaa; }
+
+/* Sort toggle */
+.gymnast-sort-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.gymnast-sort-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.gymnast-sort-btn.active {
+  background: var(--orange);
+  color: #fff;
+}
+
+/* Deep Dive */
+.deep-dive-section { margin-top: 0.5rem; }
+.deep-dive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.deep-dive-card {
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  padding: 1rem;
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: border-color 0.2s;
+}
+.deep-dive-card:hover {
+  border-color: rgba(215,63,9,0.25);
+}
+.deep-dive-mvp {
+  border-color: rgba(255,215,0,0.3);
+  background: rgba(255,215,0,0.04);
+}
+.deep-dive-icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
+.deep-dive-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--orange);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+.deep-dive-body { font-size: 0.85rem; color: var(--text); line-height: 1.5; }
+.deep-dive-big {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--orange);
+  margin-bottom: 0.3rem;
+}
+.deep-dive-text { color: var(--text-muted); font-size: 0.8rem; line-height: 1.5; }
+.deep-dive-text strong { color: var(--text); }
+.deep-dive-split {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 600px) {
   .event-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   .event-detail-title {
     font-size: 1.2rem;
+  }
+  .event-detail-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .event-banner-media {
+    width: 100%;
+  }
+  .event-banner-img {
+    height: 140px;
+  }
+  .gymnast-perf-grid {
+    grid-template-columns: 1fr;
+  }
+  .deep-dive-grid {
+    grid-template-columns: 1fr;
   }
 }
