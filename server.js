@@ -379,8 +379,8 @@ app.get('/api/athlete-progression/:name', (req, res) => {
       summary: {
         total_meets: meets.length,
         season_average: seasonAvg ? parseFloat(seasonAvg.toFixed(3)) : null,
-        best_meet: meets.reduce((max, m) => (m.aa || 0) > (max.aa || 0) ? m : max, meets[0]),
-        worst_meet: meets.reduce((min, m) => (m.aa || 0) < (min.aa || 0) ? m : min, meets[0]),
+        best_meet: meets.length > 0 ? meets.reduce((max, m) => (m.aa || 0) > (max.aa || 0) ? m : max) : null,
+        worst_meet: meets.length > 0 ? meets.reduce((min, m) => (m.aa || 0) < (min.aa || 0) ? m : min) : null,
         progression_trend: progressionTrend,
         first_half_average: firstHalfAvg ? parseFloat(firstHalfAvg.toFixed(3)) : null,
         second_half_average: secondHalfAvg ? parseFloat(secondHalfAvg.toFixed(3)) : null
