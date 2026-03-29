@@ -1,0 +1,31 @@
+
+> 1-build-stats-website@1.0.0 start
+> node server.js
+
+Stats computed: 15 athletes, 18 competitors
+🤸 OSU Gymnastics 2026 running on http://localhost:9999
+📡 WebSocket server available at ws://localhost:9999/ws
+⚠️  WARNING: ANTHROPIC_API_KEY env var is not set
+   Chatbot AI features will not work
+   See CHATBOT_SETUP.md for configuration instructions
+⚠️  WARNING: REFRESH_SECRET env var is not set — POST /api/refresh is unprotected
+[WebSocket] Client connected. Total clients: 1
+[WebSocket] Client disconnected. Total clients: 0
+[WebSocket] Client connected. Total clients: 1
+[WebSocket] Client disconnected. Total clients: 0
+[WebSocket] Client connected. Total clients: 1
+[WebSocket] Client disconnected. Total clients: 0
+[WebSocket] Client connected. Total clients: 1
+[WebSocket] Client connected. Total clients: 2
+[WebSocket] Client connected. Total clients: 3
+[WebSocket] Client disconnected. Total clients: 2
+[WebSocket] Client disconnected. Total clients: 1
+[WebSocket] Client disconnected. Total clients: 0
+[WebSocket] Client connected. Total clients: 1
+[WebSocket] Client disconnected. Total clients: 0
+[Live Updates] Detected changes in meets.json, broadcasting to clients...
+Stats computed: 15 athletes, 18 competitors
+[Live Updates] Detected changes in meets.json, broadcasting to clients...
+Stats computed: 15 athletes, 18 competitors
+[Live Updates] Detected changes in meets.json, broadcasting to clients...
+Stats computed: 15 athletes, 18 competitors
