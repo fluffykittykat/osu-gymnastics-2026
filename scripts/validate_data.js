@@ -131,6 +131,53 @@ meets.forEach((m, i) => {
       }
     });
   }
+
+  // Lineup validation
+  if (m.lineups && typeof m.lineups === 'object') {
+    EVENTS.forEach(ev => {
+      const lineup = m.lineups[ev];
+      if (!lineup || !Array.isArray(lineup)) return;
+      lineup.forEach(entry => {
+        if (!entry.name) {
+          error(m.id, `Lineup ${ev}: entry missing name`);
+        }
+        if (typeof entry.score !== 'number' || entry.score < 0 || entry.score > 10.5) {
+          warn(m.id, `Lineup ${ev}: ${entry.name || '?'} score ${entry.score} outside range [0-10.5]`);
+        }
+        if (typeof entry.position !== 'number' || entry.position < 1 || entry.position > 6) {
+          warn(m.id, `Lineup ${ev}: ${entry.name || '?'} invalid position ${entry.position}`);
+        }
+      });
+      // NQS: if 6 entries, sum of top 5 should match event total (within tolerance)
+      if (lineup.length === 6 && m.events && m.events[ev] && m.events[ev].osu) {
+        const sorted = lineup.map(e => e.score).sort((a, b) => a - b);
+        const top5sum = sorted.slice(1).reduce((s, v) => s + v, 0);
+        const eventTotal = m.events[ev].osu;
+        if (Math.abs(top5sum - eventTotal) > 0.01) {
+          warn(m.id, `Lineup ${ev}: NQS top-5 sum (${top5sum.toFixed(3)}) != event total (${eventTotal.toFixed(3)})`);
+        }
+      }
+    });
+  }
+
+  // allTeams validation
+  if (m.allTeams && Array.isArray(m.allTeams)) {
+    m.allTeams.forEach(t => {
+      if (!t.team) {
+        error(m.id, 'allTeams entry missing team name');
+      }
+      if (t.total != null && (t.total < 140 || t.total > 200)) {
+        warn(m.id, `allTeams ${t.team}: total ${t.total} outside range [140-200]`);
+      }
+    });
+    // Check Oregon State is in allTeams for quad meets
+    if (m.quadMeet) {
+      const hasOSU = m.allTeams.some(t => t.team && t.team.toLowerCase().includes('oregon'));
+      if (!hasOSU) {
+        warn(m.id, 'Quad meet allTeams[] missing Oregon State');
+      }
+    }
+  }
 });
 
 console.log(`\nResults: ${errors} error(s), ${warnings} warning(s)`);
