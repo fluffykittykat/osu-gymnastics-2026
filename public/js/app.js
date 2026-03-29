@@ -12,6 +12,8 @@
   let lastRefreshedTime = null;
   let autoRefreshInterval = null;
   let autoRefreshEnabled = false;
+  let compareMode = false;
+  let compareSelections = [];
 
   const EVENT_NAMES = {
     vault: 'Vault', bars: 'Bars', beam: 'Beam', floor: 'Floor', aa: 'All-Around'
@@ -46,9 +48,9 @@
   }
 
   // ===== Shared Stats Helpers (delegated to Stats module) =====
-  const mean = Stats.mean;
-  const stddev = Stats.stddev;
-  const pearson = Stats.pearson;
+  const mean = StatsLib.mean;
+  const stddev = StatsLib.stddev;
+  const pearson = StatsLib.pearson;
   function fmt(n, dp=3) { return n!=null&&!isNaN(n) ? n.toFixed(dp) : '—'; }
 
   // ===== Toast Notifications =====
@@ -418,7 +420,15 @@
         <div class="mc-stat-card">
           <div class="mc-stat-value" id="mcAvg">0.000</div>
           <div class="mc-stat-label">Team Avg</div>
-          <div class="mc-context">${trajArrow} ${trajLabel}</div>
+          <div class="mc-context">${trajArrow} ${trajLabel}${(() => {
+            const rolling = StatsLib.getRollingAverage(meets, 3).filter(r => r.avg != null);
+            if (rolling.length < 2) return '';
+            const last = rolling[rolling.length - 1].avg;
+            const prev = rolling[rolling.length - 2].avg;
+            const diff = last - prev;
+            const arrow = diff > 0.1 ? ' <span class="momentum-up">↑</span>' : diff < -0.1 ? ' <span class="momentum-down">↓</span>' : '';
+            return arrow;
+          })()}</div>
         </div>
         <div class="mc-stat-card">
           <div class="mc-stat-value" id="mcHome">0.000</div>
@@ -443,10 +453,21 @@
           const arrow = d.trend > 0.03 ? '▲' : d.trend < -0.03 ? '▼' : '→';
           const arrowColor = d.trend > 0.03 ? '#2ecc71' : d.trend < -0.03 ? '#e74c3c' : '#aaa';
           const barPct = Math.round(((d.avg||0) - 9.6) / 0.4 * 100);
+          // NQS chip: average of top 6 NQS values across the season
+          const nqsVals = [];
+          meets.forEach(m => {
+            const nqsData = StatsLib.getNQSBreakdown(m, ev);
+            if (nqsData) nqsVals.push(nqsData.nqs);
+          });
+          nqsVals.sort((a,b) => b - a);
+          const topNqs = nqsVals.slice(0, 6);
+          const projNqs = topNqs.length ? (topNqs.reduce((s,v)=>s+v,0)/topNqs.length) : null;
+          const nqsChip = projNqs ? `<div class="mc-ev-nqs" title="Projected NQS (avg of best ${topNqs.length} meets)">NQS ${projNqs.toFixed(3)}</div>` : '';
           return `<div class="mc-event-card">
             <div class="mc-ev-label">${EVemoji[ev]} ${EVlabel[ev]}</div>
             <div class="mc-ev-avg">${d.avg != null ? d.avg.toFixed(3) : '—'}</div>
             <div class="mc-ev-trend" style="color:${arrowColor}">${arrow} ${d.trend!=null?((d.trend>=0?'+':'')+d.trend.toFixed(3)+' trend'):'—'}</div>
+            ${nqsChip}
             <div class="mc-ev-bar-wrap"><div class="mc-ev-bar" style="width:${Math.max(0,Math.min(100,barPct))}%"></div></div>
           </div>`;
         }).join('')}
@@ -789,7 +810,46 @@
     renderMissionControl();
 
     renderScoreTrend();
+    renderTeamRankings();
     renderMeetCards();
+  }
+
+  function renderTeamRankings() {
+    const section = document.getElementById('teamRankingsSection');
+    const content = document.getElementById('teamRankingsContent');
+    if (!section || !content) return;
+
+    const rankings = StatsLib.getSeasonRankings(meets);
+    if (rankings.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+    section.style.display = '';
+
+    content.innerHTML = `
+      <p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:0.75rem;">Averages from quad meet data (${rankings[0].appearances > 0 ? rankings[0].appearances : '—'} max appearances). Teams ranked by average total.</p>
+      <div style="overflow-x:auto;">
+        <table class="team-rankings-table">
+          <thead><tr><th>#</th><th>Team</th><th>Avg Total</th><th>Best</th><th>VT</th><th>UB</th><th>BB</th><th>FX</th><th>Meets</th></tr></thead>
+          <tbody>
+            ${rankings.map((t, i) => {
+              const isOSU = t.team.toLowerCase().includes('oregon');
+              return `
+              <tr class="${isOSU ? 'osu-highlight-row' : ''}">
+                <td>${i + 1}</td>
+                <td style="${isOSU ? 'color:#D73F09;font-weight:700;' : ''}">${t.team}</td>
+                <td style="font-family:Oswald;font-weight:600;${isOSU ? 'color:#D73F09;' : ''}">${t.avgTotal.toFixed(3)}</td>
+                <td>${t.bestTotal ? t.bestTotal.toFixed(3) : '—'}</td>
+                <td>${t.vault ? t.vault.toFixed(3) : '—'}</td>
+                <td>${t.bars ? t.bars.toFixed(3) : '—'}</td>
+                <td>${t.beam ? t.beam.toFixed(3) : '—'}</td>
+                <td>${t.floor ? t.floor.toFixed(3) : '—'}</td>
+                <td>${t.appearances}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
   }
 
   function renderScoreTrend() {
@@ -843,13 +903,46 @@
       return `<text x="${x}" y="${h - 5}" text-anchor="middle" fill="#999" font-size="9" font-family="Inter">${formatDate(m.date)}</text>`;
     }).join('');
 
+    // Rolling 3-meet average overlay
+    const rolling = StatsLib.getRollingAverage(meets, 3);
+    const rollingValid = rolling.filter(r => r.avg != null);
+    let rollingPath = '';
+    if (rollingValid.length >= 2) {
+      // Map rolling entries to the same x positions as scoredMeets by date
+      const dateToIdx = {};
+      scoredMeets.forEach((m, i) => { dateToIdx[m.date] = i; });
+      rollingPath = rollingValid.map((r, ri) => {
+        const idx = dateToIdx[r.date];
+        if (idx === undefined) return '';
+        const x = xScale(idx).toFixed(1);
+        const y = yScale(r.avg).toFixed(1);
+        return `${ri === 0 ? 'M' : 'L'}${x},${y}`;
+      }).filter(Boolean).join(' ');
+      if (rollingPath) {
+        rollingPath = `<path d="${rollingPath}" fill="none" stroke="#3498db" stroke-width="1.5" stroke-dasharray="6,3" stroke-linejoin="round" opacity="0.7">
+          <title>3-meet rolling average</title>
+        </path>`;
+      }
+    }
+
+    // Legend
+    const legend = rollingValid.length >= 2 ? `
+      <g transform="translate(${w - pad.right - 150}, ${pad.top})">
+        <line x1="0" y1="6" x2="20" y2="6" stroke="var(--orange)" stroke-width="2.5"/>
+        <text x="24" y="10" fill="#999" font-size="9" font-family="Inter">Score</text>
+        <line x1="0" y1="20" x2="20" y2="20" stroke="#3498db" stroke-width="1.5" stroke-dasharray="6,3"/>
+        <text x="24" y="24" fill="#999" font-size="9" font-family="Inter">3-meet avg</text>
+      </g>` : '';
+
     container.innerHTML = `
       <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
         ${yGridLines}
+        ${rollingPath}
         <path d="${pathD}" fill="none" stroke="var(--orange)" stroke-width="2.5" stroke-linejoin="round"/>
         ${dots}
         ${yLabels}
         ${xLabels}
+        ${legend}
       </svg>
     `;
   }
@@ -1651,19 +1744,35 @@
       const barPct = ((osuScore / 50) * 100).toFixed(1);
 
       let rows;
+      let nqsHtml = '';
       if (meet.lineups && meet.lineups[event] && meet.lineups[event].length > 0) {
         // Render in competition order using lineup data
         const lineup = meet.lineups[event];
         const topScore = Math.max(...lineup.map(e => e.score));
+
+        // NQS: if 6 entries, lowest is dropped, top 5 count
+        const scores = lineup.map(e => e.score).sort((a,b) => a - b);
+        const isDrop = lineup.length >= 6;
+        const dropScore = isDrop ? scores[0] : null;
+        // Handle ties: only mark one as dropped
+        let dropMarked = false;
+
         rows = lineup.map(entry => {
           const isTop = entry.score === topScore;
+          const isDropped = isDrop && !dropMarked && entry.score === dropScore;
+          if (isDropped) dropMarked = true;
           return `
-            <tr class="lineup-row">
+            <tr class="lineup-row${isDropped ? ' nqs-dropped' : ''}">
               <td style="color:#aaa;font-size:0.75rem;font-family:monospace;width:1.5rem;">${entry.position}</td>
-              <td><span class="clickable-name lineup-gymnast" data-gymnast="${entry.name}" data-event="${event}" data-meet="${meet.id}">${entry.name}</span></td>
-              <td class="score-cell${isTop ? ' score-top' : ''}">${entry.score.toFixed(3)}</td>
+              <td><span class="clickable-name lineup-gymnast" data-gymnast="${entry.name}" data-event="${event}" data-meet="${meet.id}">${entry.name}</span>${isDropped ? ' <span class="nqs-drop-label">DROP</span>' : ''}</td>
+              <td class="score-cell${isTop ? ' score-top' : ''}${isDropped ? ' nqs-dropped-score' : ''}">${entry.score.toFixed(3)}</td>
             </tr>`;
         }).join('');
+
+        if (isDrop) {
+          const nqsTotal = scores.slice(1).reduce((s,v) => s + v, 0);
+          nqsHtml = `<div class="nqs-summary"><span class="nqs-label">NQS</span> Top 5 count: <strong>${nqsTotal.toFixed(3)}</strong></div>`;
+        }
       } else {
         // Fallback: sort by score descending (legacy behaviour)
         const eventAthletes = meet.athletes
@@ -1690,6 +1799,7 @@
             <thead><tr><th>#</th><th>Athlete</th><th style="text-align:right">Score</th></tr></thead>
             <tbody>${rows || '<tr><td colspan="3" style="color:var(--text-muted)">No data</td></tr>'}</tbody>
           </table>
+          ${nqsHtml}
         </div>`;
     }).join('');
 
@@ -2097,6 +2207,154 @@
           <div class="gymnast-averages">${avgStats}</div>
         </div>`;
     }).join('');
+  }
+
+  function toggleCompareMode() {
+    compareMode = !compareMode;
+    compareSelections = [];
+    const bar = document.getElementById('compareBar');
+    const btn = document.getElementById('compareToggleBtn');
+    const comp = document.getElementById('gymnastComparison');
+    if (compareMode) {
+      bar.style.display = 'flex';
+      btn.textContent = 'Exit Compare';
+      btn.classList.add('active');
+      comp.style.display = 'none';
+      updateCompareBar();
+    } else {
+      bar.style.display = 'none';
+      btn.textContent = 'Compare Athletes';
+      btn.classList.remove('active');
+      comp.style.display = 'none';
+      document.querySelectorAll('.gymnast-card.compare-selected').forEach(c => c.classList.remove('compare-selected'));
+    }
+  }
+
+  function updateCompareBar() {
+    const text = document.getElementById('compareBarText');
+    const goBtn = document.getElementById('compareGoBtn');
+    if (compareSelections.length === 0) {
+      text.textContent = 'Select 2 athletes to compare';
+    } else if (compareSelections.length === 1) {
+      text.textContent = `Selected: ${compareSelections[0]} — pick one more`;
+    } else {
+      text.textContent = `${compareSelections[0]} vs ${compareSelections[1]}`;
+    }
+    goBtn.disabled = compareSelections.length < 2;
+  }
+
+  function handleCompareSelect(name) {
+    const idx = compareSelections.indexOf(name);
+    if (idx >= 0) {
+      compareSelections.splice(idx, 1);
+    } else if (compareSelections.length < 2) {
+      compareSelections.push(name);
+    } else {
+      // Replace second selection
+      compareSelections[1] = name;
+    }
+    // Update card visual
+    document.querySelectorAll('.gymnast-card').forEach(c => {
+      c.classList.toggle('compare-selected', compareSelections.includes(c.dataset.gymnast));
+    });
+    updateCompareBar();
+  }
+
+  function renderComparison() {
+    if (compareSelections.length < 2) return;
+    const [name1, name2] = compareSelections;
+    const s1 = StatsLib.getAthleteStats(meets, name1);
+    const s2 = StatsLib.getAthleteStats(meets, name2);
+
+    const EVENTS = ['vault', 'bars', 'beam', 'floor'];
+    const EVN = { vault: 'Vault', bars: 'Bars', beam: 'Beam', floor: 'Floor' };
+
+    // Build side-by-side stats table
+    const rows = EVENTS.map(ev => {
+      const a = s1.perEvent[ev], b = s2.perEvent[ev];
+      if (!a && !b) return '';
+      const avgA = a ? a.avg.toFixed(3) : '—';
+      const avgB = b ? b.avg.toFixed(3) : '—';
+      const bestA = a ? a.best.toFixed(3) : '—';
+      const bestB = b ? b.best.toFixed(3) : '—';
+      const winClass1 = a && b && a.avg > b.avg ? 'compare-winner' : '';
+      const winClass2 = a && b && b.avg > a.avg ? 'compare-winner' : '';
+      return `<tr>
+        <td class="${winClass1}">${avgA}</td>
+        <td class="${winClass1}">${bestA}</td>
+        <td style="font-weight:600;color:var(--orange)">${EVN[ev]}</td>
+        <td class="${winClass2}">${avgB}</td>
+        <td class="${winClass2}">${bestB}</td>
+      </tr>`;
+    }).join('');
+
+    // Sparkline overlay for shared events
+    let sparkOverlays = '';
+    EVENTS.forEach(ev => {
+      const e1 = s1.perEvent[ev], e2 = s2.perEvent[ev];
+      if (!e1 || !e2 || e1.entries.length < 2 || e2.entries.length < 2) return;
+      const allScores = [...e1.scores, ...e2.scores];
+      const minS = Math.min(...allScores) - 0.05;
+      const maxS = Math.max(...allScores) + 0.05;
+      const w = 300, h = 60;
+      function mkPath(entries, color) {
+        const pts = entries.map((e, i) => {
+          const x = 10 + (i / (entries.length - 1)) * (w - 20);
+          const y = 5 + (1 - (e.score - minS) / (maxS - minS)) * (h - 10);
+          return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+        }).join(' ');
+        return `<path d="${pts}" fill="none" stroke="${color}" stroke-width="2" opacity="0.8"/>`;
+      }
+      sparkOverlays += `
+        <div class="compare-spark">
+          <div class="compare-spark-title">${EVN[ev]}</div>
+          <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+            ${mkPath(e1.entries, '#D73F09')}
+            ${mkPath(e2.entries, '#3498db')}
+          </svg>
+          <div class="compare-spark-legend">
+            <span style="color:#D73F09">${name1.split(' ')[1] || name1}</span>
+            <span style="color:#3498db">${name2.split(' ')[1] || name2}</span>
+          </div>
+        </div>`;
+    });
+
+    const photo1 = photos[name1];
+    const photo2 = photos[name2];
+    const av1 = photo1 ? `<img src="${photo1}" class="compare-avatar" alt="${name1}">` : `<div class="compare-avatar compare-avatar-initials">${name1.split(' ').map(n=>n[0]).join('')}</div>`;
+    const av2 = photo2 ? `<img src="${photo2}" class="compare-avatar" alt="${name2}">` : `<div class="compare-avatar compare-avatar-initials">${name2.split(' ').map(n=>n[0]).join('')}</div>`;
+
+    const panel = document.getElementById('gymnastComparison');
+    panel.style.display = 'block';
+    document.getElementById('gymnastCards').style.display = 'none';
+
+    panel.innerHTML = `
+      <button class="back-btn" id="backFromCompare">← Back to Gymnasts</button>
+      <div class="compare-header">
+        <div class="compare-athlete">${av1}<div class="compare-name" style="color:#D73F09">${name1}</div></div>
+        <div class="compare-vs">VS</div>
+        <div class="compare-athlete">${av2}<div class="compare-name" style="color:#3498db">${name2}</div></div>
+      </div>
+      <div class="section-card">
+        <h2 class="section-title">Head-to-Head Stats</h2>
+        <table class="compare-table">
+          <thead><tr><th>Avg</th><th>Best</th><th>Event</th><th>Avg</th><th>Best</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      ${sparkOverlays ? `<div class="section-card"><h2 class="section-title">Score Trends Overlay</h2><div class="compare-sparks">${sparkOverlays}</div></div>` : ''}
+    `;
+
+    document.getElementById('backFromCompare').addEventListener('click', () => {
+      panel.style.display = 'none';
+      document.getElementById('gymnastCards').style.display = 'grid';
+      compareMode = false;
+      compareSelections = [];
+      document.getElementById('compareBar').style.display = 'none';
+      document.getElementById('compareToggleBtn').textContent = 'Compare Athletes';
+      document.getElementById('compareToggleBtn').classList.remove('active');
+      document.querySelectorAll('.gymnast-card.compare-selected').forEach(c => c.classList.remove('compare-selected'));
+    });
   }
 
   function showGymnastProfile(name) {
@@ -2799,6 +3057,48 @@
         </div>
       </div>`;
 
+    // Score Distribution chart (box-and-whisker)
+    const dist = StatsLib.getScoreDistribution(meets, eventKey);
+    let distributionChart = '';
+    if (dist.scores.length >= 5) {
+      const dW = 500, dH = 70;
+      const dPad = { left: 50, right: 20 };
+      const usable = dW - dPad.left - dPad.right;
+      const dMin = dist.min - 0.05;
+      const dMax = dist.max + 0.05;
+      const dRange = dMax - dMin || 0.1;
+      const sx = v => dPad.left + ((v - dMin) / dRange) * usable;
+
+      const boxY = 20, boxH = 30;
+      const whiskerY = boxY + boxH / 2;
+
+      distributionChart = `
+        <div class="section-card">
+          <h2 class="section-title">Score Distribution</h2>
+          <p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:0.5rem;">Individual OSU ${evName} scores — min / Q1 / median / Q3 / max</p>
+          <svg viewBox="0 0 ${dW} ${dH}" preserveAspectRatio="xMidYMid meet" style="display:block;max-width:100%;">
+            <!-- Whisker line (min to max) -->
+            <line x1="${sx(dist.min)}" y1="${whiskerY}" x2="${sx(dist.max)}" y2="${whiskerY}" stroke="#666" stroke-width="1"/>
+            <!-- Min cap -->
+            <line x1="${sx(dist.min)}" y1="${boxY + 5}" x2="${sx(dist.min)}" y2="${boxY + boxH - 5}" stroke="#666" stroke-width="1.5"/>
+            <!-- Max cap -->
+            <line x1="${sx(dist.max)}" y1="${boxY + 5}" x2="${sx(dist.max)}" y2="${boxY + boxH - 5}" stroke="#666" stroke-width="1.5"/>
+            <!-- IQR box (Q1 to Q3) -->
+            <rect x="${sx(dist.q1)}" y="${boxY}" width="${sx(dist.q3) - sx(dist.q1)}" height="${boxH}" rx="3" fill="var(--orange)" opacity="0.35" stroke="var(--orange)" stroke-width="1"/>
+            <!-- Median line -->
+            <line x1="${sx(dist.median)}" y1="${boxY}" x2="${sx(dist.median)}" y2="${boxY + boxH}" stroke="#fff" stroke-width="2"/>
+            <!-- Labels -->
+            <text x="${sx(dist.min)}" y="${boxY - 4}" text-anchor="middle" fill="#888" font-size="9" font-family="Inter">${dist.min.toFixed(3)}</text>
+            <text x="${sx(dist.q1)}" y="${boxY + boxH + 12}" text-anchor="middle" fill="#aaa" font-size="9" font-family="Inter">Q1 ${dist.q1.toFixed(3)}</text>
+            <text x="${sx(dist.median)}" y="${boxY - 4}" text-anchor="middle" fill="#fff" font-size="10" font-family="Oswald" font-weight="600">${dist.median.toFixed(3)}</text>
+            <text x="${sx(dist.q3)}" y="${boxY + boxH + 12}" text-anchor="middle" fill="#aaa" font-size="9" font-family="Inter">Q3 ${dist.q3.toFixed(3)}</text>
+            <text x="${sx(dist.max)}" y="${boxY - 4}" text-anchor="middle" fill="#888" font-size="9" font-family="Inter">${dist.max.toFixed(3)}</text>
+            <!-- Dot plot -->
+            ${dist.scores.map(s => `<circle cx="${sx(s)}" cy="${whiskerY}" r="2.5" fill="var(--orange)" opacity="0.4"/>`).join('')}
+          </svg>
+        </div>`;
+    }
+
     // All-time leaderboard — top individual scores across all meets
     const individualScores = [];
     meets.forEach(m => {
@@ -3176,6 +3476,51 @@
 
     const deepDive = buildDeepDive();
 
+    // ── Lineup Position Analysis ──
+    const posResult = StatsLib.getLineupPositionStats(meets, eventKey);
+    const posStats = posResult.positions || [];
+    const hasPositionData = posStats.some(p => p.count > 0);
+    let positionChart = '';
+    if (hasPositionData) {
+      const posW = 400, posH = 160;
+      const posPad = { top: 20, right: 20, bottom: 30, left: 50 };
+      const posAvgs = posStats.map(p => p.avg || 0);
+      const posMin = Math.min(...posAvgs.filter(v => v > 0)) - 0.05;
+      const posMax = Math.max(...posAvgs) + 0.05;
+      const posRange = posMax - posMin || 1;
+      const barW = 40, barGap = 15;
+
+      const posBars = posStats.map((p, i) => {
+        if (!p.avg) return '';
+        const x = posPad.left + i * (barW + barGap);
+        const barH = Math.max(4, ((p.avg - posMin) / posRange) * (posH - posPad.top - posPad.bottom));
+        const y = posH - posPad.bottom - barH;
+        const isAnchor = p.position === 6;
+        const isLeadoff = p.position === 1;
+        const fill = isAnchor ? '#D73F09' : isLeadoff ? '#f39c12' : 'var(--orange)';
+        const opacity = (isAnchor || isLeadoff) ? '1' : '0.6';
+        const label = isAnchor ? 'Anchor' : isLeadoff ? 'Leadoff' : '';
+        return `
+          <g>
+            <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="3" fill="${fill}" opacity="${opacity}">
+              <title>Position ${p.position}: avg ${p.avg ? p.avg.toFixed(3) : '—'} (${p.count} scores)</title>
+            </rect>
+            <text x="${x + barW/2}" y="${y - 4}" text-anchor="middle" fill="${(isAnchor||isLeadoff) ? '#fff' : '#aaa'}" font-size="10" font-family="Oswald">${p.avg ? p.avg.toFixed(3) : '—'}</text>
+            <text x="${x + barW/2}" y="${posH - 10}" text-anchor="middle" fill="#999" font-size="10" font-family="Inter">#${p.position}</text>
+            ${label ? `<text x="${x + barW/2}" y="${posH}" text-anchor="middle" fill="${fill}" font-size="8" font-family="Inter" font-weight="600">${label}</text>` : ''}
+          </g>`;
+      }).join('');
+
+      positionChart = `
+        <div class="section-card">
+          <h2 class="section-title">Lineup Position Analysis</h2>
+          <p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:0.75rem;">Average score by lineup position. <span style="color:#f39c12">Leadoff</span> sets the tone, <span style="color:#D73F09">Anchor</span> closes it out.</p>
+          <svg viewBox="0 0 ${posPad.left + 6*(barW+barGap)} ${posH + 5}" preserveAspectRatio="xMidYMid meet" style="display:block;max-width:100%;">
+            ${posBars}
+          </svg>
+        </div>`;
+    }
+
     document.getElementById('eventDetailContent').innerHTML = `
       <div class="event-detail-header">
         <div class="event-banner-content">
@@ -3185,6 +3530,8 @@
       </div>
       ${chart}
       ${statsPanel}
+      ${distributionChart}
+      ${positionChart}
       ${gymnastSection}
       ${leaderboard}
       ${breakdown}
@@ -3248,23 +3595,44 @@
       return;
     }
 
+    // AA-specific: add trend arrow when >=3 entries
+    const isAA = event === 'aa';
+
     list.innerHTML = gymnasts.map((g, i) => {
       const photo = photos[g.name];
       const avatar = photo
         ? `<img src="${photo}" class="lb-avatar" alt="${g.name}">`
         : `<div class="lb-avatar lb-avatar-initials">${g.name.split(' ').map(n => n[0]).join('')}</div>`;
+
+      // Trend indicator for AA
+      let trendHtml = '';
+      if (isAA && g.count >= 3) {
+        const half = Math.floor(g.count / 2);
+        const scores = byGymnast[g.name].map(e => e.score);
+        const firstAvg = mean(scores.slice(0, half || 1));
+        const secondAvg = mean(scores.slice(half || 1));
+        const diff = secondAvg - firstAvg;
+        const arrow = diff > 0.05 ? '▲' : diff < -0.05 ? '▼' : '►';
+        const color = diff > 0.05 ? '#2ecc71' : diff < -0.05 ? '#e74c3c' : '#aaa';
+        trendHtml = `<div class="lb-stat"><span class="lb-stat-label">TREND</span><span class="lb-stat-val" style="color:${color}">${arrow}</span></div>`;
+      } else if (isAA && g.count < 3) {
+        trendHtml = `<div class="lb-stat"><span class="lb-stat-label">n</span><span class="lb-stat-val" style="color:var(--text-muted)">${g.count}</span></div>`;
+      }
+
+      const dp = isAA ? 3 : 3;
       return `
       <div class="leaderboard-item">
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
         ${avatar}
         <div class="lb-info">
           <div class="lb-name"><span class="clickable-name" data-gymnast="${g.name}">${g.name}</span></div>
-          <div class="lb-context">Best: <span class="clickable-meet" data-meet-id="${g.best.meetId}">${formatDate(g.best.meetDate)} vs ${g.best.opponent}</span></div>
+          <div class="lb-context">Best: <span class="clickable-meet" data-meet-id="${g.best.meetId}">${formatDate(g.best.meetDate)} vs ${g.best.opponent}</span>${isAA ? ` <span style="color:var(--text-muted);font-size:0.75rem">(${g.count} AA entries)</span>` : ''}</div>
         </div>
         <div class="lb-stats">
-          <div class="lb-stat"><span class="lb-stat-label">HIGH</span><span class="lb-stat-val">${g.best.score.toFixed(3)}</span></div>
-          <div class="lb-stat"><span class="lb-stat-label">AVG</span><span class="lb-stat-val">${g.avg.toFixed(3)}</span></div>
-          <div class="lb-stat"><span class="lb-stat-label">LAST</span><span class="lb-stat-val">${g.recent.score.toFixed(3)}</span></div>
+          <div class="lb-stat"><span class="lb-stat-label">HIGH</span><span class="lb-stat-val">${g.best.score.toFixed(dp)}</span></div>
+          <div class="lb-stat"><span class="lb-stat-label">AVG</span><span class="lb-stat-val">${g.avg.toFixed(dp)}</span></div>
+          <div class="lb-stat"><span class="lb-stat-label">LAST</span><span class="lb-stat-val">${g.recent.score.toFixed(dp)}</span></div>
+          ${trendHtml}
         </div>
       </div>`;
     }).join('');
@@ -3273,7 +3641,7 @@
   // ===== Insights =====
   function renderInsights() {
     // --- helpers ---
-    const linReg = Stats.linReg;
+    const linReg = StatsLib.linReg;
     function fmtDiff(n) { if (typeof n !== 'number' || isNaN(n)) return '—'; return (n>=0?'+':'')+n.toFixed(3); }
 
     const EVS = ['vault','bars','beam','floor'];
@@ -4058,7 +4426,7 @@
 // ===== Season Wild Stats =====
   function renderSeasonWildStats() {
     // ── Shared stats helpers (delegated to Stats module) ────────────────────
-    const sd = Stats.stddev;
+    const sd = StatsLib.stddev;
     function corrStrength(r) {
       const a = Math.abs(r);
       if(a < 0.2) return 'negligible';
@@ -4410,10 +4778,20 @@
       renderGymnasts(e.target.value);
     });
 
+    // Compare toggle
+    document.getElementById('compareToggleBtn').addEventListener('click', toggleCompareMode);
+    document.getElementById('compareCancelBtn').addEventListener('click', toggleCompareMode);
+    document.getElementById('compareGoBtn').addEventListener('click', renderComparison);
+
     // Gymnast card click
     document.getElementById('gymnastCards').addEventListener('click', e => {
       const card = e.target.closest('.gymnast-card');
-      if (card) showGymnastProfile(card.dataset.gymnast);
+      if (!card) return;
+      if (compareMode) {
+        handleCompareSelect(card.dataset.gymnast);
+        return;
+      }
+      showGymnastProfile(card.dataset.gymnast);
     });
 
     // Event tabs

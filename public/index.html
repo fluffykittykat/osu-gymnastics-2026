@@ -56,6 +56,12 @@
         <div class="chart-container" id="scoreTrend"></div>
       </div>
 
+      <!-- Team Season Rankings -->
+      <div class="section-card" id="teamRankingsSection" style="display:none;">
+        <h2 class="section-title">Team Season Rankings</h2>
+        <div id="teamRankingsContent"></div>
+      </div>
+
       <!-- Filters -->
       <div class="filter-bar">
         <button class="filter-btn active" data-filter="all">All</button>
@@ -79,8 +85,16 @@
     <section id="view-gymnasts" class="view" style="display:none;">
       <div class="search-container">
         <input type="text" id="gymnastSearch" class="search-input" placeholder="Search gymnasts by name...">
+        <button class="compare-toggle-btn" id="compareToggleBtn">Compare Athletes</button>
+      </div>
+      <div class="compare-bar" id="compareBar" style="display:none;">
+        <span class="compare-bar-text" id="compareBarText">Select 2 athletes to compare</span>
+        <button class="compare-go-btn" id="compareGoBtn" disabled>Compare</button>
+        <button class="compare-cancel-btn" id="compareCancelBtn">Cancel</button>
       </div>
       <div class="gymnast-cards" id="gymnastCards"></div>
+      <!-- Gymnast Comparison Panel -->
+      <div id="gymnastComparison" style="display:none;"></div>
       <!-- Gymnast Detail (shown when clicked) -->
       <div id="gymnastDetail" style="display:none;"></div>
     </section>
@@ -137,8 +151,8 @@
   <!-- Toast Container -->
   <div id="toastContainer" class="toast-container"></div>
 
-  <script src="js/search.js?v=0"></script>
   <script src="js/stats.js?v=0"></script>
+  <script src="js/search.js?v=0"></script>
   <script src="js/app.js?v=0"></script>
 </body>
 </html>
