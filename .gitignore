@@ -1,3 +1,6 @@
 node_modules/
 data/pdfs/
 data/pdf_cache/
+.env
+.env.local
+.env.*.local

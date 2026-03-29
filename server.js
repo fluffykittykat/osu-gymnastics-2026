@@ -2,9 +2,13 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
+const Anthropic = require('@anthropic-ai/sdk');
 
 const app = express();
 const { execSync } = require('child_process');
+
+// Middleware
+app.use(express.json({ limit: '10mb' }));
 
 // Cache-bust version = git commit hash (short)
 let ASSET_VERSION = 'dev';
@@ -135,6 +139,57 @@ app.post('/api/refresh', async (req, res) => {
 app.get('/healthz', (req, res) => {
   const { name, version } = require('./package.json');
   res.json({ status: 'ok', uptime: process.uptime(), version });
+});
+
+// Claude AI Chatbot Endpoint
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { messages } = req.body;
+
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'Messages array required' });
+    }
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      console.error('ANTHROPIC_API_KEY not set');
+      return res.status(500).json({ error: 'AI service not configured' });
+    }
+
+    const client = new Anthropic({ apiKey });
+
+    // Format messages for Claude API
+    const claudeMessages = messages.map(msg => ({
+      role: msg.role,
+      content: msg.content,
+    }));
+
+    const response = await client.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 1024,
+      system: `You are a helpful AI assistant for the OSU Gymnastics 2026 stats website. 
+You can answer questions about gymnastics, the team, meet results, and athlete statistics shown on this website.
+Be friendly, concise, and provide analytical insights when discussing gymnastics performance data.
+If asked for detailed analysis, provide comprehensive metrics and comparisons.`,
+      messages: claudeMessages,
+    });
+
+    const assistantMessage = response.content[0]?.text || '';
+
+    res.json({
+      success: true,
+      message: assistantMessage,
+    });
+  } catch (error) {
+    console.error('Chat API error:', error.message);
+    if (error.status === 401) {
+      return res.status(500).json({ error: 'Invalid API credentials' });
+    }
+    if (error.status === 429) {
+      return res.status(429).json({ error: 'Rate limited. Please try again later.' });
+    }
+    res.status(500).json({ error: 'Failed to process chat message' });
+  }
 });
 
 const PORT = process.env.PORT || 8888;
