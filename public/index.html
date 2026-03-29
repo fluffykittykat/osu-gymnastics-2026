@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=0">
   <link rel="stylesheet" href="css/chatbot.css?v=0">
+  <link rel="stylesheet" href="css/saved-notes.css?v=0">
 </head>
 <body>
   <!-- Top Nav (desktop) -->
@@ -22,6 +23,7 @@
       <a href="#" class="nav-link" data-view="gymnasts">🤸 Gymnasts</a>
       <a href="#" class="nav-link" data-view="leaderboards">📊 Leaderboards</a>
       <a href="#" class="nav-link" data-view="insights">🔍 Insights</a>
+      <a href="#" class="nav-link" data-view="notes">📔 Saved Notes</a>
     </div>
     <div class="nav-actions">
       <div id="liveIndicator" class="live-indicator disconnected" title="Live updates connecting...">
@@ -108,6 +110,11 @@
       <div id="mainContent"></div>
     </section>
 
+    <!-- Saved Notes & Analysis -->
+    <section id="view-notes" class="view" style="display:none;">
+      <!-- Content rendered by saved-notes.js -->
+    </section>
+
     <!-- Event Detail Drill-down -->
     <section id="view-event" class="view" style="display:none;">
       <button class="back-btn" id="backFromEvent">← Back to Meet</button>
@@ -129,9 +136,9 @@
       <span class="nav-icon">📊</span>
       <span class="nav-label">Leaders</span>
     </a>
-    <a href="#" class="bottom-nav-item" data-view="insights">
-      <span class="nav-icon">🔍</span>
-      <span class="nav-label">Insights</span>
+    <a href="#" class="bottom-nav-item" data-view="notes">
+      <span class="nav-icon">📔</span>
+      <span class="nav-label">Notes</span>
     </a>
     <a href="#" class="bottom-nav-item refresh-mobile" id="refreshBtnMobile">
       <span class="nav-icon">🔄</span>
@@ -145,6 +152,7 @@
   <script src="js/stats.js?v=0"></script>
   <script src="js/search.js?v=0"></script>
   <script src="js/live-updates.js?v=0"></script>
+  <script src="js/saved-notes.js?v=0"></script>
   <script src="js/app.js?v=0"></script>
   <script src="js/chatbot.js?v=0"></script>
 </body>

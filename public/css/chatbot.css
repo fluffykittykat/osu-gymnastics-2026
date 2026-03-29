@@ -332,6 +332,12 @@
   color: #999;
 }
 
+.input-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .chatbot-send-btn {
   background: transparent;
   border: none;
@@ -350,6 +356,31 @@
 }
 
 .chatbot-send-btn:active {
+  transform: scale(0.95);
+}
+
+.chatbot-save-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.chatbot-save-btn:hover {
+  background: #45a049;
+  transform: scale(1.05);
+}
+
+.chatbot-save-btn:active {
   transform: scale(0.95);
 }
 
