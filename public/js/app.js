@@ -4659,6 +4659,31 @@
   document.addEventListener('DOMContentLoaded', () => {
     loadData();
 
+    // Initialize Live Updates (WebSocket)
+    if (window.LiveUpdates) {
+      window.LiveUpdates.init({
+        onConnected: () => {
+          console.log('[App] Connected to live updates');
+          showToast('🟢 Live updates connected', 'success');
+        },
+        onDisconnected: () => {
+          console.log('[App] Disconnected from live updates');
+        },
+        onScoresUpdated: (newMeets) => {
+          console.log('[App] Received score updates from server');
+          meets = newMeets;
+          // Determine if we're viewing the season and re-render
+          if (currentView === 'season') {
+            renderMeetCards();
+          }
+          showToast('📊 Scores updated', 'success', 2000);
+        },
+        onConnectionError: (error) => {
+          console.error('[App] Live update connection error:', error);
+        },
+      });
+    }
+
     // Navigation
     document.querySelectorAll('[data-view]').forEach(link => {
       link.addEventListener('click', e => {

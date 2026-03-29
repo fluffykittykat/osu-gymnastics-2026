@@ -4,6 +4,8 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const Anthropic = require('@anthropic-ai/sdk');
 const { computeStats } = require('./stats/stats');
+const http = require('http');
+const WebSocket = require('ws');
 
 const app = express();
 const { execSync } = require('child_process');
@@ -22,6 +24,11 @@ let meetsData = null;
 let biosData = null;
 let statsCache = null;
 
+// WebSocket server and connected clients
+let wss = null;
+let connectedClients = new Set();
+let lastMeetsChecksum = null;
+
 function loadBiosData() {
   try {
     biosData = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'bios.json'), 'utf-8'));
@@ -34,9 +41,34 @@ function loadBiosData() {
 function loadMeetsData() {
   try {
     meetsData = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'meets.json'), 'utf-8'));
+    // Mark meets with "in_progress" or future dates as live
+    const today = new Date().toISOString().split('T')[0];
+    meetsData = meetsData.map(m => ({
+      ...m,
+      status: m.status === 'in_progress' ? 'in_progress' : (m.date >= today && !m.result) ? 'upcoming' : 'completed'
+    }));
   } catch (err) {
     console.error('Failed to load meets.json:', err.message);
     meetsData = [];
+  }
+}
+
+// Simple checksum to detect changes in meets data
+function getMeetsChecksum() {
+  return require('crypto')
+    .createHash('sha256')
+    .update(JSON.stringify(meetsData))
+    .digest('hex');
+}
+
+// Broadcast message to all connected WebSocket clients
+function broadcastToClients(message) {
+  if (!wss) return;
+  const data = JSON.stringify(message);
+  for (const client of connectedClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(data);
+    }
   }
 }
 
@@ -214,6 +246,17 @@ app.post('/api/refresh', async (req, res) => {
       summary = { raw: result.trim() };
     }
 
+    // Broadcast score updates to all connected clients
+    const newChecksum = getMeetsChecksum();
+    if (newChecksum !== lastMeetsChecksum) {
+      lastMeetsChecksum = newChecksum;
+      broadcastToClients({
+        event: 'scoresUpdated',
+        meets: meetsData,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     res.json({ success: true, summary });
   } catch (err) {
     console.error('Refresh failed:', err.message);
@@ -315,8 +358,78 @@ const PORT = process.env.PORT || 8888;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-app.listen(PORT, () => {
+// Create HTTP server and attach WebSocket server
+const server = http.createServer(app);
+wss = new WebSocket.Server({ server, path: '/ws' });
+
+// Handle WebSocket connections
+wss.on('connection', (ws) => {
+  console.log(`[WebSocket] Client connected. Total clients: ${connectedClients.size + 1}`);
+  connectedClients.add(ws);
+
+  // Send initial data to newly connected client
+  ws.send(JSON.stringify({
+    event: 'connected',
+    meets: meetsData,
+    timestamp: new Date().toISOString(),
+  }));
+
+  // Handle client disconnect
+  ws.on('close', () => {
+    connectedClients.delete(ws);
+    console.log(`[WebSocket] Client disconnected. Total clients: ${connectedClients.size}`);
+  });
+
+  // Handle errors
+  ws.on('error', (error) => {
+    console.error('[WebSocket] Error:', error.message);
+  });
+
+  // Echo ping/pong for keep-alive
+  ws.on('message', (data) => {
+    try {
+      const message = JSON.parse(data);
+      if (message.type === 'ping') {
+        ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
+  });
+});
+
+// Initialize checksum on startup
+lastMeetsChecksum = getMeetsChecksum();
+
+// Periodic check for file changes (every 10 seconds)
+// This enables auto-refresh when meets.json is updated externally
+setInterval(() => {
+  try {
+    const fileChecksum = require('crypto')
+      .createHash('sha256')
+      .update(fs.readFileSync(path.join(__dirname, 'data', 'meets.json'), 'utf-8'))
+      .digest('hex');
+    
+    if (fileChecksum !== lastMeetsChecksum) {
+      console.log('[Live Updates] Detected changes in meets.json, broadcasting to clients...');
+      loadMeetsData();
+      recomputeStats();
+      lastMeetsChecksum = getMeetsChecksum();
+      
+      broadcastToClients({
+        event: 'scoresUpdated',
+        meets: meetsData,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch (err) {
+    // Silently ignore file read errors
+  }
+}, 10000);
+
+server.listen(PORT, () => {
   console.log(`🤸 OSU Gymnastics 2026 running on http://localhost:${PORT}`);
+  console.log(`📡 WebSocket server available at ws://localhost:${PORT}/ws`);
   
   // Check for required and optional configuration
   if (!ANTHROPIC_API_KEY) {
