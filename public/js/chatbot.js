@@ -11,8 +11,10 @@ class ChatbotWidget {
     this.sessionId = this.generateSessionId();
     this.sendDebounceTimer = null;
     this.lastSendTime = 0;
+    this.athleteStats = null; // Cache athlete stats for reference
     this.init();
     this.loadConversationFromStorage();
+    this.loadAthleteStats(); // Load athlete data on startup
   }
 
   generateSessionId() {
@@ -22,6 +24,25 @@ class ChatbotWidget {
   init() {
     this.createWidget();
     this.attachEventListeners();
+  }
+
+  /**
+   * Load athlete stats from backend API for chatbot context
+   */
+  async loadAthleteStats() {
+    try {
+      const response = await fetch('/api/athlete-stats', { timeout: 5000 });
+      if (response.ok) {
+        const data = await response.json();
+        this.athleteStats = data.athletes || {};
+        console.log(`[Chatbot] Loaded ${Object.keys(this.athleteStats).length} athlete profiles`);
+      } else {
+        console.warn('[Chatbot] Failed to load athlete stats:', response.status);
+      }
+    } catch (err) {
+      console.warn('[Chatbot] Error loading athlete stats:', err.message);
+      // Graceful fallback - chatbot will still work without stats
+    }
   }
 
   /**
@@ -251,7 +272,7 @@ class ChatbotWidget {
     this.showTypingIndicator();
 
     try {
-      // Send to backend (which proxies to Claude)
+      // Send to backend (which proxies to Claude with athlete stats context)
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -261,33 +282,49 @@ class ChatbotWidget {
             content: m.content,
           })),
         }),
+        timeout: 30000, // 30 second timeout
       });
 
       if (!response.ok) {
         if (response.status === 429) {
           throw new Error('Too many requests. Please wait a moment before sending another message.');
+        } else if (response.status === 504) {
+          throw new Error('Request timed out. Please try again.');
+        } else if (response.status === 503) {
+          throw new Error('Service temporarily unavailable. Please try again later.');
         }
         throw new Error(`API error: ${response.status}`);
       }
 
       const data = await response.json();
 
-      if (data.success && data.message) {
-        // Add assistant response
+      // Handle both successful responses and error responses
+      if (data.message || data.success) {
+        const content = data.message || data.content || 'I\'m unable to process that right now.';
         this.messages.push({
           role: 'assistant',
-          content: data.message,
+          content: content,
           timestamp: new Date(),
         });
+      } else if (data.error) {
+        // Server returned an error message
+        throw new Error(data.error);
       } else {
-        throw new Error(data.error || 'Failed to get response');
+        throw new Error('No response from AI service');
       }
     } catch (error) {
       console.error('Chat error:', error);
-      // Add error message
+      
+      // User-friendly error messages
+      let errorMsg = error.message || 'Unknown error';
+      if (error.message === 'Failed to fetch') {
+        errorMsg = 'Network connection error. Please check your internet and try again.';
+      }
+      
+      // Add error message to conversation
       this.messages.push({
         role: 'assistant',
-        content: `Sorry, I encountered an error: ${error.message}. Please try again later.`,
+        content: `I'm having trouble: ${errorMsg}. Please try again.`,
         timestamp: new Date(),
         isError: true,
       });
