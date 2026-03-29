@@ -298,8 +298,9 @@
       var best = null;
       Object.keys(map).forEach(function (name) {
         var scores = map[name];
-        if (!best || scores.length > best.count) {
-          best = { name: name, avg: mean(scores), count: scores.length };
+        var thisAvg = mean(scores);
+        if (!best || thisAvg > best.avg || (thisAvg === best.avg && scores.length > best.count)) {
+          best = { name: name, avg: thisAvg, count: scores.length };
         }
       });
       return best;
