@@ -273,6 +273,15 @@ app.get('/healthz', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime(), version });
 });
 
+// Utility: Create a timeout promise that rejects after delay
+function createTimeoutPromise(ms) {
+  return new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Request timeout after ${ms}ms`));
+    }, ms);
+  });
+}
+
 // Claude AI Chatbot Endpoint
 app.post('/api/chat', async (req, res) => {
   try {
@@ -295,8 +304,13 @@ app.post('/api/chat', async (req, res) => {
 
     console.log(`[Chat API] API Key found: ${apiKey.substring(0, 10)}...`);
 
-    const client = new Anthropic({ apiKey });
-    console.log('[Chat API] Anthropic client initialized');
+    // Create Anthropic client with 10-second timeout
+    const client = new Anthropic({
+      apiKey,
+      timeout: 10000, // 10 second timeout
+      maxRetries: 2,
+    });
+    console.log('[Chat API] Anthropic client initialized with 10s timeout');
 
     // Format messages for Claude API
     const claudeMessages = messages.map(msg => ({
@@ -339,14 +353,18 @@ app.post('/api/chat', async (req, res) => {
 - Always be accurate with numbers and careful with statistical claims
 - Focus on gymnastics-specific analysis rather than general sports commentary`;
 
-    console.log('[Chat API] Making request to Claude API...');
+    console.log('[Chat API] Making request to Claude API with 10s timeout...');
     
-    const response = await client.messages.create({
-      model: 'claude-opus-4-1-20250805',
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: claudeMessages,
-    });
+    // Race the API call against a timeout promise
+    const response = await Promise.race([
+      client.messages.create({
+        model: 'claude-opus-4-1-20250805',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: claudeMessages,
+      }),
+      createTimeoutPromise(10000),
+    ]);
 
     console.log('[Chat API] Successfully received response from Claude API');
 
@@ -362,17 +380,34 @@ app.post('/api/chat', async (req, res) => {
       message: error.message,
       status: error.status,
       type: error.type,
+      code: error.code,
     });
     
+    // Handle timeout specifically
+    if (error.message && error.message.includes('timeout')) {
+      console.error('[Chat API] Request timed out after 10 seconds');
+      return res.status(504).json({ error: 'AI service timed out. Please try again.' });
+    }
+    
+    // Handle authentication errors
     if (error.status === 401) {
       console.error('[Chat API] Authentication failed - invalid API key');
       return res.status(500).json({ error: 'Invalid API credentials' });
     }
+    
+    // Handle rate limiting
     if (error.status === 429) {
       console.error('[Chat API] Rate limited');
       return res.status(429).json({ error: 'Rate limited. Please try again later.' });
     }
     
+    // Handle API errors
+    if (error.status && error.status >= 500) {
+      console.error('[Chat API] API server error:', error.status);
+      return res.status(503).json({ error: 'AI service temporarily unavailable.' });
+    }
+    
+    console.error('[Chat API] Unexpected error:', error.message);
     res.status(500).json({ error: 'Failed to process chat message' });
   }
 });
