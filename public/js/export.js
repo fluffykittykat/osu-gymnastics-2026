@@ -151,19 +151,15 @@
    */
   window.loadComparisonFromURL = function() {
     const params = new URLSearchParams(window.location.search);
-    const compareAthlete = params.get('compare');
-    const withAthlete = params.get('with');
+    const a1 = params.get('compare');
+    const a2 = params.get('with');
     
-    if (compareAthlete && withAthlete) {
+    // URLSearchParams.get() returns already-decoded values, no need for decodeURIComponent
+    if (a1 && a2) {
       try {
-        const a1 = decodeURIComponent(compareAthlete);
-        const a2 = decodeURIComponent(withAthlete);
-        
-        if (a1 && a2) {
-          // Trigger comparison view with these athletes
-          if (typeof window.triggerComparison === 'function') {
-            window.triggerComparison(a1, a2);
-          }
+        // Trigger comparison view with these athletes
+        if (typeof window.triggerComparison === 'function') {
+          window.triggerComparison(a1, a2);
         }
       } catch (err) {
         console.error('Failed to load comparison from URL:', err);

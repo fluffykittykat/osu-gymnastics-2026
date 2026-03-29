@@ -392,36 +392,6 @@ app.get('/api/export/compare-pdf', (req, res) => {
   }
 });
 
-/**
- * Get share link information
- * GET /api/compare?a1=name1&a2=name2
- * This allows comparison state to be loaded from URL parameters
- */
-app.get('/api/compare', (req, res) => {
-  if (!statsCache) {
-    return res.status(503).json({ error: 'Stats not yet computed' });
-  }
-  
-  const { a1, a2 } = req.query;
-  
-  if (!a1 || !a2) {
-    return res.status(400).json({ error: 'Both a1 and a2 athlete names are required' });
-  }
-  
-  const athlete1 = statsCache.athletes[a1];
-  const athlete2 = statsCache.athletes[a2];
-  
-  if (!athlete1 || !athlete2) {
-    return res.status(404).json({ error: 'One or both athletes not found' });
-  }
-  
-  // Return comparison data
-  res.json({
-    athlete1: { name: a1, stats: athlete1 },
-    athlete2: { name: a2, stats: athlete2 }
-  });
-});
-
 const PORT = process.env.PORT || 8888;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;

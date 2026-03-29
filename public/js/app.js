@@ -2166,15 +2166,15 @@
         <div class="compare-legend"><span style="color:var(--orange)">■ ${name1.split(' ')[0]}</span> <span style="color:#3498db">■ ${name2.split(' ')[0]}</span></div>
         
         <div class="compare-export-actions">
-          <button class="export-btn export-csv" id="exportCSVBtn" title="Export as CSV">
+          <button class="export-btn export-csv" id="exportCSVBtn" title="Export as CSV" aria-label="Download comparison as CSV file">
             <span class="export-icon">📥</span>
             <span class="export-label">CSV</span>
           </button>
-          <button class="export-btn export-pdf" id="exportPDFBtn" title="Export as PDF">
+          <button class="export-btn export-pdf" id="exportPDFBtn" title="Export as PDF" aria-label="Download comparison as PDF document">
             <span class="export-icon">📄</span>
             <span class="export-label">PDF</span>
           </button>
-          <button class="export-btn export-share" id="shareBtn" title="Copy share link">
+          <button class="export-btn export-share" id="shareBtn" title="Copy share link" aria-label="Copy or share the comparison link">
             <span class="export-icon">🔗</span>
             <span class="export-label">Share</span>
           </button>

@@ -15,6 +15,20 @@ const PDFDocument = require('pdfkit');
  * @returns {string} CSV string
  */
 function generateComparisonCSV(athlete1, athlete2, name1, name2) {
+  // Validate input
+  if (!athlete1 || typeof athlete1 !== 'object') {
+    throw new Error('Invalid athlete1 object');
+  }
+  if (!athlete2 || typeof athlete2 !== 'object') {
+    throw new Error('Invalid athlete2 object');
+  }
+  if (!name1 || typeof name1 !== 'string') {
+    throw new Error('Invalid name1');
+  }
+  if (!name2 || typeof name2 !== 'string') {
+    throw new Error('Invalid name2');
+  }
+
   const events = ['vault', 'bars', 'beam', 'floor'];
   const eventNames = {
     vault: 'Vault',
@@ -94,11 +108,23 @@ function generateComparisonCSV(athlete1, athlete2, name1, name2) {
  * @param {Object} athlete2 - Second athlete stats object
  * @param {string} name1 - Name of athlete 1
  * @param {string} name2 - Name of athlete 2
- * @param {string} photo1 - Photo URL or path for athlete 1
- * @param {string} photo2 - Photo URL or path for athlete 2
  * @returns {PDFKit.PDFDocument} PDF document
  */
-function generateComparisonPDF(athlete1, athlete2, name1, name2, photo1, photo2) {
+function generateComparisonPDF(athlete1, athlete2, name1, name2) {
+  // Validate input
+  if (!athlete1 || typeof athlete1 !== 'object') {
+    throw new Error('Invalid athlete1 object');
+  }
+  if (!athlete2 || typeof athlete2 !== 'object') {
+    throw new Error('Invalid athlete2 object');
+  }
+  if (!name1 || typeof name1 !== 'string') {
+    throw new Error('Invalid name1');
+  }
+  if (!name2 || typeof name2 !== 'string') {
+    throw new Error('Invalid name2');
+  }
+
   const doc = new PDFDocument({ margin: 40, size: 'A4' });
   
   const events = ['vault', 'bars', 'beam', 'floor'];
