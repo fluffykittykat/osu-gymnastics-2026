@@ -313,9 +313,18 @@ app.post('/api/chat', async (req, res) => {
 
 const PORT = process.env.PORT || 8888;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+
 app.listen(PORT, () => {
   console.log(`🤸 OSU Gymnastics 2026 running on http://localhost:${PORT}`);
+  
+  // Check for required and optional configuration
+  if (!ANTHROPIC_API_KEY) {
+    console.warn('⚠️  WARNING: ANTHROPIC_API_KEY env var is not set');
+    console.warn('   Chatbot AI features will not work');
+    console.warn('   See CHATBOT_SETUP.md for configuration instructions');
+  }
   if (!REFRESH_SECRET) {
-    console.warn('WARNING: REFRESH_SECRET env var is not set — POST /api/refresh is unprotected');
+    console.warn('⚠️  WARNING: REFRESH_SECRET env var is not set — POST /api/refresh is unprotected');
   }
 });

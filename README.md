@@ -1,5 +1,15 @@
 # OSU Gymnastics 2026
 
+## 🤖 AI Chatbot
+
+The website includes an AI-powered gymnastics analytics assistant powered by Claude. To enable the chatbot:
+
+1. Get your Anthropic API key from [console.anthropic.com](https://console.anthropic.com)
+2. Add it to your `.env` file: `ANTHROPIC_API_KEY=sk-ant-...`
+3. Restart the server and the chatbot will be active
+
+**See [CHATBOT_SETUP.md](./CHATBOT_SETUP.md) for detailed setup instructions.**
+
 ## Stats API
 
 All stats are pre-computed server-side when data loads and cached in memory. Stats are recomputed on data refresh.
