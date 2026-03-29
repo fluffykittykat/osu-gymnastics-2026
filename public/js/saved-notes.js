@@ -1,631 +1,319 @@
 /**
- * Saved Notes & Analysis Manager
- * Handles saving, retrieving, and managing chat analyses with insights
+ * Saved Notes & Analysis Module
+ * Handles displaying, viewing, and managing saved chatbot analyses
  */
 
 class SavedNotesManager {
   constructor() {
-    this.storageKey = 'savedAnalyses';
+    this.analyses = [];
+    this.selectedAnalysis = null;
+    this.currentFilter = 'all';
     this.init();
   }
 
-  /**
-   * Initialize the saved notes manager
-   */
-  init() {
-    this.loadAllAnalyses = this.loadAllAnalyses.bind(this);
-    this.saveAnalysis = this.saveAnalysis.bind(this);
-    this.getAnalysis = this.getAnalysis.bind(this);
-    this.addInsight = this.addInsight.bind(this);
-    this.deleteAnalysis = this.deleteAnalysis.bind(this);
-    this.updateAnalysis = this.updateAnalysis.bind(this);
+  async init() {
+    await this.loadAnalyses();
+    this.attachEventListeners();
   }
 
-  /**
-   * Get all saved analyses for the current user
-   */
-  loadAllAnalyses() {
+  async loadAnalyses() {
     try {
-      const data = localStorage.getItem(this.storageKey);
-      return data ? JSON.parse(data) : [];
-    } catch (e) {
-      console.error('Failed to load saved analyses:', e);
-      return [];
+      const response = await fetch('/api/analyses');
+      if (!response.ok) throw new Error('Failed to load analyses');
+
+      const data = await response.json();
+      this.analyses = data.analyses || [];
+      console.log(`[SavedNotes] Loaded ${this.analyses.length} analyses`);
+    } catch (err) {
+      console.error('[SavedNotes] Error loading analyses:', err.message);
+      this.analyses = [];
     }
   }
 
-  /**
-   * Save a new chat analysis
-   * @param {Object} analysis - Analysis object with title, summary, category, chatHistory
-   * @returns {Object} - Saved analysis with ID
-   */
-  saveAnalysis(analysis) {
+  async loadAnalysisDetail(id) {
     try {
-      const analyses = this.loadAllAnalyses();
-      
-      const newAnalysis = {
-        id: `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        title: analysis.title || 'Untitled Analysis',
-        summary: analysis.summary || '',
-        category: analysis.category || 'General',
-        chatHistory: analysis.chatHistory || [],
-        insights: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      const response = await fetch(`/api/analyses/${id}`);
+      if (!response.ok) throw new Error('Analysis not found');
 
-      analyses.push(newAnalysis);
-      localStorage.setItem(this.storageKey, JSON.stringify(analyses));
-      
-      return newAnalysis;
-    } catch (e) {
-      console.error('Failed to save analysis:', e);
-      throw e;
+      const data = await response.json();
+      this.selectedAnalysis = data.analysis;
+      return data.analysis;
+    } catch (err) {
+      console.error('[SavedNotes] Error loading analysis:', err.message);
+      return null;
     }
   }
 
-  /**
-   * Get a specific analysis by ID
-   * @param {String} analysisId
-   * @returns {Object|null}
-   */
-  getAnalysis(analysisId) {
-    const analyses = this.loadAllAnalyses();
-    return analyses.find(a => a.id === analysisId) || null;
-  }
-
-  /**
-   * Update analysis metadata (title, category, summary)
-   * @param {String} analysisId
-   * @param {Object} updates
-   * @returns {Object|null}
-   */
-  updateAnalysis(analysisId, updates) {
+  async addInsight(analysisId, content) {
     try {
-      const analyses = this.loadAllAnalyses();
-      const index = analyses.findIndex(a => a.id === analysisId);
-      
-      if (index === -1) return null;
-      
-      analyses[index] = {
-        ...analyses[index],
-        ...updates,
-        updatedAt: new Date().toISOString(),
-      };
-      
-      localStorage.setItem(this.storageKey, JSON.stringify(analyses));
-      return analyses[index];
-    } catch (e) {
-      console.error('Failed to update analysis:', e);
-      throw e;
+      const response = await fetch(`/api/analyses/${analysisId}/insights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) throw new Error('Failed to add insight');
+
+      const data = await response.json();
+      this.selectedAnalysis = data.analysis;
+      return data.insight;
+    } catch (err) {
+      console.error('[SavedNotes] Error adding insight:', err.message);
+      throw err;
     }
   }
 
-  /**
-   * Add an insight to an analysis
-   * @param {String} analysisId
-   * @param {String} content - Insight text
-   * @returns {Object|null} - Updated analysis
-   */
-  addInsight(analysisId, content) {
+  async updateAnalysis(id, updates) {
     try {
-      const analyses = this.loadAllAnalyses();
-      const analysis = analyses.find(a => a.id === analysisId);
-      
-      if (!analysis) return null;
-      
-      const newInsight = {
-        id: `insight_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content,
-        createdAt: new Date().toISOString(),
-      };
-      
-      if (!analysis.insights) {
-        analysis.insights = [];
+      const response = await fetch(`/api/analyses/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) throw new Error('Failed to update analysis');
+
+      const data = await response.json();
+      const index = this.analyses.findIndex(a => a.id === id);
+      if (index !== -1) {
+        this.analyses[index] = data.analysis;
       }
-      
-      analysis.insights.push(newInsight);
-      analysis.updatedAt = new Date().toISOString();
-      
-      localStorage.setItem(this.storageKey, JSON.stringify(analyses));
-      return analysis;
-    } catch (e) {
-      console.error('Failed to add insight:', e);
-      throw e;
+      if (this.selectedAnalysis?.id === id) {
+        this.selectedAnalysis = data.analysis;
+      }
+      return data.analysis;
+    } catch (err) {
+      console.error('[SavedNotes] Error updating analysis:', err.message);
+      throw err;
     }
   }
 
-  /**
-   * Delete a saved analysis
-   * @param {String} analysisId
-   * @returns {Boolean}
-   */
-  deleteAnalysis(analysisId) {
+  async deleteAnalysis(id) {
     try {
-      let analyses = this.loadAllAnalyses();
-      const initialLength = analyses.length;
-      analyses = analyses.filter(a => a.id !== analysisId);
-      
-      if (analyses.length === initialLength) return false; // Not found
-      
-      localStorage.setItem(this.storageKey, JSON.stringify(analyses));
+      const response = await fetch(`/api/analyses/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete analysis');
+
+      this.analyses = this.analyses.filter(a => a.id !== id);
+      if (this.selectedAnalysis?.id === id) {
+        this.selectedAnalysis = null;
+      }
       return true;
-    } catch (e) {
-      console.error('Failed to delete analysis:', e);
-      throw e;
+    } catch (err) {
+      console.error('[SavedNotes] Error deleting analysis:', err.message);
+      throw err;
     }
   }
 
-  /**
-   * Format date for display
-   * @param {String} dateString - ISO date string
-   * @returns {String}
-   */
-  formatDate(dateString) {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined });
-    }
-  }
-}
-
-/**
- * Saved Notes UI Manager
- * Handles rendering and user interactions for the saved notes page
- */
-class SavedNotesUI {
-  constructor() {
-    this.manager = new SavedNotesManager();
-    this.currentDetailAnalysisId = null;
-    this.init();
-  }
-
-  init() {
-    this.setupEventListeners();
-  }
-
-  setupEventListeners() {
-    // Back button from detail view
-    document.addEventListener('click', (e) => {
-      if (e.target.closest('.back-to-notes')) {
-        this.closeDetailView();
-      }
-      
-      // Open detail view
-      if (e.target.closest('.analysis-card')) {
-        const card = e.target.closest('.analysis-card');
-        const analysisId = card.dataset.analysisId;
-        this.showDetailView(analysisId);
-      }
-
-      // Delete analysis
-      if (e.target.closest('.delete-analysis-btn')) {
-        e.stopPropagation();
-        const btn = e.target.closest('.delete-analysis-btn');
-        const analysisId = btn.dataset.analysisId;
-        this.deleteAnalysis(analysisId);
-      }
-
-      // Add insight
-      if (e.target.closest('.add-insight-btn')) {
-        e.stopPropagation();
-        this.showAddInsightForm();
-      }
-
-      // Submit insight
-      if (e.target.closest('.submit-insight-btn')) {
-        e.stopPropagation();
-        this.submitInsight();
-      }
-
-      // Cancel adding insight
-      if (e.target.closest('.cancel-insight-btn')) {
-        e.stopPropagation();
-        this.hideAddInsightForm();
-      }
-
-      // Edit analysis
-      if (e.target.closest('.edit-analysis-btn')) {
-        e.stopPropagation();
-        this.showEditForm();
-      }
-
-      // Submit edit
-      if (e.target.closest('.submit-edit-btn')) {
-        e.stopPropagation();
-        this.submitEdit();
-      }
-
-      // Cancel edit
-      if (e.target.closest('.cancel-edit-btn')) {
-        e.stopPropagation();
-        this.hideEditForm();
-      }
+  attachEventListeners() {
+    // Listen for navigation event from chatbot
+    window.addEventListener('navigateToNotes', () => {
+      window.dispatchEvent(new CustomEvent('viewChange', { detail: { view: 'notes' } }));
     });
   }
 
-  /**
-   * Render the saved notes page
-   */
-  render() {
-    const analyses = this.manager.loadAllAnalyses();
-    const container = document.getElementById('view-notes');
-
-    if (!container) return;
-
-    if (analyses.length === 0) {
-      container.innerHTML = `
-        <div class="notes-empty-state">
-          <div class="empty-icon">📔</div>
-          <h2>No Saved Analyses Yet</h2>
-          <p>Start a conversation with the Gymnastics AI Assistant and click "Save This Chat" to build your personal notebook of insights.</p>
-          <button class="btn btn-primary" onclick="document.getElementById('chatbotBubble').click()">
-            Start New Analysis
-          </button>
-        </div>
-      `;
-      return;
-    }
-
-    // Group by category
-    const byCategory = {};
-    analyses.forEach(a => {
-      const cat = a.category || 'General';
-      if (!byCategory[cat]) byCategory[cat] = [];
-      byCategory[cat].push(a);
-    });
-
-    let html = `
-      <div class="notes-container">
-        <div class="notes-header">
-          <h1>📔 Saved Analyses</h1>
-          <p class="notes-subtitle">${analyses.length} saved analysis${analyses.length !== 1 ? 'es' : ''}</p>
-        </div>
-        
-        <div class="notes-filters">
-          <button class="filter-tag active" data-filter="all">All</button>
-    `;
-
-    Object.keys(byCategory).forEach(cat => {
-      html += `<button class="filter-tag" data-filter="${cat}">${cat}</button>`;
-    });
-
-    html += `
-        </div>
-
-        <div class="notes-grid">
-    `;
-
-    // Sort analyses by date (newest first)
-    const sortedAnalyses = analyses.sort((a, b) => 
-      new Date(b.createdAt) - new Date(a.createdAt)
-    );
-
-    sortedAnalyses.forEach(analysis => {
-      const preview = analysis.summary || analysis.chatHistory
-        .filter(m => m.role === 'assistant')
-        .map(m => m.content)
-        .join(' ')
-        .substring(0, 150) + '...';
-
-      html += `
-        <div class="analysis-card" data-analysis-id="${analysis.id}" data-category="${analysis.category}">
-          <div class="card-header">
-            <h3 class="card-title">${this.escapeHtml(analysis.title)}</h3>
-            <button class="delete-analysis-btn" data-analysis-id="${analysis.id}" title="Delete">🗑️</button>
-          </div>
-          
-          <div class="card-meta">
-            <span class="card-date">${this.manager.formatDate(analysis.createdAt)}</span>
-            <span class="card-category">${analysis.category}</span>
-          </div>
-
-          <p class="card-preview">${this.escapeHtml(preview)}</p>
-
-          <div class="card-footer">
-            <span class="insight-count">💡 ${analysis.insights?.length || 0} insights</span>
-            <span class="message-count">💬 ${analysis.chatHistory?.length || 0} messages</span>
-          </div>
-        </div>
-      `;
-    });
-
-    html += `
-        </div>
-      </div>
-    `;
-
-    container.innerHTML = html;
-    this.attachFilterListeners();
+  getCategories() {
+    const categories = new Set(this.analyses.map(a => a.category).filter(Boolean));
+    return ['all', ...Array.from(categories).sort()];
   }
 
-  /**
-   * Show detail view for an analysis
-   */
-  showDetailView(analysisId) {
-    const analysis = this.manager.getAnalysis(analysisId);
-    if (!analysis) return;
-
-    this.currentDetailAnalysisId = analysisId;
-    const container = document.getElementById('view-notes');
-
-    let html = `
-      <div class="notes-detail">
-        <button class="back-to-notes back-btn">← Back to Analyses</button>
-
-        <div class="detail-header">
-          <div class="detail-title-section">
-            <h1>${this.escapeHtml(analysis.title)}</h1>
-            <p class="detail-date">${this.manager.formatDate(analysis.createdAt)}</p>
-          </div>
-          <div class="detail-actions">
-            <button class="edit-analysis-btn" title="Edit title/category">✏️ Edit</button>
-            <button class="delete-analysis-btn" data-analysis-id="${analysisId}" title="Delete">🗑️ Delete</button>
-          </div>
-        </div>
-
-        <div class="detail-meta">
-          <span class="badge category-badge">${analysis.category}</span>
-          ${analysis.summary ? `<p class="detail-summary"><strong>Summary:</strong> ${this.escapeHtml(analysis.summary)}</p>` : ''}
-        </div>
-
-        <!-- Chat Section -->
-        <div class="detail-section">
-          <h2 class="section-title">💬 Conversation</h2>
-          <div class="chat-transcript">
-    `;
-
-    analysis.chatHistory.forEach(msg => {
-      const formatted = this.formatMessageContent(msg.content);
-      html += `
-        <div class="transcript-message ${msg.role}-message">
-          <div class="transcript-role">${msg.role === 'user' ? 'You' : 'AI Assistant'}</div>
-          <div class="transcript-content">${formatted}</div>
-          ${msg.timestamp ? `<div class="transcript-time">${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>` : ''}
-        </div>
-      `;
-    });
-
-    html += `
-          </div>
-        </div>
-
-        <!-- Insights Section -->
-        <div class="detail-section">
-          <div class="insights-header">
-            <h2 class="section-title">📌 Insights Added</h2>
-            <button class="add-insight-btn">+ Add Insight</button>
-          </div>
-
-          <div class="insights-list" id="insightsList">
-    `;
-
-    if (analysis.insights && analysis.insights.length > 0) {
-      analysis.insights.forEach(insight => {
-        html += `
-          <div class="insight-item">
-            <div class="insight-date">${this.manager.formatDate(insight.createdAt)}</div>
-            <div class="insight-content">${this.escapeHtml(insight.content)}</div>
-          </div>
-        `;
-      });
-    } else {
-      html += `<p class="no-insights">No insights added yet. Click "Add Insight" to start building your analysis.</p>`;
+  getFilteredAnalyses() {
+    if (this.currentFilter === 'all') {
+      return this.analyses;
     }
-
-    html += `
-          </div>
-
-          <!-- Add Insight Form (hidden by default) -->
-          <div class="add-insight-form" id="addInsightForm" style="display: none;">
-            <textarea class="insight-textarea" id="insightTextarea" placeholder="Add a finding, observation, or note..." rows="3"></textarea>
-            <div class="form-actions">
-              <button class="submit-insight-btn btn btn-primary">Save Insight</button>
-              <button class="cancel-insight-btn btn btn-secondary">Cancel</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Edit Form (hidden by default) -->
-        <div class="edit-form" id="editForm" style="display: none;">
-          <div class="form-group">
-            <label for="editTitle">Title</label>
-            <input type="text" id="editTitle" class="form-input" value="${this.escapeHtml(analysis.title)}" />
-          </div>
-          <div class="form-group">
-            <label for="editCategory">Category</label>
-            <input type="text" id="editCategory" class="form-input" value="${this.escapeHtml(analysis.category)}" />
-          </div>
-          <div class="form-group">
-            <label for="editSummary">Summary (optional)</label>
-            <textarea id="editSummary" class="form-input" rows="3">${this.escapeHtml(analysis.summary || '')}</textarea>
-          </div>
-          <div class="form-actions">
-            <button class="submit-edit-btn btn btn-primary">Save Changes</button>
-            <button class="cancel-edit-btn btn btn-secondary">Cancel</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    container.innerHTML = html;
-    this.setupEventListeners();
+    return this.analyses.filter(a => a.category === this.currentFilter);
   }
 
-  /**
-   * Close detail view and return to list
-   */
-  closeDetailView() {
-    this.currentDetailAnalysisId = null;
-    this.render();
-  }
-
-  /**
-   * Show the add insight form
-   */
-  showAddInsightForm() {
-    const form = document.getElementById('addInsightForm');
-    if (form) {
-      form.style.display = 'block';
-      document.getElementById('insightTextarea').focus();
-    }
-  }
-
-  /**
-   * Hide the add insight form
-   */
-  hideAddInsightForm() {
-    const form = document.getElementById('addInsightForm');
-    if (form) {
-      form.style.display = 'none';
-      document.getElementById('insightTextarea').value = '';
-    }
-  }
-
-  /**
-   * Submit a new insight
-   */
-  submitInsight() {
-    const textarea = document.getElementById('insightTextarea');
-    const content = textarea.value.trim();
-
-    if (!content) {
-      alert('Please enter an insight');
-      return;
-    }
-
-    try {
-      this.manager.addInsight(this.currentDetailAnalysisId, content);
-      this.showDetailView(this.currentDetailAnalysisId);
-    } catch (e) {
-      alert('Failed to add insight: ' + e.message);
-    }
-  }
-
-  /**
-   * Show the edit form
-   */
-  showEditForm() {
-    const form = document.getElementById('editForm');
-    if (form) form.style.display = 'block';
-  }
-
-  /**
-   * Hide the edit form
-   */
-  hideEditForm() {
-    const form = document.getElementById('editForm');
-    if (form) form.style.display = 'none';
-  }
-
-  /**
-   * Submit edits to analysis
-   */
-  submitEdit() {
-    const title = document.getElementById('editTitle').value.trim();
-    const category = document.getElementById('editCategory').value.trim();
-    const summary = document.getElementById('editSummary').value.trim();
-
-    if (!title) {
-      alert('Title is required');
-      return;
-    }
-
-    try {
-      this.manager.updateAnalysis(this.currentDetailAnalysisId, {
-        title,
-        category,
-        summary,
-      });
-      this.showDetailView(this.currentDetailAnalysisId);
-    } catch (e) {
-      alert('Failed to update analysis: ' + e.message);
-    }
-  }
-
-  /**
-   * Delete an analysis
-   */
-  deleteAnalysis(analysisId) {
-    if (!confirm('Are you sure you want to delete this analysis? This cannot be undone.')) {
-      return;
-    }
-
-    try {
-      this.manager.deleteAnalysis(analysisId);
-      if (this.currentDetailAnalysisId === analysisId) {
-        this.closeDetailView();
-      } else {
-        this.render();
-      }
-    } catch (e) {
-      alert('Failed to delete analysis: ' + e.message);
-    }
-  }
-
-  /**
-   * Attach filter listeners
-   */
-  attachFilterListeners() {
-    document.querySelectorAll('.filter-tag').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const filter = btn.dataset.filter;
-        
-        // Update active button
-        document.querySelectorAll('.filter-tag').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        // Filter cards
-        const cards = document.querySelectorAll('.analysis-card');
-        cards.forEach(card => {
-          if (filter === 'all' || card.dataset.category === filter) {
-            card.style.display = '';
-          } else {
-            card.style.display = 'none';
-          }
-        });
-      });
+  formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 
-  /**
-   * Format message content (same as chatbot formatting)
-   */
-  formatMessageContent(content) {
-    let html = this.escapeHtml(content);
+  formatDateShort(dateStr) {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now - date;
 
-    // Convert markdown-like formatting
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
-    html = html.replace(/`([^`]+?)`/g, '<code>$1</code>');
-    html = html.replace(/^### (.+?)$/gm, '<h4 style="margin: 8px 0; font-weight: 600;">$1</h4>');
-    html = html.replace(/^## (.+?)$/gm, '<h3 style="margin: 8px 0; font-weight: 600;">$1</h3>');
-    html = html.replace(/^# (.+?)$/gm, '<h2 style="margin: 8px 0; font-weight: 600;">$1</h2>');
-    html = html.replace(/\n/g, '<br>');
+    // Less than 1 minute
+    if (diff < 60000) return 'just now';
+    // Less than 1 hour
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    // Less than 1 day
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    // Less than 7 days
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
 
-    return html;
+    // Otherwise show date
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
-  /**
-   * Escape HTML
-   */
   escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
+
+  renderAnalysesList() {
+    const analyses = this.getFilteredAnalyses();
+
+    if (analyses.length === 0) {
+      return `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <p>No saved analyses yet</p>
+          <small>Start a chat with the AI assistant and save your findings to build your notebook.</small>
+        </div>
+      `;
+    }
+
+    return analyses
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .map(
+        (analysis) => `
+      <div class="analysis-card" data-id="${analysis.id}">
+        <div class="analysis-card-header">
+          <h3>${this.escapeHtml(analysis.title)}</h3>
+          <span class="analysis-date">${this.formatDateShort(analysis.createdAt)}</span>
+        </div>
+        <div class="analysis-card-meta">
+          <span class="analysis-category">${this.escapeHtml(analysis.category)}</span>
+          ${
+            analysis.insightCount > 0
+              ? `<span class="insight-badge">${analysis.insightCount} insight${analysis.insightCount !== 1 ? 's' : ''}</span>`
+              : ''
+          }
+        </div>
+        ${
+          analysis.summary
+            ? `<p class="analysis-summary">${this.escapeHtml(analysis.summary.substring(0, 150))}${analysis.summary.length > 150 ? '...' : ''}</p>`
+            : ''
+        }
+        <div class="analysis-card-actions">
+          <button class="view-btn" data-id="${analysis.id}">View Full →</button>
+        </div>
+      </div>
+    `
+      )
+      .join('');
+  }
+
+  renderAnalysisDetail(analysis) {
+    if (!analysis) {
+      return '<p>Analysis not found</p>';
+    }
+
+    const chatHtml = (analysis.chatHistory || [])
+      .map((msg, idx) => {
+        const isUser = msg.role === 'user';
+        const content = this.escapeHtml(msg.content)
+          .replace(/\n/g, '<br>')
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*([^*]+?)\*/g, '<em>$1</em>')
+          .replace(/`([^`]+?)`/g, '<code>$1</code>');
+
+        return `
+        <div class="chat-message ${isUser ? 'user' : 'assistant'}">
+          <div class="message-role">${isUser ? 'You' : 'AI Assistant'}</div>
+          <div class="message-content">${content}</div>
+        </div>
+      `;
+      })
+      .join('');
+
+    const insightsHtml =
+      analysis.insights && analysis.insights.length > 0
+        ? analysis.insights
+            .map(
+              (insight) => `
+          <div class="insight-item">
+            <div class="insight-header">
+              <span class="insight-time">${this.formatDate(insight.createdAt)}</span>
+              <button class="delete-insight-btn" data-insight-id="${insight.id}" title="Delete insight">
+                ✕
+              </button>
+            </div>
+            <div class="insight-content">${this.escapeHtml(insight.content)}</div>
+          </div>
+        `
+            )
+            .join('')
+        : '<p class="no-insights">No insights added yet. Add one below to get started.</p>';
+
+    return `
+      <div class="analysis-detail-container">
+        <div class="detail-header">
+          <div class="detail-title-section">
+            <h2>${this.escapeHtml(analysis.title)}</h2>
+            <div class="detail-meta">
+              <span class="category-badge">${this.escapeHtml(analysis.category)}</span>
+              <span class="detail-date">Saved ${this.formatDate(analysis.createdAt)}</span>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button class="detail-btn edit-btn" id="editBtn" title="Edit title and category">
+              ✏️ Edit
+            </button>
+            <button class="detail-btn delete-btn" id="deleteBtn" title="Delete this analysis">
+              🗑️ Delete
+            </button>
+            <button class="detail-btn back-btn" id="backBtn" title="Back to list">
+              ← Back
+            </button>
+          </div>
+        </div>
+
+        ${
+          analysis.summary
+            ? `
+          <div class="detail-summary">
+            <h3>Summary</h3>
+            <p>${this.escapeHtml(analysis.summary)}</p>
+          </div>
+        `
+            : ''
+        }
+
+        <div class="detail-section">
+          <h3>📋 Chat Conversation</h3>
+          <div class="chat-transcript">
+            ${chatHtml}
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>📌 Insights & Notes</h3>
+          <div class="insights-list">
+            ${insightsHtml}
+          </div>
+
+          <div class="add-insight-form" id="addInsightForm">
+            <textarea 
+              id="insightInput" 
+              placeholder="Add a new insight or finding..."
+              maxlength="500"
+            ></textarea>
+            <div class="insight-form-footer">
+              <span class="char-count"><span id="insightCharCount">0</span>/500</span>
+              <button type="button" id="addInsightBtn" class="add-insight-btn">
+                + Add Insight
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 }
 
-// Initialize when page loads
-let savedNotesUI = null;
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  savedNotesUI = new SavedNotesUI();
+  window.savedNotesManager = new SavedNotesManager();
 });

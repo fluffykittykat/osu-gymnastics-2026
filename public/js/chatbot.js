@@ -1,6 +1,7 @@
 /**
  * AI Chatbot Widget - Facebook Messenger style floating window
  * Integrates with Claude API via backend proxy
+ * Features: Save chats as analyses, persistent storage
  */
 
 class ChatbotWidget {
@@ -11,6 +12,7 @@ class ChatbotWidget {
     this.sessionId = this.generateSessionId();
     this.sendDebounceTimer = null;
     this.lastSendTime = 0;
+    this.isSaving = false;
     this.init();
     this.loadConversationFromStorage();
   }
@@ -100,53 +102,74 @@ class ChatbotWidget {
             placeholder="Ask about gymnastics stats, athletes, or meets..."
             rows="1"
           ></textarea>
-          <div class="input-buttons">
-            <button class="chatbot-send-btn" id="sendBtn" title="Send message">
-              <span>📤</span>
-            </button>
-            <button class="chatbot-save-btn" id="saveBtn" title="Save this chat analysis" style="display: none;">
-              <span>💾</span>
-            </button>
-          </div>
+          <button class="chatbot-send-btn" id="sendBtn" title="Send message">
+            <span>📤</span>
+          </button>
         </div>
 
-        <!-- Footer Info -->
-        <div class="chatbot-footer">
-          <small>💡 Ask about meet results, athlete stats, or gymnastics analysis</small>
+        <!-- Action Buttons -->
+        <div class="chatbot-action-buttons">
+          <button class="action-btn save-chat" id="saveChatBtn" title="Save this chat as an analysis">
+            📌 Save Analysis
+          </button>
+          <button class="action-btn view-notes" id="viewNotesBtn" title="View your saved analyses">
+            📓 My Notes
+          </button>
         </div>
       </div>
 
-      <!-- Save Analysis Modal -->
-      <div class="save-modal" id="saveModal" style="display: none;">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>Save This Analysis</h3>
-            <button class="modal-close" id="modalCloseBtn">✕</button>
-          </div>
-          <div class="modal-body">
+      <!-- Save Chat Modal -->
+      <div class="save-chat-modal" id="saveChatModal">
+        <div class="save-chat-modal-content">
+          <h3>Save This Analysis</h3>
+          <p>Give this chat a title and optional summary to save it for later reference.</p>
+          
+          <form id="saveChatForm">
             <div class="form-group">
-              <label for="analysisTitle">Analysis Title *</label>
-              <input type="text" id="analysisTitle" class="form-input" placeholder="e.g., Savannah Mill Season Analysis" required />
+              <label for="analysisTitle">Title *</label>
+              <input 
+                type="text" 
+                id="analysisTitle" 
+                placeholder="e.g., Savannah Mill Season Analysis" 
+                maxlength="100"
+                required
+              >
+              <div class="char-count">
+                <span id="titleCharCount">0</span>/100
+              </div>
             </div>
+
+            <div class="form-group">
+              <label for="analysisSummary">Summary (Optional)</label>
+              <textarea 
+                id="analysisSummary" 
+                placeholder="Brief summary of key findings..."
+                maxlength="500"
+              ></textarea>
+              <div class="char-count">
+                <span id="summaryCharCount">0</span>/500
+              </div>
+            </div>
+
             <div class="form-group">
               <label for="analysisCategory">Category</label>
-              <select id="analysisCategory" class="form-input">
+              <select id="analysisCategory">
                 <option value="General">General</option>
                 <option value="Athlete Performance">Athlete Performance</option>
                 <option value="Athlete Comparison">Athlete Comparison</option>
                 <option value="Performance Trends">Performance Trends</option>
-                <option value="Meet Analysis">Meet Analysis</option>
+                <option value="Event Analysis">Event Analysis</option>
+                <option value="Team Analysis">Team Analysis</option>
+                <option value="Meet Report">Meet Report</option>
+                <option value="Other">Other</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="analysisSummary">Summary (optional)</label>
-              <textarea id="analysisSummary" class="form-input" placeholder="Brief summary of this analysis..." rows="2"></textarea>
+
+            <div class="modal-actions">
+              <button type="button" class="modal-btn cancel" id="cancelSaveBtn">Cancel</button>
+              <button type="submit" class="modal-btn save" id="confirmSaveBtn">Save Analysis</button>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" id="modalCancelBtn">Cancel</button>
-            <button class="btn btn-primary" id="modalSaveBtn">Save Analysis</button>
-          </div>
+          </form>
         </div>
       </div>
     `;
@@ -161,13 +184,8 @@ class ChatbotWidget {
     const minimizeBtn = document.getElementById('minimizeBtn');
     const input = document.getElementById('chatbotInput');
     const sendBtn = document.getElementById('sendBtn');
-    const saveBtn = document.getElementById('saveBtn');
-    
-    // Modal elements
-    const saveModal = document.getElementById('saveModal');
-    const modalCloseBtn = document.getElementById('modalCloseBtn');
-    const modalCancelBtn = document.getElementById('modalCancelBtn');
-    const modalSaveBtn = document.getElementById('modalSaveBtn');
+    const saveChatBtn = document.getElementById('saveChatBtn');
+    const viewNotesBtn = document.getElementById('viewNotesBtn');
 
     // Toggle window on bubble click
     bubble.addEventListener('click', () => {
@@ -206,24 +224,14 @@ class ChatbotWidget {
       }
     });
 
-    // Save button click
-    saveBtn.addEventListener('click', () => this.openSaveModal());
+    // Save chat button
+    saveChatBtn.addEventListener('click', () => this.openSaveModal());
 
-    // Modal close button
-    modalCloseBtn.addEventListener('click', () => this.closeSaveModal());
+    // View notes button
+    viewNotesBtn.addEventListener('click', () => this.openNotesPage());
 
-    // Modal cancel button
-    modalCancelBtn.addEventListener('click', () => this.closeSaveModal());
-
-    // Modal save button
-    modalSaveBtn.addEventListener('click', () => this.submitSaveAnalysis());
-
-    // Close modal when clicking outside
-    saveModal.addEventListener('click', (e) => {
-      if (e.target === saveModal) {
-        this.closeSaveModal();
-      }
-    });
+    // Save modal handlers
+    this.attachModalListeners();
 
     // Greet user when widget is first opened
     if (this.messages.length === 0) {
@@ -236,6 +244,153 @@ class ChatbotWidget {
       ];
       this.saveConversationToStorage();
     }
+  }
+
+  attachModalListeners() {
+    const modal = document.getElementById('saveChatModal');
+    const form = document.getElementById('saveChatForm');
+    const cancelBtn = document.getElementById('cancelSaveBtn');
+    const titleInput = document.getElementById('analysisTitle');
+    const summaryInput = document.getElementById('analysisSummary');
+    const titleCount = document.getElementById('titleCharCount');
+    const summaryCount = document.getElementById('summaryCharCount');
+
+    // Character counters
+    titleInput.addEventListener('input', () => {
+      titleCount.textContent = titleInput.value.length;
+    });
+
+    summaryInput.addEventListener('input', () => {
+      summaryCount.textContent = summaryInput.value.length;
+    });
+
+    // Cancel button
+    cancelBtn.addEventListener('click', () => this.closeSaveModal());
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        this.closeSaveModal();
+      }
+    });
+
+    // Form submission
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.saveChat();
+    });
+  }
+
+  openSaveModal() {
+    const modal = document.getElementById('saveChatModal');
+    const form = document.getElementById('saveChatForm');
+    form.reset();
+    document.getElementById('titleCharCount').textContent = '0';
+    document.getElementById('summaryCharCount').textContent = '0';
+    modal.classList.add('visible');
+  }
+
+  closeSaveModal() {
+    const modal = document.getElementById('saveChatModal');
+    modal.classList.remove('visible');
+  }
+
+  async saveChat() {
+    if (this.isSaving || this.messages.length === 0) return;
+
+    const title = document.getElementById('analysisTitle').value.trim();
+    const summary = document.getElementById('analysisSummary').value.trim();
+    const category = document.getElementById('analysisCategory').value;
+
+    if (!title || title.length < 3) {
+      alert('Please enter a title (at least 3 characters)');
+      return;
+    }
+
+    this.isSaving = true;
+    const confirmBtn = document.getElementById('confirmSaveBtn');
+    const originalText = confirmBtn.textContent;
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Saving...';
+
+    try {
+      const response = await fetch('/api/analyses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          summary,
+          category,
+          chatHistory: this.messages.map(m => ({
+            role: m.role,
+            content: m.content,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Save failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        this.closeSaveModal();
+        this.showToast(`✅ Analysis saved: "${title}"`, 'success');
+        // Clear the chat after saving
+        this.clearChat();
+      } else {
+        throw new Error(data.error || 'Failed to save');
+      }
+    } catch (error) {
+      console.error('Save error:', error.message);
+      this.showToast(`❌ Failed to save: ${error.message}`, 'error');
+    } finally {
+      this.isSaving = false;
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = originalText;
+    }
+  }
+
+  openNotesPage() {
+    // Dispatch custom event to navigate to notes page
+    window.dispatchEvent(new CustomEvent('navigateToNotes'));
+  }
+
+  clearChat() {
+    this.messages = [
+      {
+        role: 'assistant',
+        content: 'Chat saved! Start a new analysis or ask me something else. 📊',
+        timestamp: new Date(),
+      },
+    ];
+    this.saveConversationToStorage();
+    this.renderMessages();
+  }
+
+  showToast(message, type = 'default') {
+    // Create a simple toast notification
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      z-index: 10000;
+      animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
   }
 
   /**
@@ -265,7 +420,6 @@ class ChatbotWidget {
     bubble.classList.add('active');
     this.isOpen = true;
     this.renderMessages();
-    this.updateSaveButtonVisibility();
     document.getElementById('chatbotInput').focus();
   }
 
@@ -378,7 +532,6 @@ class ChatbotWidget {
     } finally {
       this.hideTypingIndicator();
       this.renderMessages();
-      this.updateSaveButtonVisibility();
       this.saveConversationToStorage();
     }
   }
@@ -461,94 +614,6 @@ class ChatbotWidget {
     const indicator = document.getElementById('typingIndicator');
     indicator.style.display = 'none';
     this.isLoading = false;
-  }
-
-  /**
-   * Open the save analysis modal
-   */
-  openSaveModal() {
-    const modal = document.getElementById('saveModal');
-    const titleInput = document.getElementById('analysisTitle');
-    
-    modal.style.display = 'flex';
-    
-    // Auto-generate title from last user message
-    const lastUserMessage = this.messages
-      .slice()
-      .reverse()
-      .find(m => m.role === 'user');
-    
-    if (lastUserMessage) {
-      titleInput.value = lastUserMessage.content.substring(0, 50);
-    }
-    
-    titleInput.focus();
-  }
-
-  /**
-   * Close the save analysis modal
-   */
-  closeSaveModal() {
-    const modal = document.getElementById('saveModal');
-    modal.style.display = 'none';
-    
-    // Clear form
-    document.getElementById('analysisTitle').value = '';
-    document.getElementById('analysisCategory').value = 'General';
-    document.getElementById('analysisSummary').value = '';
-  }
-
-  /**
-   * Submit the save analysis form
-   */
-  submitSaveAnalysis() {
-    const title = document.getElementById('analysisTitle').value.trim();
-    const category = document.getElementById('analysisCategory').value;
-    const summary = document.getElementById('analysisSummary').value.trim();
-
-    if (!title) {
-      alert('Please enter a title for this analysis');
-      return;
-    }
-
-    try {
-      // Use the SavedNotesManager to save
-      const manager = new SavedNotesManager();
-      const analysis = manager.saveAnalysis({
-        title,
-        category,
-        summary,
-        chatHistory: this.messages,
-      });
-
-      // Show success message
-      alert(`✅ Analysis saved! View your saved analyses in the "Saved Analyses" page.`);
-      
-      this.closeSaveModal();
-      
-      // Optionally navigate to saved notes (if there's a view switcher)
-      // You could add this if needed: switchView('notes');
-    } catch (e) {
-      alert(`Failed to save analysis: ${e.message}`);
-    }
-  }
-
-  /**
-   * Update the save button visibility based on message count
-   */
-  updateSaveButtonVisibility() {
-    const saveBtn = document.getElementById('saveBtn');
-    // Show save button if there are messages beyond the initial greeting
-    const hasUserMessages = this.messages.some(m => m.role === 'user');
-    saveBtn.style.display = hasUserMessages ? 'block' : 'none';
-  }
-
-  /**
-   * Override renderMessages to update save button visibility
-   */
-  renderMessagesWithSaveButton() {
-    this.renderMessages();
-    this.updateSaveButtonVisibility();
   }
 }
 

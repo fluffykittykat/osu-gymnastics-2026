@@ -559,6 +559,267 @@ function buildTeamContext() {
   }
 }
 
+// ── Saved Analyses Endpoints ────────────────────────────────────────────────
+
+const ANALYSES_FILE = path.join(__dirname, 'data', 'saved-analyses.json');
+
+/**
+ * Load saved analyses from JSON file
+ * Creates file if it doesn't exist
+ */
+function loadAnalyses() {
+  try {
+    if (fs.existsSync(ANALYSES_FILE)) {
+      const data = fs.readFileSync(ANALYSES_FILE, 'utf-8');
+      return JSON.parse(data) || [];
+    }
+  } catch (err) {
+    console.error('Failed to load analyses:', err.message);
+  }
+  return [];
+}
+
+/**
+ * Save analyses to JSON file
+ */
+function saveAnalyses(analyses) {
+  try {
+    const dir = path.dirname(ANALYSES_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(ANALYSES_FILE, JSON.stringify(analyses, null, 2));
+    return true;
+  } catch (err) {
+    console.error('Failed to save analyses:', err.message);
+    return false;
+  }
+}
+
+/**
+ * Generate unique ID for analysis
+ */
+function generateAnalysisId() {
+  return `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Validate analysis data
+ */
+function validateAnalysis(analysis) {
+  if (!analysis.title || typeof analysis.title !== 'string' || analysis.title.trim().length < 3) {
+    return 'Title must be at least 3 characters';
+  }
+  if (!Array.isArray(analysis.chatHistory)) {
+    return 'Chat history must be an array';
+  }
+  return null;
+}
+
+/**
+ * POST /api/analyses - Save a new chat analysis
+ */
+app.post('/api/analyses', (req, res) => {
+  try {
+    const { title, summary, category, chatHistory } = req.body;
+
+    // Validate input
+    const error = validateAnalysis({ title, chatHistory });
+    if (error) {
+      return res.status(400).json({ error });
+    }
+
+    // Load existing analyses
+    let analyses = loadAnalyses();
+
+    // Create new analysis
+    const newAnalysis = {
+      id: generateAnalysisId(),
+      title: title.trim(),
+      summary: summary || '',
+      category: category || 'General',
+      chatHistory: chatHistory,
+      insights: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Add to array
+    analyses.push(newAnalysis);
+
+    // Save
+    if (!saveAnalyses(analyses)) {
+      return res.status(500).json({ error: 'Failed to save analysis' });
+    }
+
+    console.log(`[Analyses] Saved new analysis: ${newAnalysis.id}`);
+    res.status(201).json({ success: true, analysis: newAnalysis });
+  } catch (err) {
+    console.error('[Analyses POST] Error:', err.message);
+    res.status(500).json({ error: 'Failed to save analysis' });
+  }
+});
+
+/**
+ * GET /api/analyses - List all saved analyses
+ */
+app.get('/api/analyses', (req, res) => {
+  try {
+    let analyses = loadAnalyses();
+
+    // Return list with basic info (no full chat history to keep response small)
+    const summary = analyses.map(a => ({
+      id: a.id,
+      title: a.title,
+      summary: a.summary,
+      category: a.category,
+      insightCount: (a.insights || []).length,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+    }));
+
+    res.json({ success: true, analyses: summary, count: summary.length });
+  } catch (err) {
+    console.error('[Analyses GET] Error:', err.message);
+    res.status(500).json({ error: 'Failed to load analyses' });
+  }
+});
+
+/**
+ * GET /api/analyses/:id - Get specific analysis with all details
+ */
+app.get('/api/analyses/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    let analyses = loadAnalyses();
+    const analysis = analyses.find(a => a.id === id);
+
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    res.json({ success: true, analysis });
+  } catch (err) {
+    console.error('[Analyses GET :id] Error:', err.message);
+    res.status(500).json({ error: 'Failed to load analysis' });
+  }
+});
+
+/**
+ * POST /api/analyses/:id/insights - Add insight to analysis
+ */
+app.post('/api/analyses/:id/insights', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      return res.status(400).json({ error: 'Insight content cannot be empty' });
+    }
+
+    let analyses = loadAnalyses();
+    const analysis = analyses.find(a => a.id === id);
+
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    // Add insight
+    if (!Array.isArray(analysis.insights)) {
+      analysis.insights = [];
+    }
+
+    const insight = {
+      id: `insight_${Date.now()}`,
+      content: content.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    analysis.insights.push(insight);
+    analysis.updatedAt = new Date().toISOString();
+
+    // Save
+    if (!saveAnalyses(analyses)) {
+      return res.status(500).json({ error: 'Failed to save insight' });
+    }
+
+    console.log(`[Analyses] Added insight to ${id}`);
+    res.json({ success: true, insight, analysis });
+  } catch (err) {
+    console.error('[Analyses POST insight] Error:', err.message);
+    res.status(500).json({ error: 'Failed to add insight' });
+  }
+});
+
+/**
+ * PUT /api/analyses/:id - Update analysis title/category
+ */
+app.put('/api/analyses/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, category, summary } = req.body;
+
+    let analyses = loadAnalyses();
+    const analysis = analyses.find(a => a.id === id);
+
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    // Update fields if provided
+    if (title && typeof title === 'string' && title.trim().length >= 3) {
+      analysis.title = title.trim();
+    }
+    if (category && typeof category === 'string') {
+      analysis.category = category.trim();
+    }
+    if (summary !== undefined && typeof summary === 'string') {
+      analysis.summary = summary.trim();
+    }
+
+    analysis.updatedAt = new Date().toISOString();
+
+    // Save
+    if (!saveAnalyses(analyses)) {
+      return res.status(500).json({ error: 'Failed to update analysis' });
+    }
+
+    console.log(`[Analyses] Updated analysis ${id}`);
+    res.json({ success: true, analysis });
+  } catch (err) {
+    console.error('[Analyses PUT] Error:', err.message);
+    res.status(500).json({ error: 'Failed to update analysis' });
+  }
+});
+
+/**
+ * DELETE /api/analyses/:id - Delete analysis
+ */
+app.delete('/api/analyses/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    let analyses = loadAnalyses();
+    const index = analyses.findIndex(a => a.id === id);
+
+    if (index === -1) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    const deleted = analyses.splice(index, 1)[0];
+
+    // Save
+    if (!saveAnalyses(analyses)) {
+      return res.status(500).json({ error: 'Failed to delete analysis' });
+    }
+
+    console.log(`[Analyses] Deleted analysis ${id}`);
+    res.json({ success: true, deleted });
+  } catch (err) {
+    console.error('[Analyses DELETE] Error:', err.message);
+    res.status(500).json({ error: 'Failed to delete analysis' });
+  }
+});
+
 // Claude AI Chatbot Endpoint
 app.post('/api/chat', async (req, res) => {
   let athleteProfiles = null;

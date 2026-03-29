@@ -332,12 +332,6 @@
   color: #999;
 }
 
-.input-buttons {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
 .chatbot-send-btn {
   background: transparent;
   border: none;
@@ -356,31 +350,6 @@
 }
 
 .chatbot-send-btn:active {
-  transform: scale(0.95);
-}
-
-.chatbot-save-btn {
-  background: #4CAF50;
-  color: white;
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.chatbot-save-btn:hover {
-  background: #45a049;
-  transform: scale(1.05);
-}
-
-.chatbot-save-btn:active {
   transform: scale(0.95);
 }
 
@@ -437,6 +406,184 @@
   .chatbot-input {
     font-size: 16px; /* Prevents zoom on iOS */
   }
+}
+
+/* Save Chat Modal */
+.save-chat-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10001;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.save-chat-modal.visible {
+  display: flex;
+}
+
+.save-chat-modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 40px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.save-chat-modal-content h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #000;
+}
+
+.save-chat-modal-content p {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #BA0021;
+  box-shadow: 0 0 0 3px rgba(186, 0, 33, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+  max-height: 200px;
+}
+
+.char-count {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-btn.cancel {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.modal-btn.cancel:hover {
+  background: #e0e0e0;
+}
+
+.modal-btn.save {
+  background: #BA0021;
+  color: white;
+}
+
+.modal-btn.save:hover {
+  background: #8B0015;
+}
+
+.modal-btn.save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Save/View Notes Buttons in Chatbot */
+.chatbot-action-buttons {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border-top: 1px solid #e5e5e5;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #f0f0f0;
+  border-color: #BA0021;
+  color: #BA0021;
+}
+
+.action-btn.save-chat {
+  background: #BA0021;
+  color: white;
+  border-color: #BA0021;
+}
+
+.action-btn.save-chat:hover {
+  background: #8B0015;
+  border-color: #8B0015;
 }
 
 /* Print Styles */

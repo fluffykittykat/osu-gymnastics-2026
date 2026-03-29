@@ -254,12 +254,7 @@
       else if (view === 'gymnasts') renderGymnasts();
       else if (view === 'leaderboards') { renderHeatMap(); renderLeaderboard('vault'); }
       else if (view === 'insights') renderInsights();
-      else if (view === 'notes') {
-        // Render saved notes - delegate to savedNotesUI
-        if (window.savedNotesUI) {
-          window.savedNotesUI.render();
-        }
-      }
+      else if (view === 'notes') renderNotesView();
     } catch (err) {
       console.error('Render error in view "' + view + '":', err);
       const el = document.getElementById('view-' + view);
@@ -3969,6 +3964,210 @@
       ${renderDeepCuts()}
       ${renderSeasonWildStats()}
     `;
+  }
+
+  // ===== Saved Notes & Analysis View =====
+  async function renderNotesView() {
+    const container = document.getElementById('notesContent');
+    const filterBar = document.getElementById('notesFilterBar');
+    const notesManager = window.savedNotesManager;
+
+    if (!notesManager) {
+      container.innerHTML = '<p style="padding: 20px;">Loading saved notes...</p>';
+      return;
+    }
+
+    // Reload analyses from server
+    await notesManager.loadAnalyses();
+
+    // Get categories for filter
+    const categories = notesManager.getCategories();
+    notesManager.currentFilter = 'all';
+
+    // Render filter bar
+    filterBar.innerHTML = categories
+      .map(
+        (cat) => `
+      <button class="filter-btn ${cat === 'all' ? 'active' : ''}" data-filter="${cat}">
+        ${cat === 'all' ? 'All' : cat}
+      </button>
+    `
+      )
+      .join('');
+
+    // Add filter button event listeners
+    filterBar.querySelectorAll('.filter-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        filterBar.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        notesManager.currentFilter = btn.dataset.filter;
+        renderAnalysesList();
+      });
+    });
+
+    // Render analyses list
+    function renderAnalysesList() {
+      const html = notesManager.renderAnalysesList();
+      container.innerHTML = html;
+
+      // Add click handlers for view full button
+      container.querySelectorAll('.view-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const analysis = await notesManager.loadAnalysisDetail(id);
+          if (analysis) {
+            renderAnalysisDetail(analysis);
+          }
+        });
+      });
+    }
+
+    // Render analysis detail view
+    function renderAnalysisDetail(analysis) {
+      const detailHtml = notesManager.renderAnalysisDetail(analysis);
+      container.innerHTML = detailHtml;
+
+      // Back button
+      const backBtn = container.querySelector('#backBtn');
+      if (backBtn) {
+        backBtn.addEventListener('click', renderAnalysesList);
+      }
+
+      // Edit button
+      const editBtn = container.querySelector('#editBtn');
+      if (editBtn) {
+        editBtn.addEventListener('click', () => showEditModal(analysis));
+      }
+
+      // Delete button
+      const deleteBtn = container.querySelector('#deleteBtn');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', () => deleteAnalysis(analysis.id));
+      }
+
+      // Add insight button
+      const addInsightBtn = container.querySelector('#addInsightBtn');
+      const insightInput = container.querySelector('#insightInput');
+      const insightCharCount = container.querySelector('#insightCharCount');
+
+      if (insightInput) {
+        insightInput.addEventListener('input', () => {
+          insightCharCount.textContent = insightInput.value.length;
+        });
+      }
+
+      if (addInsightBtn) {
+        addInsightBtn.addEventListener('click', async () => {
+          const content = insightInput?.value.trim();
+          if (!content) {
+            alert('Please enter an insight');
+            return;
+          }
+
+          addInsightBtn.disabled = true;
+          addInsightBtn.textContent = 'Adding...';
+
+          try {
+            const insight = await notesManager.addInsight(analysis.id, content);
+            insightInput.value = '';
+            insightCharCount.textContent = '0';
+            renderAnalysisDetail(notesManager.selectedAnalysis);
+          } catch (err) {
+            alert('Failed to add insight: ' + err.message);
+          } finally {
+            addInsightBtn.disabled = false;
+            addInsightBtn.textContent = '+ Add Insight';
+          }
+        });
+      }
+
+      // Delete insight buttons
+      container.querySelectorAll('.delete-insight-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          alert('Delete insight feature coming soon');
+        });
+      });
+    }
+
+    // Show edit modal
+    function showEditModal(analysis) {
+      const modal = document.createElement('div');
+      modal.className = 'edit-modal visible';
+      modal.innerHTML = `
+        <div class="edit-modal-content">
+          <h3>Edit Analysis</h3>
+          <form id="editForm">
+            <div class="edit-form-group">
+              <label for="editTitle">Title</label>
+              <input type="text" id="editTitle" value="${notesManager.escapeHtml(analysis.title)}" required>
+            </div>
+            <div class="edit-form-group">
+              <label for="editCategory">Category</label>
+              <select id="editCategory">
+                <option value="General" ${analysis.category === 'General' ? 'selected' : ''}>General</option>
+                <option value="Athlete Performance" ${analysis.category === 'Athlete Performance' ? 'selected' : ''}>Athlete Performance</option>
+                <option value="Athlete Comparison" ${analysis.category === 'Athlete Comparison' ? 'selected' : ''}>Athlete Comparison</option>
+                <option value="Performance Trends" ${analysis.category === 'Performance Trends' ? 'selected' : ''}>Performance Trends</option>
+                <option value="Event Analysis" ${analysis.category === 'Event Analysis' ? 'selected' : ''}>Event Analysis</option>
+                <option value="Team Analysis" ${analysis.category === 'Team Analysis' ? 'selected' : ''}>Team Analysis</option>
+                <option value="Meet Report" ${analysis.category === 'Meet Report' ? 'selected' : ''}>Meet Report</option>
+                <option value="Other" ${analysis.category === 'Other' ? 'selected' : ''}>Other</option>
+              </select>
+            </div>
+            <div class="edit-modal-actions">
+              <button type="button" class="edit-modal-btn cancel" id="cancelEditBtn">Cancel</button>
+              <button type="submit" class="edit-modal-btn save">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      const form = modal.querySelector('#editForm');
+      const cancelBtn = modal.querySelector('#cancelEditBtn');
+
+      cancelBtn.addEventListener('click', () => {
+        modal.remove();
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.remove();
+        }
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = document.querySelector('#editTitle').value;
+        const category = document.querySelector('#editCategory').value;
+
+        try {
+          await notesManager.updateAnalysis(analysis.id, { title, category });
+          modal.remove();
+          renderAnalysisDetail(notesManager.selectedAnalysis);
+        } catch (err) {
+          alert('Failed to update: ' + err.message);
+        }
+      });
+    }
+
+    // Delete analysis
+    async function deleteAnalysis(id) {
+      if (!confirm('Are you sure you want to delete this analysis? This cannot be undone.')) {
+        return;
+      }
+
+      try {
+        await notesManager.deleteAnalysis(id);
+        renderAnalysesList();
+      } catch (err) {
+        alert('Failed to delete: ' + err.message);
+      }
+    }
+
+    // Initial render
+    renderAnalysesList();
   }
 
   // ===== Season Rankings from allTeams (quad meets) =====
