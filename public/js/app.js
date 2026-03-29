@@ -975,9 +975,9 @@
           ${resultBadge}
         </div>
         <div class="meet-scores">
-          <div class="team-score"><div class="team-name">Oregon State</div><div class="score score-osu">${m.osuScore.toFixed(3)}</div></div>
+          <div class="team-score"><div class="team-name">Oregon State</div><div class="score score-osu">${m.osuScore != null ? m.osuScore.toFixed(3) : "TBD"}</div></div>
           <div class="score-vs">vs</div>
-          <div class="team-score"><div class="team-name">Opponent</div><div class="score">${m.opponentScore.toFixed(3)}</div></div>
+          <div class="team-score"><div class="team-name">Opponent</div><div class="score">${m.opponentScore != null ? m.opponentScore.toFixed(3) : "TBD"}</div></div>
         </div>
         <div class="event-bars">${eventBars}</div>
       </div>`;
@@ -1032,9 +1032,9 @@
             <div class="meet-opponent" style="font-size:1rem;">${m.opponent} ${getStatusBadge(m)}</div>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem;">
-            <span style="font-family:Oswald;color:var(--orange);font-size:1rem;">${m.osuScore.toFixed(3)}</span>
+            <span style="font-family:Oswald;color:var(--orange);font-size:1rem;">${m.osuScore != null ? m.osuScore.toFixed(3) : "TBD"}</span>
             <span style="color:var(--text-muted);">–</span>
-            <span style="font-size:1rem;">${m.opponentScore.toFixed(3)}</span>
+            <span style="font-size:1rem;">${m.opponentScore != null ? m.opponentScore.toFixed(3) : "TBD"}</span>
             <span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>
           </div>
         </div>
@@ -2621,12 +2621,12 @@
 
     const rows = teamMeets.map(m => {
       const teamData = m.allTeams && m.allTeams.find(t => t.team.toLowerCase() === teamName.toLowerCase());
-      const oppScore = teamData ? teamData.total.toFixed(3) : m.opponentScore.toFixed(3);
+      const oppScore = teamData ? teamData.total.toFixed(3) : m.opponentScore != null ? m.opponentScore.toFixed(3) : "TBD";
       const result = m.result;
       return `<tr>
         <td>${formatDateLong(m.date)}</td>
         <td><span class="clickable-meet" data-meet-id="${m.id}">${m.quadName || m.opponent}</span></td>
-        <td style="color:var(--orange);font-family:Oswald;">${m.osuScore.toFixed(3)}</td>
+        <td style="color:var(--orange);font-family:Oswald;">${m.osuScore != null ? m.osuScore.toFixed(3) : "TBD"}</td>
         <td>${oppScore}</td>
         <td><span class="badge badge-${result.toLowerCase()}">${result}</span></td>
       </tr>`;
