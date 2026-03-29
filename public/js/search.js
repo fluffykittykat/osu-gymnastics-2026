@@ -56,8 +56,11 @@
 
     // ---- Meets ----
     meets.forEach(meet => {
+      if (!meet || !meet.opponent) return; // Skip invalid meets
       const homeAway = meet.isHome ? 'Home' : 'Away';
-      const resultStr = `${meet.result} ${meet.osuScore.toFixed(3)}–${meet.opponentScore.toFixed(3)}`;
+      const osuScore = meet.osuScore ? meet.osuScore.toFixed(3) : 'N/A';
+      const oppScore = meet.opponentScore ? meet.opponentScore.toFixed(3) : 'N/A';
+      const resultStr = `${meet.result || '?'} ${osuScore}–${oppScore}`;
       const dateStr = formatDate(meet.date);
       searchIndex.push({
         type: 'meet',
