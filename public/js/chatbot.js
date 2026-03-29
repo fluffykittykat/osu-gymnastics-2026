@@ -261,11 +261,18 @@ class ChatbotWidget {
             content: m.content,
           })),
         }),
+        timeout: 35000, // 35 second timeout to match server config
       });
 
       if (!response.ok) {
         if (response.status === 429) {
           throw new Error('Too many requests. Please wait a moment before sending another message.');
+        }
+        if (response.status === 504) {
+          throw new Error('The AI service is responding slowly. Please try again in a moment.');
+        }
+        if (response.status === 503) {
+          throw new Error('The AI service is temporarily unavailable. Please try again shortly.');
         }
         throw new Error(`API error: ${response.status}`);
       }
@@ -278,16 +285,27 @@ class ChatbotWidget {
           role: 'assistant',
           content: data.message,
           timestamp: new Date(),
+          statsAvailable: data.statsAvailable !== false,
         });
+      } else if (data.error) {
+        throw new Error(data.error);
       } else {
-        throw new Error(data.error || 'Failed to get response');
+        throw new Error('Failed to get response from AI assistant');
       }
     } catch (error) {
-      console.error('Chat error:', error);
-      // Add error message
+      console.error('Chat error:', error.message);
+      // Add error message - be helpful and specific
+      let errorMessage = `Sorry, I encountered an error: ${error.message}`;
+      
+      if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'The request took too long. Please try again.';
+      }
+      
       this.messages.push({
         role: 'assistant',
-        content: `Sorry, I encountered an error: ${error.message}. Please try again later.`,
+        content: errorMessage + ' 🔄 Please try again or refresh the page if the problem persists.',
         timestamp: new Date(),
         isError: true,
       });
