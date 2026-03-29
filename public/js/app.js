@@ -45,20 +45,10 @@
     return meets.some(m => m.status === 'in_progress');
   }
 
-  // ===== Shared Stats Helpers =====
-  function mean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
-  function stddev(arr) {
-    if (arr.length < 2) return 0;
-    const m = mean(arr);
-    return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1));
-  }
-  function pearson(xs, ys) {
-    const n = xs.length; if (n < 3) return null;
-    const mx = mean(xs), my = mean(ys);
-    const num = xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
-    const den = Math.sqrt(xs.reduce((s,x)=>s+Math.pow(x-mx,2),0)*ys.reduce((s,y)=>s+Math.pow(y-my,2),0));
-    return den === 0 ? null : num/den;
-  }
+  // ===== Shared Stats Helpers (delegated to Stats module) =====
+  const mean = Stats.mean;
+  const stddev = Stats.stddev;
+  const pearson = Stats.pearson;
   function fmt(n, dp=3) { return n!=null&&!isNaN(n) ? n.toFixed(dp) : '—'; }
 
   // ===== Toast Notifications =====
@@ -3283,13 +3273,7 @@
   // ===== Insights =====
   function renderInsights() {
     // --- helpers ---
-    function linReg(pts) {
-      const n = pts.length;
-      if (n < 2) return {slope:0};
-      const sx=pts.reduce((s,p)=>s+p.x,0), sy=pts.reduce((s,p)=>s+p.y,0);
-      const sxy=pts.reduce((s,p)=>s+p.x*p.y,0), sx2=pts.reduce((s,p)=>s+p.x*p.x,0);
-      return {slope:(n*sxy-sx*sy)/(n*sx2-sx*sx)||0};
-    }
+    const linReg = Stats.linReg;
     function fmtDiff(n) { if (typeof n !== 'number' || isNaN(n)) return '—'; return (n>=0?'+':'')+n.toFixed(3); }
 
     const EVS = ['vault','bars','beam','floor'];
@@ -4073,12 +4057,8 @@
   }
 // ===== Season Wild Stats =====
   function renderSeasonWildStats() {
-    // ── Shared stats helpers ────────────────────────────────────────────────
-    function sd(arr) {
-      if(arr.length < 2) return null;
-      const m = mean(arr);
-      return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1));
-    }
+    // ── Shared stats helpers (delegated to Stats module) ────────────────────
+    const sd = Stats.stddev;
     function corrStrength(r) {
       const a = Math.abs(r);
       if(a < 0.2) return 'negligible';
