@@ -3207,6 +3207,38 @@
 
     const deepDive = buildDeepDive();
 
+    // Lineup Position Analysis
+    const posStats = Stats.getLineupPositionStats(meets, eventKey);
+    let lineupAnalysisHtml = '';
+    const posKeys = Object.keys(posStats.byPosition).sort();
+    if (posKeys.length > 0) {
+      const posScores = posKeys.map(p => posStats.byPosition[p].avg);
+      const maxPosAvg = posScores.length ? Math.max(...posScores) : 10;
+      const minPosAvg = posScores.length ? Math.min(...posScores) : 9;
+
+      const posBars = posKeys.map(p => {
+        const ps = posStats.byPosition[p];
+        const pct = ((ps.avg - 9.0) / 1.0 * 100).toFixed(1);
+        return `<div class="position-bar-item">
+          <div class="position-bar-label">Pos ${p}</div>
+          <div class="position-bar-track"><div class="position-bar-fill" style="width:${Math.max(5, Math.min(100, pct))}%"></div></div>
+          <div class="position-bar-value">${ps.avg.toFixed(3)} <span style="color:var(--text-muted);font-size:0.7rem">(${ps.count})</span></div>
+        </div>`;
+      }).join('');
+
+      const anchor = posStats.byPosition['6'];
+      const leadoff = posStats.byPosition['1'];
+      const anchorCard = anchor ? `<div class="lineup-role-card"><div class="lineup-role-title">Anchor (Pos 6)</div><div class="lineup-role-athlete">${anchor.topAthlete || '—'}</div><div class="lineup-role-avg">${anchor.avg.toFixed(3)} avg</div></div>` : '';
+      const leadoffCard = leadoff ? `<div class="lineup-role-card"><div class="lineup-role-title">Leadoff (Pos 1)</div><div class="lineup-role-athlete">${leadoff.topAthlete || '—'}</div><div class="lineup-role-avg">${leadoff.avg.toFixed(3)} avg</div></div>` : '';
+
+      lineupAnalysisHtml = `
+        <div class="section-card">
+          <h2 class="section-title">Lineup Analysis — ${evName}</h2>
+          <div class="position-bars">${posBars}</div>
+          <div class="lineup-roles">${leadoffCard}${anchorCard}</div>
+        </div>`;
+    }
+
     document.getElementById('eventDetailContent').innerHTML = `
       <div class="event-detail-header">
         <div class="event-banner-content">
@@ -3216,6 +3248,7 @@
       </div>
       ${chart}
       ${statsPanel}
+      ${lineupAnalysisHtml}
       ${gymnastSection}
       ${leaderboard}
       ${breakdown}
