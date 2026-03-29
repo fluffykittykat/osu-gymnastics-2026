@@ -318,6 +318,116 @@ app.get('/api/stats/events/:event', (req, res) => {
   }
 });
 
+/**
+ * Athlete progression endpoint - meet-by-meet performance history
+ * Returns chronological progression data for trend analysis
+ */
+app.get('/api/athlete-progression/:name', (req, res) => {
+  if (!statsCache) {
+    return res.status(503).json({ error: 'Stats not yet computed' });
+  }
+  
+  const name = decodeURIComponent(req.params.name);
+  const athlete = statsCache.athletes[name];
+  
+  if (!athlete) {
+    return res.status(404).json({ error: `Athlete "${name}" not found` });
+  }
+
+  // Collect all meet dates across all events
+  const meetDatesSet = new Set();
+  Object.values(athlete.events || {}).forEach(eventData => {
+    (eventData.entries || []).forEach(entry => {
+      meetDatesSet.add(entry.date);
+    });
+  });
+
+  // Sort chronologically
+  const meetDates = Array.from(meetDatesSet).sort();
+
+  // Build meet-by-meet progression
+  const meets = meetDates.map(date => {
+    const meetData = {
+      date: date,
+      opponent: null,
+      scores: {}
+    };
+
+    // Collect scores from each event for this date
+    Object.entries(athlete.events || {}).forEach(([eventName, eventData]) => {
+      const entry = (eventData.entries || []).find(e => e.date === date);
+      if (entry) {
+        meetData.scores[eventName] = entry.score;
+        if (!meetData.opponent) {
+          meetData.opponent = entry.opponent;
+        }
+      }
+    });
+
+    // Calculate all-around if athlete competed in all 4 events
+    const events = ['vault', 'bars', 'beam', 'floor'];
+    if (events.every(ev => meetData.scores[ev] !== undefined)) {
+      meetData.scores.aa = events.reduce((sum, ev) => sum + meetData.scores[ev], 0);
+    }
+
+    return meetData;
+  });
+
+  // Calculate trend statistics
+  const calculateTrend = (scores) => {
+    if (scores.length < 2) return 'stable';
+    const firstHalf = scores.slice(0, Math.floor(scores.length / 2));
+    const secondHalf = scores.slice(Math.floor(scores.length / 2));
+    const firstAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+    const secondAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+    const diff = secondAvg - firstAvg;
+    if (diff > 0.05) return 'improving';
+    if (diff < -0.05) return 'declining';
+    return 'stable';
+  };
+
+  const trends = {};
+  Object.entries(athlete.events || {}).forEach(([eventName, eventData]) => {
+    const scores = (eventData.entries || []).map(e => e.score);
+    trends[eventName] = {
+      trend: calculateTrend(scores),
+      average: eventData.avg,
+      best: eventData.best,
+      worst: eventData.worst,
+      count: scores.length
+    };
+  });
+
+  // Find best and worst meet performances
+  const meetsWithAA = meets.filter(m => m.scores.aa !== undefined);
+  let bestMeet = null;
+  let worstMeet = null;
+  
+  if (meetsWithAA.length > 0) {
+    bestMeet = meetsWithAA.reduce((best, current) => 
+      current.scores.aa > best.scores.aa ? current : best
+    );
+    worstMeet = meetsWithAA.reduce((worst, current) => 
+      current.scores.aa < worst.scores.aa ? current : worst
+    );
+  }
+
+  res.json({
+    athlete: name,
+    bio: athlete.bio,
+    totalAppearances: athlete.totalAppearances,
+    meets: meets,
+    trends: trends,
+    bestMeet: bestMeet,
+    worstMeet: worstMeet,
+    metadata: {
+      meetsCount: meets.length,
+      eventsCompeted: Object.keys(athlete.events || {}),
+      computedAt: new Date().toISOString()
+    }
+  });
+});
+
 app.get('/api/competitor-scores', (req, res) => {
   const meets = meetsData || [];
   res.json(meets.map(m => ({
@@ -667,7 +777,7 @@ When stats do load, they will be included in your context.
 
 # YOUR ROLE
 
-You are a specialized gymnastics analytics engine with deep knowledge of OSU's 2026 season performance data.
+You are a specialized gymnastics analytics engine with deep knowledge of OSU's 2026 season performance data, including comprehensive meet-by-meet progression tracking.
 
 ${dataContext}
 
@@ -679,24 +789,47 @@ When asked about an athlete or team:
 3. Identify TRENDS and patterns (improving, declining, stable)
 4. Compare to team averages and other athletes when relevant
 5. Give coaching-level insights about strengths and weaknesses
+6. Analyze progression through the season using meet-by-meet data
+
+## Meet-by-Meet Data Available
+
+You have access to FULL CHRONOLOGICAL PROGRESSION DATA for every athlete:
+- Each athlete's event data includes a "meet_by_meet" array with scores, dates, and opponents
+- This allows you to track performance trends throughout the season
+- You can identify improvement patterns, consistency issues, and turning points
+- Best/worst performances are tracked with context
 
 ## Analysis Capabilities:
 - **Event Strengths**: Which apparatus are they strongest/weakest on?
 - **Consistency**: How reliable are they across competitions?
-- **Trends**: Are they improving or declining?
+- **Trends**: Are they improving or declining over time?
+- **Progression**: Show meet-by-meet score progression through the season
+- **Best/Worst Performances**: Identify peak and low performances with context
 - **Team Impact**: How do they contribute to team performance?
 - **Competitive Positioning**: Where do they rank among teammates?
-- **Comparative Analysis**: Side-by-side athlete comparisons
+- **Comparative Analysis**: Side-by-side athlete comparisons across the season
+- **Turning Points**: Identify when performance significantly changed
 
 ## Questions you can answer:
-- "How has [athlete] done this season?"
-- "Compare [athlete1] vs [athlete2]"
+- "How has [athlete] done this season?" → Show progression with specific meets
+- "Compare [athlete1] vs [athlete2]" → Include seasonal trends for both
 - "Which events is [athlete] strongest in?"
+- "Show me [athlete]'s progression on [event]" → Use meet_by_meet data
 - "What's the team average on [event]?"
-- "Who's trending up/down?"
+- "Who's trending up/down?" → Reference actual meet scores over time
 - "Show me consistency metrics"
-- "Who's most improved?"
-- "Deep dive on [athlete]'s performance"
+- "Who's most improved?" → Compare early vs late season averages
+- "Deep dive on [athlete]'s performance" → Full chronological analysis
+- "Which meet did [athlete] perform best/worst?" → Reference specific meets
+- "Has [athlete] improved over time?" → Calculate trend from meet-by-meet data
+
+## How to Use Meet-by-Meet Data:
+Each athlete's event profile includes a "meet_by_meet" array with entries like:
+- date: "2026-01-03"
+- score: 9.725
+- opponent: "UCLA"
+
+When discussing progression, reference actual meet dates and opponents from this data.
 
 # CRITICAL RULES
 
@@ -705,9 +838,11 @@ When asked about an athlete or team:
 - Use clear formatting: headers, bullet points, tables
 - Provide statistical context and comparisons
 - Be analytical, insightful, not just conversational
-- If stats are unavailable, say so explicitly and offer general gymnastics guidance
+- **You DO have meet-by-meet chronological data** - use it for trend analysis
+- If specific data is missing for an athlete, say so explicitly
 - Never make up or hallucinate specific numbers
 - Handle missing data gracefully
+- Reference actual meet dates and opponents when discussing progression
 
 # FALLBACK BEHAVIOR
 
