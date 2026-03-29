@@ -3595,16 +3595,18 @@
         <div class="insight-section-title">🎪 Team Event Breakdown</div>
         <div class="insight-card">
           <p class="insight-note">OSU's average team score per event, split by meet result. Where does OSU win and lose rotations?</p>
-          <div class="insight-table">
-            <div class="itrow header"><span>Event</span><span>Season Avg</span><span>In Wins</span><span>In Losses</span><span>W/L Diff</span></div>
-            ${teamEvents.map(e => `
-              <div class="itrow">
-                <span style="font-weight:600">${e.label}</span>
-                <span>${fmt(e.avg)}</span>
-                <span style="color:#2ecc71">${e.winAvg?fmt(e.winAvg):'—'}</span>
-                <span style="color:#e74c3c">${e.lossAvg?fmt(e.lossAvg):'—'}</span>
-                <span style="color:${e.winLossDiff>0?'#2ecc71':e.winLossDiff<0?'#e74c3c':'#aaa'};font-weight:600">${e.winLossDiff?fmtDiff(e.winLossDiff):'—'}</span>
-              </div>`).join('')}
+          <div class="info-cards-grid">
+            ${teamEvents.map(e => `<div class="info-card">
+              <div class="info-card-label">${e.label}</div>
+              <div class="info-card-value">${fmt(e.avg)}</div>
+              <div class="info-card-secondary" style="margin-bottom:auto">
+                <div style="display:flex;justify-content:space-between;gap:0.5rem;font-size:0.75rem;margin-top:0.25rem">
+                  <span style="color:#4caf82">W: ${e.winAvg?fmt(e.winAvg):'—'}</span>
+                  <span style="color:#e05c4a">L: ${e.lossAvg?fmt(e.lossAvg):'—'}</span>
+                </div>
+              </div>
+              <div class="info-card-meta" style="border-top:1px solid var(--border);padding-top:0.5rem">Δ: <span style="color:${e.winLossDiff>0?'#4caf82':e.winLossDiff<0?'#e05c4a':'var(--text-muted)'}";font-weight:600">${e.winLossDiff?fmtDiff(e.winLossDiff):'—'}</span></div>
+            </div>`).join('')}
           </div>
         </div>
 
@@ -3612,29 +3614,29 @@
         <div class="insight-card">
           <p class="insight-note">Does more time between meets improve performance? Correlation between rest days and team score.</p>
           ${restCorr!==null?`<div class="insight-big-stat">${restCorr>0.2?'📈':'📉'} r = <strong>${restCorr.toFixed(2)}</strong> — ${corrStrength(restCorr)} correlation</div>`:'<p class="insight-note">Not enough data points.</p>'}
-          <div class="insight-table" style="margin-top:0.75rem">
-            <div class="itrow header"><span>Meet</span><span>Rest Days</span><span>Team Score</span><span>Result</span></div>
-            ${restData.map(d => `
-              <div class="itrow">
-                <span style="color:var(--text-muted);font-size:0.8rem">${formatDate(compDays[restData.indexOf(d)+1]?.date||'')}</span>
-                <span>${d.days}d</span>
-                <span>${fmt(d.score)}</span>
-                <span style="color:${d.result==='W'?'#2ecc71':'#e74c3c'}">${d.result}</span>
-              </div>`).join('')}
-          </div>
+          ${restData.length>0?`<div class="info-cards-grid" style="margin-top:0.75rem">
+            ${restData.map((d, idx) => {
+              const meetDate = compDays[restData.indexOf(d)+1]?.date||'';
+              return `<div class="info-card">
+                <div class="info-card-label">${d.days} days rest</div>
+                <div class="info-card-value">${fmt(d.score)}</div>
+                <div class="info-card-secondary" style="color:${d.result==='W'?'#4caf82':'#e05c4a'};font-weight:600;margin-bottom:auto">${d.result === 'W' ? '✓ Win' : '✗ Loss'}</div>
+              </div>`;
+            }).join('')}
+          </div>`:''}
         </div>
 
         <div class="insight-section-title">🔗 Event Correlations</div>
         <div class="insight-card">
           <p class="insight-note">Do gymnasts who score well on one event also score well on another? Pearson r across all athletes' season averages.</p>
-          <div class="insight-table">
-            <div class="itrow header"><span>Events</span><span>Correlation</span><span>Strength</span></div>
+          <div class="info-cards-grid">
             ${corrMatrix.map(c => {
               const pct = Math.round(Math.abs(c.r)*100);
-              return `<div class="itrow">
-                <span style="font-weight:600">${pairLabels[c.e1]} ↔ ${pairLabels[c.e2]}</span>
-                <span style="color:${Math.abs(c.r)>0.5?'var(--orange)':'var(--text-muted)'}">r = ${c.r.toFixed(2)}</span>
-                <span style="color:var(--text-muted);font-size:0.8rem">${corrStrength(c.r)}</span>
+              const isStrong = Math.abs(c.r) > 0.5;
+              return `<div class="info-card ${isStrong?'info-card-highlight':''}">
+                <div class="info-card-label">${pairLabels[c.e1]} ↔ ${pairLabels[c.e2]}</div>
+                <div class="info-card-value" style="color:${isStrong?'var(--orange)':'var(--text-muted)'}">r = ${c.r.toFixed(2)}</div>
+                <div class="info-card-meta">${corrStrength(c.r)}</div>
               </div>`;
             }).join('')}
           </div>
@@ -3646,13 +3648,17 @@
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">🛣️ Road Fatigue Is Real — And It's Brutal</div>
           <p class="insight-note">Each consecutive away meet strips ~0.8 pts off the team score. Not a fluke — it shows up every single time.</p>
-          <div class="streak-bars">
+          <div class="info-cards-grid">
             ${[0,1,2].map(k => {
               const scores = awayStreakGroups[k];
               const avg = scores.length ? mean(scores) : null;
-              const pct = avg ? Math.round(((avg-194)/(198-194))*100) : 0;
-              const labels = ['🏠 Home meets','🛣️ 1st away meet','🛣️ 2nd+ consecutive away'];
-              return avg ? '<div class="streak-row"><span class="streak-label">'+labels[k]+'</span><div class="streak-bar-wrap"><div class="streak-bar" style="width:'+pct+'%"></div></div><span class="streak-val">'+fmt(avg)+'</span></div>' : '';
+              const labels = ['🏠 Home', '🛣️ 1st Away', '🛣️ 2nd+ Away'];
+              const icons = ['🏠', '🛣️', '🛣️'];
+              return avg ? `<div class="info-card">
+                <div class="info-card-label">${icons[k]} ${labels[k]}</div>
+                <div class="info-card-value">${fmt(avg)}</div>
+                <div class="info-card-meta">${scores.length} meet${scores.length!==1?'s':''}</div>
+              </div>` : '';
             }).join('')}
           </div>
         </div>
@@ -3660,20 +3666,26 @@
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">📅 February Is OSU's Best Month — Not March</div>
           <p class="insight-note">Counterintuitive. Teams are supposed to peak for postseason. OSU's best gymnastics happened in February, not heading into March regionals.</p>
-          <div class="insight-table">
-            <div class="itrow header"><span>Month</span><span>Avg Team Score</span><span>Meets</span></div>
-            ${monthSorted.map(([month, scores], i) => '<div class="itrow"><span style="font-weight:600">'+(i===0?'🔥 ':'')+month+'</span><span style="color:'+(i===0?'var(--orange)':'var(--text-primary)')+';font-weight:'+(i===0?700:400)+'">'+fmt(mean(scores))+'</span><span style="color:var(--text-muted)">'+scores.length+' meets</span></div>').join('')}
+          <div class="info-cards-grid">
+            ${monthSorted.map(([month, scores], i) => `<div class="info-card ${i===0?'info-card-highlight':''}">
+              <div class="info-card-label">${i===0?'🔥 Peak Month':month}</div>
+              <div class="info-card-value">${fmt(mean(scores))}</div>
+              <div class="info-card-meta">${scores.length} meet${scores.length!==1?'s':''}</div>
+            </div>`).join('')}
           </div>
         </div>
 
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">📆 Best Day of the Week to Watch OSU</div>
           <p class="insight-note">Small sample, but the trend is clear. OSU's peak day: ${dowSorted[0][0]}.</p>
-          <div class="insight-table">
-            <div class="itrow header"><span>Day</span><span>Avg Score</span><span>Record</span></div>
+          <div class="info-cards-grid">
             ${dowSorted.map(([day, scores], i) => {
               const wins = compDays.filter(m => new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long'})===day && m.result==='W').length;
-              return '<div class="itrow"><span style="font-weight:600">'+(i===0?'⭐ ':'')+day+'</span><span style="color:'+(i===0?'var(--orange)':'var(--text-primary)')+'">'+fmt(mean(scores))+'</span><span style="color:var(--text-muted)">'+wins+'-'+(scores.length-wins)+'</span></div>';
+              return `<div class="info-card ${i===0?'info-card-highlight':''}">
+                <div class="info-card-label">${i===0?'⭐ Best Day':'📅 '+day}</div>
+                <div class="info-card-value">${fmt(mean(scores))}</div>
+                <div class="info-card-meta">${wins}-${scores.length-wins} record (${scores.length} meets)</div>
+              </div>`;
             }).join('')}
           </div>
         </div>
@@ -3681,39 +3693,74 @@
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">🔄 Bounce-Back After Big Losses</div>
           <p class="insight-note">After getting blown out by 1.5+ points, does OSU reset and come back stronger — or does the loss linger?</p>
-          <div class="insight-table">
-            <div class="itrow header"><span>Scenario</span><span>Next Meet Avg</span><span>Sample</span></div>
-            <div class="itrow"><span>After blowout (margin ≥ 1.5)</span><span style="color:${mean(bigMargin)>mean(smallMargin)?'#2ecc71':'#e74c3c'};font-weight:600">${bigMargin.length?fmt(mean(bigMargin)):'—'}</span><span style="color:var(--text-muted)">${bigMargin.length} meets</span></div>
-            <div class="itrow"><span>After close meet (margin &lt; 1.5)</span><span style="font-weight:600">${smallMargin.length?fmt(mean(smallMargin)):'—'}</span><span style="color:var(--text-muted)">${smallMargin.length} meets</span></div>
-            <div class="itrow" style="color:var(--text-muted);font-size:0.78rem;font-style:italic"><span>${bigMargin.length&&smallMargin.length?(mean(bigMargin)>mean(smallMargin)?'✅ Bounce-back is real — big losses fuel bigger next scores':'❌ No clear bounce-back — big losses carry over'):'Insufficient data'}</span><span></span><span></span></div>
+          <div class="stat-compare-grid">
+            <div class="stat-compare-card" style="${mean(bigMargin)>mean(smallMargin)?'border-color:var(--orange);background:rgba(46,204,113,0.1);':''}">
+              <div class="stat-compare-card-title">💥 After Blowout</div>
+              <div class="stat-compare-card-value">${bigMargin.length?fmt(mean(bigMargin)):'—'}</div>
+              <div class="stat-compare-card-label">Margin ≥ 1.5 pts (${bigMargin.length} meets)</div>
+            </div>
+            <div class="stat-compare-card" style="${mean(smallMargin)>mean(bigMargin)?'border-color:var(--orange);background:rgba(46,204,113,0.1);':''}">
+              <div class="stat-compare-card-title">⚡ After Close Meet</div>
+              <div class="stat-compare-card-value">${smallMargin.length?fmt(mean(smallMargin)):'—'}</div>
+              <div class="stat-compare-card-label">Margin &lt; 1.5 pts (${smallMargin.length} meets)</div>
+            </div>
           </div>
+          ${bigMargin.length&&smallMargin.length?`<p style="color:var(--text-muted);font-size:0.75rem;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)">${mean(bigMargin)>mean(smallMargin)?'✅ Bounce-back is real — big losses fuel bigger next scores':'❌ No clear bounce-back — big losses carry over'}</p>`:''}
         </div>
 
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">🎪 Quad Meets vs Dual Meets — Bigger Stage, Better Scores?</div>
           <p class="insight-note">In quad meets there are more teams, bigger atmosphere. Does it lift OSU's scores or add pressure?</p>
-          <div class="insight-table">
-            <div class="itrow header"><span>Format</span><span>Avg Score</span><span>Meets</span></div>
-            <div class="itrow"><span>🎪 Quad meets</span><span style="color:${mean(quadScores)>mean(dualScores)?'#2ecc71':'#e74c3c'};font-weight:600">${fmt(mean(quadScores))}</span><span style="color:var(--text-muted)">${quadScores.length}</span></div>
-            <div class="itrow"><span>🤼 Dual meets</span><span style="font-weight:600">${fmt(mean(dualScores))}</span><span style="color:var(--text-muted)">${dualScores.length}</span></div>
+          <div class="stat-compare-grid">
+            <div class="stat-compare-card" style="${mean(quadScores)>mean(dualScores)?'border-color:var(--orange);background:rgba(255,107,53,0.05);':''}">
+              <div class="stat-compare-card-title">🎪 Quad Meets</div>
+              <div class="stat-compare-card-value">${fmt(mean(quadScores))}</div>
+              <div class="stat-compare-card-label">${quadScores.length} meets</div>
+            </div>
+            <div class="stat-compare-card" style="${mean(dualScores)>mean(quadScores)?'border-color:var(--orange);background:rgba(255,107,53,0.05);':''}">
+              <div class="stat-compare-card-title">🤼 Dual Meets</div>
+              <div class="stat-compare-card-value">${fmt(mean(dualScores))}</div>
+              <div class="stat-compare-card-label">${dualScores.length} meets</div>
+            </div>
           </div>
         </div>
 
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">📈 Who Gets Better As The Season Goes On?</div>
           <p class="insight-note">January vs February/March average. Late-season risers are your postseason players. Decliners may be carrying fatigue or nursing something.</p>
-          <div class="insight-table">
-            <div class="itrow header"><span>Gymnast</span><span>Jan Avg</span><span>Late Season</span><span>Trend</span></div>
-            ${earlyLate.map(g => '<div class="itrow"><span class="clickable-name" data-gymnast="'+g.name+'">'+g.name+'</span><span>'+fmt(g.early)+'</span><span>'+fmt(g.late)+'</span><span style="color:'+(g.delta>0.05?'#2ecc71':g.delta<-0.05?'#e74c3c':'#aaa')+';font-weight:600">'+fmtDiff(g.delta)+'</span></div>').join('')}
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-top:1rem">
+            ${earlyLate.map(g => {
+              const bgStyle = g.delta>0.05 ? 'background:rgba(76,175,130,0.1);border-color:var(--orange);' : g.delta<-0.05 ? 'background:rgba(224,92,74,0.1);' : '';
+              const deltaColor = g.delta>0.05 ? '#4caf82' : g.delta<-0.05 ? '#e05c4a' : '#aaa';
+              return `<div class="info-card" style="${bgStyle}">
+                <div class="info-card-label clickable-name" data-gymnast="${g.name}" style="cursor:pointer;color:var(--orange)">${g.name}</div>
+                <div class="info-card-value" style="font-size:1.3rem">${fmt(g.late)}</div>
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:0.5rem">Late season avg</div>
+                <div style="display:flex;justify-content:space-between;font-size:0.75rem;padding-top:0.5rem;border-top:1px solid var(--border);color:var(--text-muted)">
+                  <span>Jan: ${fmt(g.early)}</span>
+                  <span style="color:${deltaColor};font-weight:600">${fmtDiff(g.delta)}</span>
+                </div>
+              </div>`;
+            }).join('')}
           </div>
         </div>
 
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">🚀 Slow Starters vs Fast Finishers (Vault vs Floor)</div>
           <p class="insight-note">Vault is typically an early rotation. Floor is typically last. A big positive delta means a gymnast who warms up slowly but finishes strong — the classic "anchor" type.</p>
-          <div class="insight-table">
-            <div class="itrow header"><span>Gymnast</span><span>Vault Avg</span><span>Floor Avg</span><span>Δ (FX−VT)</span></div>
-            ${startFinish.map(g => '<div class="itrow"><span class="clickable-name" data-gymnast="'+g.name+'">'+g.name+'</span><span>'+fmt(g.vault)+'</span><span>'+fmt(g.floor)+'</span><span style="color:'+(g.delta>0.05?'#2ecc71':g.delta<-0.05?'#e74c3c':'#aaa')+';font-weight:600">'+fmtDiff(g.delta)+'</span></div>').join('')}
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-top:1rem">
+            ${startFinish.map(g => {
+              const bgStyle = g.delta>0.05 ? 'background:rgba(76,175,130,0.1);border-color:var(--orange);' : g.delta<-0.05 ? 'background:rgba(224,92,74,0.1);' : '';
+              return `<div class="info-card" style="${bgStyle}">
+                <div class="info-card-label clickable-name" data-gymnast="${g.name}" style="cursor:pointer;color:var(--orange)">${g.name}</div>
+                <div class="info-card-value" style="font-size:1.1rem">${fmtDiff(g.delta)}</div>
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:0.5rem">Floor − Vault</div>
+                <div style="display:flex;justify-content:space-between;font-size:0.75rem;padding-top:0.5rem;border-top:1px solid var(--border);color:var(--text-muted)">
+                  <span>VT: ${fmt(g.vault)}</span>
+                  <span>FX: ${fmt(g.floor)}</span>
+                </div>
+              </div>`;
+            }).join('')}
           </div>
         </div>
 
