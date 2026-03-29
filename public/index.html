@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=0">
+  <link rel="stylesheet" href="css/chatbot.css?v=0">
 </head>
 <body>
   <!-- Top Nav (desktop) -->
@@ -78,7 +79,7 @@
     <!-- Gymnast Search & Profile -->
     <section id="view-gymnasts" class="view" style="display:none;">
       <div class="search-container">
-        <input type="text" id="gymnastSearch" class="search-input" placeholder="Search gymnasts by name...">
+        <input type="text" id="gymnastSearch" class="search-input" placeholder="Search gymnasts... (use comma to compare: Name1, Name2)">
       </div>
       <div class="gymnast-cards" id="gymnastCards"></div>
       <!-- Gymnast Detail (shown when clicked) -->
@@ -137,7 +138,9 @@
   <!-- Toast Container -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <script src="js/stats.js?v=0"></script>
   <script src="js/search.js?v=0"></script>
   <script src="js/app.js?v=0"></script>
+  <script src="js/chatbot.js?v=0"></script>
 </body>
 </html>

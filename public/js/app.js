@@ -12,7 +12,6 @@
   let lastRefreshedTime = null;
   let autoRefreshInterval = null;
   let autoRefreshEnabled = false;
-  let statsCache = {};
 
   const EVENT_NAMES = {
     vault: 'Vault', bars: 'Bars', beam: 'Beam', floor: 'Floor', aa: 'All-Around'
@@ -46,20 +45,10 @@
     return meets.some(m => m.status === 'in_progress');
   }
 
-  // ===== Shared Stats Helpers =====
-  function mean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null; }
-  function stddev(arr) {
-    if (arr.length < 2) return 0;
-    const m = mean(arr);
-    return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1));
-  }
-  function pearson(xs, ys) {
-    const n = xs.length; if (n < 3) return null;
-    const mx = mean(xs), my = mean(ys);
-    const num = xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
-    const den = Math.sqrt(xs.reduce((s,x)=>s+Math.pow(x-mx,2),0)*ys.reduce((s,y)=>s+Math.pow(y-my,2),0));
-    return den === 0 ? null : num/den;
-  }
+  // ===== Shared Stats Helpers (delegating to Stats module) =====
+  function mean(arr) { return Stats.mean(arr); }
+  function stddev(arr) { return Stats.stddev(arr); }
+  function pearson(xs, ys) { return Stats.pearson(xs, ys); }
   function fmt(n, dp=3) { return n!=null&&!isNaN(n) ? n.toFixed(dp) : '—'; }
 
   // ===== Toast Notifications =====
@@ -107,11 +96,10 @@
       const data = await res.json();
 
       if (data.success) {
-        // Re-fetch the meets data and stats
-        const [meetsRes2, statsRes2] = await Promise.all([fetch('/api/meets'), fetch('/api/stats')]);
+        // Re-fetch the meets data
+        const meetsRes = await fetch('/api/meets');
         const oldMeets = meets.slice();
-        meets = await meetsRes2.json();
-        try { if (statsRes2.ok) statsCache = await statsRes2.json(); } catch (e) { /* keep old cache */ }
+        meets = await meetsRes.json();
 
         lastRefreshedTime = new Date();
         updateLastUpdatedDisplay();
@@ -195,17 +183,6 @@
       bios = await biosRes.json();
       meetPhotos = await meetPhotosRes.json();
 
-      // Fetch pre-computed stats from backend (non-blocking — fallback to inline if it fails)
-      try {
-        const statsRes = await fetch('/api/stats');
-        if (statsRes.ok) {
-          statsCache = await statsRes.json();
-        }
-      } catch (e) {
-        console.warn('[OSU] Stats API unavailable, using inline computation fallback');
-        statsCache = {};
-      }
-
       // Set initial lastRefreshed from meet data
       const refreshed = meets.find(m => m.lastRefreshed);
       if (refreshed) {
@@ -243,6 +220,8 @@
 
       showView('season');
     } catch (err) {
+      console.error('[OSU] Fatal render error:', err);
+      document.getElementById('loading').style.display = 'block';
       document.getElementById('loading').innerHTML =
         '<div class="empty-state"><div class="empty-icon">😕</div><p class="empty-text">Failed to load data. Is the server running?</p></div>';
     }
@@ -314,11 +293,7 @@
     const mc = document.getElementById('missionControl');
     if (!mc) return;
 
-    // Use pre-computed stats from API when available
-    const ts = statsCache.team || null;
-    const et = statsCache.eventTrends || null;
-
-    // Unique competition days (fallback computation)
+    // Unique competition days
     const compDays = [];
     const seenD = new Set();
     meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m => {
@@ -329,37 +304,47 @@
         elevFt: m.elevationFt ?? null });
     });
 
-    const wins = ts ? ts.record.wins : meets.filter(m => m.result === 'W').length;
-    const losses = ts ? ts.record.losses : meets.filter(m => m.result === 'L').length;
+    const scoredMeets = meets.filter(m => m.result === 'W' || m.result === 'L');
+    const wins = meets.filter(m => m.result === 'W').length;
+    const losses = meets.filter(m => m.result === 'L').length;
+
+    // Unique day wins
+    const dayWins = new Set(), dayLosses = new Set();
+    meets.forEach(m => {
+      if (m.result === 'W') dayWins.add(m.date);
+      else if (m.result === 'L') dayLosses.add(m.date);
+    });
 
     const allScores = compDays.map(d=>d.total);
     const homeScores = compDays.filter(d=>d.isHome).map(d=>d.total);
     const awayScores = compDays.filter(d=>!d.isHome).map(d=>d.total);
-    const teamAvg = ts ? ts.seasonAvg : mcMean(allScores);
-    const homeAvg = ts ? ts.homeAvg : mcMean(homeScores);
-    const awayAvg = ts ? ts.awayAvg : mcMean(awayScores);
-    const seasonHigh = ts ? ts.seasonHigh : (allScores.length ? Math.max(...allScores) : null);
+    const teamAvg = mcMean(allScores);
+    const homeAvg = mcMean(homeScores);
+    const awayAvg = mcMean(awayScores);
+    const seasonHigh = allScores.length ? Math.max(...allScores) : null;
     const homeDiff = homeAvg && teamAvg ? homeAvg - teamAvg : null;
 
-    // Season trajectory
-    const trajectory = ts ? ts.trajectory : (() => {
-      const half = Math.floor(allScores.length / 2);
-      const f = mcMean(allScores.slice(0, half));
-      const s = mcMean(allScores.slice(half));
-      return f && s ? s - f : null;
-    })();
+    // Season trajectory — first half vs second half
+    const half = Math.floor(allScores.length / 2);
+    const firstHalf = mcMean(allScores.slice(0, half));
+    const secondHalf = mcMean(allScores.slice(half));
+    const trajectory = firstHalf && secondHalf ? secondHalf - firstHalf : null;
     const trajArrow = trajectory == null ? '' : trajectory > 0.1 ? '🚀' : trajectory < -0.1 ? '📉' : '→';
     const trajLabel = trajectory == null ? '' : trajectory > 0.1 ? `Up ${trajectory.toFixed(3)} pts vs early season` : trajectory < -0.1 ? `Down ${Math.abs(trajectory).toFixed(3)} pts vs early season` : 'Flat season trend';
 
-    // NQS from stats API
-    const nqs = ts ? ts.nqs : null;
+    // Momentum indicator: last 3 meets vs season avg
+    const last3Scores = allScores.slice(-3);
+    const last3Avg = last3Scores.length >= 3 ? mcMean(last3Scores) : null;
+    const momArrow = last3Avg == null || teamAvg == null ? '' : last3Avg > teamAvg + 0.1 ? '↑' : last3Avg < teamAvg - 0.1 ? '↓' : '→';
+    const momColor = momArrow === '↑' ? '#2ecc71' : momArrow === '↓' ? '#e74c3c' : '#aaa';
+    const momLabel = momArrow === '↑' ? 'Trending up' : momArrow === '↓' ? 'Trending down' : 'Steady';
 
-    // Event trends
+    // Event trends — compare first 5 vs last 5 scored meets
     const EVS = ['vault','bars','beam','floor'];
     const EVlabel = {vault:'VAULT',bars:'BARS',beam:'BEAM',floor:'FLOOR'};
     const EVemoji = {vault:'🤸',bars:'💪',beam:'⚖️',floor:'🔥'};
 
-    function eventTrendFallback(ev) {
+    function eventTrend(ev) {
       const dates = [...seenD].slice().sort();
       const pts = [];
       dates.forEach(date => {
@@ -376,59 +361,48 @@
     }
 
     const evData = {};
-    EVS.forEach(ev => {
-      if (et && et[ev]) {
-        evData[ev] = { avg: et[ev].seasonAvg, trend: et[ev].trendDiff || 0, recent: et[ev].recentAvg };
-      } else {
-        evData[ev] = eventTrendFallback(ev);
-      }
-    });
+    EVS.forEach(ev => { evData[ev] = eventTrend(ev); });
 
-    // Hot/Cold gymnasts from stats API
-    let hot, cold;
-    if (ts && ts.hotCold) {
-      hot = ts.hotCold.hot || [];
-      cold = ts.hotCold.cold || [];
-    } else {
-      // Fallback to inline computation
-      function gymnLastN(name, n) {
-        const scored = [];
-        const dates = new Set();
-        meets.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(m => {
-          if (dates.size >= n || dates.has(m.date)) return;
-          const a = m.athletes.find(x=>x.name===name&&x.team==='Oregon State');
-          if (!a) return;
-          const evScores = EVS.map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
-          if (!evScores.length) return;
-          dates.add(m.date);
-          evScores.forEach(s=>scored.push(s));
-        });
-        return mcMean(scored);
-      }
-      function gymnSeasonAvg(name) {
-        const scores = [];
-        const seen = new Set();
-        meets.forEach(m => {
-          if (seen.has(m.date)) return;
-          const a = m.athletes.find(x=>x.name===name&&x.team==='Oregon State');
-          if (!a) return;
-          const evScores = EVS.map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
-          if (!evScores.length) return;
-          seen.add(m.date);
-          evScores.forEach(s=>scores.push(s));
-        });
-        return mcMean(scores);
-      }
-      const gymnasts = [...new Set(meets.flatMap(m=>m.athletes.filter(a=>a.team==='Oregon State').map(a=>a.name)))];
-      const gymnForm = gymnasts.map(name => {
-        const recent = gymnLastN(name, 3);
-        const season = gymnSeasonAvg(name);
-        if (!recent || !season) return null;
-        return { name, recent, season, diff: recent - season };
-      }).filter(Boolean).sort((a,b)=>b.diff-a.diff);
-      hot = gymnForm.slice(0,3).filter(g=>g.diff>0.01);
-      cold = gymnForm.slice(-3).filter(g=>g.diff<-0.01).reverse();
+    // Hot/Cold gymnasts — last 3 meets vs season avg
+    function gymnLastN(name, n) {
+      const scored = [];
+      const dates = new Set();
+      meets.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(m => {
+        if (dates.size >= n || dates.has(m.date)) return;
+        const a = m.athletes.find(x=>x.name===name&&x.team==='Oregon State');
+        if (!a) return;
+        const evScores = EVS.map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
+        if (!evScores.length) return;
+        dates.add(m.date);
+        evScores.forEach(s=>scored.push(s));
+      });
+      return mcMean(scored);
     }
+    function gymnSeasonAvg(name) {
+      const scores = [];
+      const seen = new Set();
+      meets.forEach(m => {
+        if (seen.has(m.date)) return;
+        const a = m.athletes.find(x=>x.name===name&&x.team==='Oregon State');
+        if (!a) return;
+        const evScores = EVS.map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
+        if (!evScores.length) return;
+        seen.add(m.date);
+        evScores.forEach(s=>scores.push(s));
+      });
+      return mcMean(scores);
+    }
+
+    const gymnasts = [...new Set(meets.flatMap(m=>m.athletes.filter(a=>a.team==='Oregon State').map(a=>a.name)))];
+    const gymnForm = gymnasts.map(name => {
+      const recent = gymnLastN(name, 3);
+      const season = gymnSeasonAvg(name);
+      if (!recent || !season) return null;
+      return { name, recent, season, diff: recent - season };
+    }).filter(Boolean).sort((a,b)=>b.diff-a.diff);
+
+    const hot = gymnForm.slice(0,3).filter(g=>g.diff>0.01);
+    const cold = gymnForm.slice(-3).filter(g=>g.diff<-0.01).reverse();
 
     // Record context
     const need500 = Math.max(0, losses - wins);
@@ -470,11 +444,24 @@
           <div class="mc-stat-label">Season High 🏆</div>
           <div class="mc-context">${compDays.find(d=>d.total===seasonHigh)?.date || ''}</div>
         </div>
-        ${nqs ? `<div class="mc-stat-card">
-          <div class="mc-stat-value" id="mcNqs">0.000</div>
-          <div class="mc-stat-label">NQS 📊</div>
-          <div class="mc-context">Nat'l Qualifying Score</div>
-        </div>` : ''}
+        ${(() => {
+          // Projected NQS: best NQS per event across all meets
+          const nqsEvents = ['vault','bars','beam','floor'];
+          let bestNqs = 0;
+          let hasNqs = false;
+          nqsEvents.forEach(ev => {
+            let bestEvNqs = 0;
+            meets.forEach(m => {
+              if (!m.lineups || !m.lineups[ev] || m.lineups[ev].length < 5) return;
+              const scores = m.lineups[ev].map(e => e.score).slice().sort((a,b) => a - b);
+              const nqs = scores.length >= 6 ? scores.slice(1).reduce((s,v) => s+v, 0) : scores.reduce((s,v) => s+v, 0);
+              if (nqs > bestEvNqs) bestEvNqs = nqs;
+            });
+            if (bestEvNqs > 0) { bestNqs += bestEvNqs; hasNqs = true; }
+          });
+          return hasNqs ? `<div class="mc-stat-card"><div class="mc-stat-value" style="color:var(--orange)">${bestNqs.toFixed(3)}</div><div class="mc-stat-label">Proj. NQS</div><div class="mc-context">Best per-event NQS combined</div></div>` : '';
+        })()}
+        ${momArrow ? `<div class="mc-stat-card"><div class="mc-stat-value" style="color:${momColor};font-size:2rem">${momArrow}</div><div class="mc-stat-label" style="color:${momColor}">${momLabel}</div><div class="mc-context">Last 3 meets vs season avg</div></div>` : ''}
       </div>
 
       <div class="mc-event-row">
@@ -525,7 +512,6 @@
       if (homeAvg) animateValue(document.getElementById('mcHome'), 196, homeAvg, 900, 3);
       if (awayAvg) animateValue(document.getElementById('mcAway'), 196, awayAvg, 900, 3);
       if (seasonHigh) animateValue(document.getElementById('mcHigh'), 196, seasonHigh, 1000, 3);
-      if (nqs) animateValue(document.getElementById('mcNqs'), 196, nqs, 1000, 3);
     }, 100);
   }
 
@@ -728,45 +714,38 @@
     const EVS = ['vault','bars','beam','floor'];
     const EVlabel = {vault:'VAULT',bars:'BARS',beam:'BEAM',floor:'FLOOR'};
 
-    let teamAvgs, gymnList;
-
-    if (statsCache.heatmap) {
-      // Use pre-computed heatmap from stats API
-      teamAvgs = statsCache.heatmap.teamAvgs;
-      gymnList = statsCache.heatmap.gymnasts.map(g => ({
-        name: g.name,
-        overallAvg: g.overallAvg,
-        evAvgs: g.evAvgs,
-      }));
-    } else {
-      // Fallback: compute inline
-      const gymnData = {};
-      const seen = new Set();
-      meets.forEach(m => {
-        m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
-          if (!gymnData[a.name]) gymnData[a.name] = {vault:[],bars:[],beam:[],floor:[]};
-          EVS.forEach(ev => {
-            const s = a.scores[ev];
-            if (s !== undefined && s > 0) {
-              const key = `${a.name}|${ev}|${m.date}`;
-              if (!seen.has(key)) { seen.add(key); gymnData[a.name][ev].push(s); }
-            }
-          });
+    // Per-gymnast, per-event averages
+    const gymnData = {};
+    const seen = new Set();
+    meets.forEach(m => {
+      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
+        if (!gymnData[a.name]) gymnData[a.name] = {vault:[],bars:[],beam:[],floor:[]};
+        EVS.forEach(ev => {
+          const s = a.scores[ev];
+          if (s !== undefined && s > 0) {
+            // Dedup per date
+            const key = `${a.name}|${ev}|${m.date}`;
+            if (!seen.has(key)) { seen.add(key); gymnData[a.name][ev].push(s); }
+          }
         });
       });
-      teamAvgs = {};
-      EVS.forEach(ev => {
-        const all = Object.values(gymnData).flatMap(g=>g[ev]);
-        teamAvgs[ev] = mcMean(all);
-      });
-      gymnList = Object.entries(gymnData).map(([name, evData]) => {
-        const allScores = EVS.flatMap(ev=>evData[ev]);
-        const overallAvg = mcMean(allScores);
-        const evAvgs = {};
-        EVS.forEach(ev => { evAvgs[ev] = mcMean(evData[ev]); });
-        return { name, overallAvg, evAvgs };
-      }).filter(g=>g.overallAvg).sort((a,b)=>b.overallAvg-a.overallAvg);
-    }
+    });
+
+    // Team averages per event
+    const teamAvgs = {};
+    EVS.forEach(ev => {
+      const all = Object.values(gymnData).flatMap(g=>g[ev]);
+      teamAvgs[ev] = mcMean(all);
+    });
+
+    // Sort gymnasts by overall avg
+    const gymnList = Object.entries(gymnData).map(([name, evData]) => {
+      const allScores = EVS.flatMap(ev=>evData[ev]);
+      const overallAvg = mcMean(allScores);
+      const evAvgs = {};
+      EVS.forEach(ev => { evAvgs[ev] = mcMean(evData[ev]); });
+      return { name, overallAvg, evAvgs };
+    }).filter(g=>g.overallAvg).sort((a,b)=>b.overallAvg-a.overallAvg);
 
     function heatColor(val, teamAvg) {
       if (!val || !teamAvg) return '#1e1e1e';
@@ -891,10 +870,22 @@
       return `<text x="${x}" y="${h - 5}" text-anchor="middle" fill="#999" font-size="9" font-family="Inter">${formatDate(m.date)}</text>`;
     }).join('');
 
+    // Rolling 3-meet average dashed line
+    let rollingPath = '';
+    if (scores.length >= 3) {
+      const rollingPts = [];
+      for (let ri = 2; ri < scores.length; ri++) {
+        const avg3 = (scores[ri] + scores[ri-1] + scores[ri-2]) / 3;
+        rollingPts.push(`${ri === 2 ? 'M' : 'L'}${xScale(ri).toFixed(1)},${yScale(avg3).toFixed(1)}`);
+      }
+      rollingPath = `<path d="${rollingPts.join(' ')}" fill="none" stroke="#888" stroke-width="1.5" stroke-dasharray="6,4" stroke-linejoin="round" opacity="0.7"><title>Rolling 3-meet avg</title></path>`;
+    }
+
     container.innerHTML = `
       <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
         ${yGridLines}
         <path d="${pathD}" fill="none" stroke="var(--orange)" stroke-width="2.5" stroke-linejoin="round"/>
+        ${rollingPath}
         ${dots}
         ${yLabels}
         ${xLabels}
@@ -1691,7 +1682,7 @@
         </div>`;
     }
 
-    // Event detail cards with athlete lineups
+    // Event detail cards with athlete lineups + NQS
     const eventCards = (!meet.events || !meet.events.vault) ? [] : ['vault', 'bars', 'beam', 'floor'].map(event => {
       const osuScore = meet.events[event]?.osu;
       const oppScore = meet.events[event]?.opponent;
@@ -1699,21 +1690,32 @@
       const barPct = ((osuScore / 50) * 100).toFixed(1);
 
       let rows;
+      let nqsHtml = '';
       if (meet.lineups && meet.lineups[event] && meet.lineups[event].length > 0) {
-        // Render in competition order using lineup data
         const lineup = meet.lineups[event];
         const topScore = Math.max(...lineup.map(e => e.score));
+        // NQS: top 5 of 6 count
+        const sortedScores = lineup.map(e => e.score).slice().sort((a,b) => a - b);
+        const droppedScore = sortedScores.length >= 6 ? sortedScores[0] : null;
+        const nqsTotal = sortedScores.length >= 6
+          ? sortedScores.slice(1).reduce((s,v) => s+v, 0)
+          : sortedScores.reduce((s,v) => s+v, 0);
+
         rows = lineup.map(entry => {
           const isTop = entry.score === topScore;
+          const isDropped = droppedScore !== null && entry.score === droppedScore;
           return `
             <tr class="lineup-row">
               <td style="color:#aaa;font-size:0.75rem;font-family:monospace;width:1.5rem;">${entry.position}</td>
               <td><span class="clickable-name lineup-gymnast" data-gymnast="${entry.name}" data-event="${event}" data-meet="${meet.id}">${entry.name}</span></td>
-              <td class="score-cell${isTop ? ' score-top' : ''}">${entry.score.toFixed(3)}</td>
+              <td class="score-cell${isTop ? ' score-top' : ''}${isDropped ? ' nqs-dropped' : ''}">${entry.score.toFixed(3)}</td>
             </tr>`;
         }).join('');
+
+        if (lineup.length >= 5) {
+          nqsHtml = `<div class="nqs-breakdown"><div class="nqs-label">NQS (top ${Math.min(5, lineup.length)})</div><div class="nqs-value">${nqsTotal.toFixed(3)}</div>${droppedScore !== null ? `<div class="nqs-dropped-label">Dropped: ${droppedScore.toFixed(3)}</div>` : ''}</div>`;
+        }
       } else {
-        // Fallback: sort by score descending (legacy behaviour)
         const eventAthletes = meet.athletes
           .filter(a => a.scores[event] !== undefined);
         rows = eventAthletes.map((a, i) => `
@@ -1738,6 +1740,7 @@
             <thead><tr><th>#</th><th>Athlete</th><th style="text-align:right">Score</th></tr></thead>
             <tbody>${rows || '<tr><td colspan="3" style="color:var(--text-muted)">No data</td></tr>'}</tbody>
           </table>
+          ${nqsHtml}
         </div>`;
     }).join('');
 
@@ -1824,41 +1827,6 @@
       ${(()=>{try{return renderMeetWildStats(meet);}catch(e){return '<div style="color:red;padding:1rem;background:#1a0000;border-radius:8px;margin-bottom:1rem">⚠️ Wild Stats error: '+e.message+'</div>';}})()}
       <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
       <div class="detail-event-grid">${eventCards}</div>
-      ${(() => {
-        // Competitor roster section from stats API
-        const ca = meet.competitorAthletes;
-        if (!ca || typeof ca !== 'object' || Object.keys(ca).length === 0) return '';
-        const compStats = statsCache.competitors || {};
-        let html = '<div class="section-card" style="margin-top:1rem;"><h2 class="section-title">🏅 Competitor Rosters</h2>';
-        html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">';
-        Object.entries(ca).forEach(([team, athletes]) => {
-          if (!athletes || typeof athletes !== 'object') return;
-          const seasonData = compStats[team];
-          html += '<div style="background:var(--card);border:1px solid #333;border-radius:8px;padding:0.75rem;">';
-          html += '<div style="font-family:Oswald;color:#fff;font-size:1rem;margin-bottom:0.5rem;">' + team;
-          if (seasonData) html += ' <span style="color:#888;font-size:0.7rem;">(' + seasonData.meetsPlayed + ' meets this season)</span>';
-          html += '</div>';
-          const entries = Object.entries(athletes);
-          const sorted = entries.map(([name, scores]) => {
-            const allScores = typeof scores === 'object' ? Object.values(scores).filter(s => typeof s === 'number' && s > 0) : [];
-            const best = allScores.length ? Math.max(...allScores) : 0;
-            return { name, scores, best };
-          }).sort((a, b) => b.best - a.best).slice(0, 8);
-          sorted.forEach(({ name, scores }) => {
-            if (typeof scores !== 'object') return;
-            const evs = Object.entries(scores).filter(([,s]) => typeof s === 'number' && s > 0);
-            if (!evs.length) return;
-            html += '<div style="display:flex;justify-content:space-between;padding:0.2rem 0;font-size:0.78rem;border-bottom:1px solid #222;">';
-            html += '<span style="color:#ccc;">' + name + '</span>';
-            html += '<span style="color:#888;">' + evs.map(([ev, s]) => EVENT_SHORT[ev] + ':' + s.toFixed(3)).join(' ') + '</span>';
-            html += '</div>';
-          });
-          if (entries.length > 8) html += '<div style="color:#666;font-size:0.7rem;margin-top:0.25rem;">+ ' + (entries.length - 8) + ' more</div>';
-          html += '</div>';
-        });
-        html += '</div></div>';
-        return html;
-      })()}
     `;
 
     // Bind auto-refresh toggle
@@ -2120,8 +2088,96 @@
     return Object.values(profiles).sort((a, b) => b.totalMeets - a.totalMeets);
   }
 
+  function renderAthleteComparison(name1, name2) {
+    const detail = document.getElementById('gymnastDetail');
+    detail.style.display = 'block';
+    document.getElementById('gymnastCards').style.display = 'none';
+
+    const stats1 = Stats.getAthleteStats(meets, name1);
+    const stats2 = Stats.getAthleteStats(meets, name2);
+    const events = ['vault', 'bars', 'beam', 'floor'];
+
+    const eventCards = events.map(ev => {
+      const cmp = Stats.getAthleteComparisonData(meets, name1, name2, ev);
+      if (!cmp.athlete1 || !cmp.athlete2) return '';
+      const a1 = cmp.athlete1, a2 = cmp.athlete2;
+      const better1 = (a1.avg || 0) > (a2.avg || 0);
+
+      // Combined sparkline
+      const allEntries = [...(a1.entries || []), ...(a2.entries || [])];
+      const allDates = [...new Set(allEntries.map(e => e.date))].sort();
+      const sparkW = allDates.length * 20;
+      let spark1Points = '', spark2Points = '';
+      const minS = 9.0, maxS = 10.0, sparkH = 40;
+      allDates.forEach((d, di) => {
+        const e1 = a1.entries.find(e => e.date === d);
+        const e2 = a2.entries.find(e => e.date === d);
+        const x = 10 + di * 18;
+        if (e1) { const y = sparkH - ((e1.score - minS) / (maxS - minS) * sparkH); spark1Points += `${spark1Points ? 'L' : 'M'}${x},${y.toFixed(1)} `; }
+        if (e2) { const y = sparkH - ((e2.score - minS) / (maxS - minS) * sparkH); spark2Points += `${spark2Points ? 'L' : 'M'}${x},${y.toFixed(1)} `; }
+      });
+
+      return `
+        <div class="compare-event-card">
+          <div class="compare-event-title">${EVENT_NAMES[ev]}</div>
+          <div class="compare-row">
+            <div class="compare-stat ${better1 ? 'compare-better' : ''}">${a1.avg != null ? a1.avg.toFixed(3) : '—'}<span class="compare-label">avg</span></div>
+            <div class="compare-vs">vs</div>
+            <div class="compare-stat ${!better1 ? 'compare-better' : ''}">${a2.avg != null ? a2.avg.toFixed(3) : '—'}<span class="compare-label">avg</span></div>
+          </div>
+          <div class="compare-row">
+            <div class="compare-stat">${a1.best != null ? a1.best.toFixed(3) : '—'}<span class="compare-label">best</span></div>
+            <div class="compare-vs"></div>
+            <div class="compare-stat">${a2.best != null ? a2.best.toFixed(3) : '—'}<span class="compare-label">best</span></div>
+          </div>
+          ${allDates.length >= 2 ? `<svg width="${sparkW + 20}" height="${sparkH + 5}" class="compare-spark">
+            <path d="${spark1Points}" fill="none" stroke="var(--orange)" stroke-width="2"/>
+            <path d="${spark2Points}" fill="none" stroke="#3498db" stroke-width="2"/>
+          </svg>` : ''}
+        </div>`;
+    }).join('');
+
+    const photo1 = photos[name1], photo2 = photos[name2];
+    detail.innerHTML = `
+      <button class="back-btn" id="backFromCompare">← Back to Gymnasts</button>
+      <div class="compare-athletes">
+        <div class="compare-header">
+          <div class="compare-athlete-info">
+            ${photo1 ? `<img src="${photo1}" class="compare-photo" alt="${name1}">` : ''}
+            <div class="compare-name" style="color:var(--orange)">${name1}</div>
+          </div>
+          <div class="compare-vs-big">VS</div>
+          <div class="compare-athlete-info">
+            ${photo2 ? `<img src="${photo2}" class="compare-photo" alt="${name2}">` : ''}
+            <div class="compare-name" style="color:#3498db">${name2}</div>
+          </div>
+        </div>
+        <div class="compare-legend"><span style="color:var(--orange)">■ ${name1.split(' ')[0]}</span> <span style="color:#3498db">■ ${name2.split(' ')[0]}</span></div>
+        <div class="compare-grid">${eventCards}</div>
+      </div>`;
+
+    document.getElementById('backFromCompare').addEventListener('click', () => {
+      detail.style.display = 'none';
+      document.getElementById('gymnastCards').style.display = 'grid';
+    });
+  }
+
   function renderGymnasts(searchTerm = '') {
     const profiles = getGymnastProfiles();
+
+    // Check for comma-separated comparison search
+    if (searchTerm && searchTerm.includes(',')) {
+      const parts = searchTerm.split(',').map(s => s.trim()).filter(Boolean);
+      if (parts.length === 2) {
+        const allNames = profiles.map(p => p.name);
+        const match1 = allNames.find(n => n.toLowerCase().includes(parts[0].toLowerCase()));
+        const match2 = allNames.find(n => n.toLowerCase().includes(parts[1].toLowerCase()));
+        if (match1 && match2 && match1 !== match2) {
+          renderAthleteComparison(match1, match2);
+          return;
+        }
+      }
+    }
 
     // Also include bio-only gymnasts who didn't appear in meet data (e.g., injured/redshirt)
     const profileNames = new Set(profiles.map(p => p.name));
@@ -2145,7 +2201,26 @@
       return;
     }
 
-    container.innerHTML = filtered.map(p => {
+    // Compare button + dropdown UI
+    const competingProfiles = profiles.filter(p => !p.bioOnly && p.totalMeets > 0);
+    const compareBtn = competingProfiles.length >= 2 ? `
+      <div class="compare-btn-container" style="grid-column:1/-1;margin-bottom:0.5rem;">
+        <button class="compare-athletes-btn" id="compareAthletesBtn">Compare Athletes</button>
+        <div class="compare-select-ui" id="compareSelectUI" style="display:none;">
+          <select id="compareSelect1" class="compare-select">
+            <option value="">Select athlete 1...</option>
+            ${competingProfiles.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+          </select>
+          <span style="color:var(--text-muted)">vs</span>
+          <select id="compareSelect2" class="compare-select">
+            <option value="">Select athlete 2...</option>
+            ${competingProfiles.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+          </select>
+          <button class="compare-go-btn" id="compareGoBtn">Go</button>
+        </div>
+      </div>` : '';
+
+    container.innerHTML = compareBtn + filtered.map(p => {
       const photo = photos[p.name];
       const photoHtml = photo
         ? `<img src="${photo}" class="gymnast-headshot" alt="${p.name}" loading="lazy">`
@@ -2559,6 +2634,17 @@
     const EVS = ['vault','bars','beam','floor'];
     const EV_LBL = {vault:'Vault',bars:'Bars',beam:'Beam',floor:'Floor'};
     function gmean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : 0; }
+    function gsd(arr) {
+      if (arr.length < 2) return null;
+      const m = gmean(arr);
+      return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1));
+    }
+    function glinReg(pts) {
+      const n=pts.length; if(n<2) return {slope:0};
+      const sx=pts.reduce((s,p)=>s+p.x,0), sy=pts.reduce((s,p)=>s+p.y,0);
+      const sxy=pts.reduce((s,p)=>s+p.x*p.y,0), sx2=pts.reduce((s,p)=>s+p.x*p.x,0);
+      return {slope:(n*sxy-sx*sy)/(n*sx2-sx*sx)||0};
+    }
     function gfmt(n) { return typeof n==='number'&&!isNaN(n)?n.toFixed(3):'—'; }
     function gdiff(n) { if(typeof n!=='number'||isNaN(n)) return '—'; return (n>=0?'+':'')+n.toFixed(3); }
     function arrow(s) {
@@ -2568,83 +2654,49 @@
       return '<span style="color:#aaa">►</span>';
     }
 
-    let evStats;
+    const sm = meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const t0 = new Date(sm[0].date+'T12:00:00');
 
-    if (statsCache.athletes && statsCache.athletes[name]) {
-      // Use pre-computed athlete stats from API
-      const ath = statsCache.athletes[name];
-      evStats = EVS.map(ev => {
-        const e = ath.events[ev];
-        if (!e || e.appearances < 2) return null;
-        return {
-          ev, n: e.appearances, avg: e.avg, best: e.best, sd: e.stdDev, slope: e.trendSlope,
-          homeAvg: e.homeAvg, awayAvg: e.awayAvg,
-          haDiff: e.homeDelta,
-          winAvg: e.winAvg, lossAvg: e.lossAvg,
-          wlDiff: e.winLossDelta,
-          clutch: e.clutchAvg,
-          janAvg: e.janAvg, lateAvg: e.lateAvg,
-          seasonDiff: e.seasonDelta
-        };
-      }).filter(Boolean);
-    } else {
-      // Fallback: compute inline
-      function gsd(arr) {
-        if (arr.length < 2) return null;
-        const m = gmean(arr);
-        return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1));
-      }
-      function glinReg(pts) {
-        const n=pts.length; if(n<2) return {slope:0};
-        const sx=pts.reduce((s,p)=>s+p.x,0), sy=pts.reduce((s,p)=>s+p.y,0);
-        const sxy=pts.reduce((s,p)=>s+p.x*p.y,0), sx2=pts.reduce((s,p)=>s+p.x*p.x,0);
-        return {slope:(n*sxy-sx*sy)/(n*sx2-sx*sx)||0};
-      }
-
-      const sm = meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
-      const t0 = new Date(sm[0].date+'T12:00:00');
-
-      function evEntries(ev) {
-        const out=[], seen=new Set();
-        sm.forEach(meet => {
-          if(seen.has(meet.date)) return;
-          const a=meet.athletes.find(x=>x.name===name);
-          if(a&&a.scores[ev]!==undefined){
-            seen.add(meet.date);
-            out.push({
-              score:a.scores[ev], date:meet.date, isHome:meet.isHome,
-              result:meet.result, gap:Math.abs((meet.osuScore||0)-(meet.opponentScore||0)),
-              day:Math.round((new Date(meet.date+'T12:00:00')-t0)/864e5)
-            });
-          }
-        });
-        return out;
-      }
-
-      evStats = EVS.map(ev => {
-        const e = evEntries(ev);
-        if(e.length<2) return null;
-        const scores = e.map(x=>x.score);
-        const slope = e.length>=3 ? glinReg(e.map(x=>({x:x.day,y:x.score}))).slope*7 : null;
-        const home=e.filter(x=>x.isHome).map(x=>x.score);
-        const away=e.filter(x=>!x.isHome).map(x=>x.score);
-        const wins=e.filter(x=>x.result==='W').map(x=>x.score);
-        const losses=e.filter(x=>x.result==='L').map(x=>x.score);
-        const close=e.filter(x=>x.gap<1.0).map(x=>x.score);
-        const jan=e.filter(x=>new Date(x.date+'T12:00:00').getMonth()===0).map(x=>x.score);
-        const late=e.filter(x=>new Date(x.date+'T12:00:00').getMonth()>0).map(x=>x.score);
-        return {
-          ev, n:e.length, avg:gmean(scores), best:Math.max(...scores), sd:gsd(scores), slope,
-          homeAvg:home.length?gmean(home):null, awayAvg:away.length?gmean(away):null,
-          haDiff:home.length&&away.length?gmean(home)-gmean(away):null,
-          winAvg:wins.length?gmean(wins):null, lossAvg:losses.length?gmean(losses):null,
-          wlDiff:wins.length&&losses.length?gmean(wins)-gmean(losses):null,
-          clutch:close.length?gmean(close):null,
-          janAvg:jan.length?gmean(jan):null, lateAvg:late.length?gmean(late):null,
-          seasonDiff:jan.length&&late.length?gmean(late)-gmean(jan):null
-        };
-      }).filter(Boolean);
+    function evEntries(ev) {
+      const out=[], seen=new Set();
+      sm.forEach(meet => {
+        if(seen.has(meet.date)) return;
+        const a=meet.athletes.find(x=>x.name===name);
+        if(a&&a.scores[ev]!==undefined){
+          seen.add(meet.date);
+          out.push({
+            score:a.scores[ev], date:meet.date, isHome:meet.isHome,
+            result:meet.result, gap:Math.abs((meet.osuScore||0)-(meet.opponentScore||0)),
+            day:Math.round((new Date(meet.date+'T12:00:00')-t0)/864e5)
+          });
+        }
+      });
+      return out;
     }
+
+    const evStats = EVS.map(ev => {
+      const e = evEntries(ev);
+      if(e.length<2) return null;
+      const scores = e.map(x=>x.score);
+      const slope = e.length>=3 ? glinReg(e.map(x=>({x:x.day,y:x.score}))).slope*7 : null;
+      const home=e.filter(x=>x.isHome).map(x=>x.score);
+      const away=e.filter(x=>!x.isHome).map(x=>x.score);
+      const wins=e.filter(x=>x.result==='W').map(x=>x.score);
+      const losses=e.filter(x=>x.result==='L').map(x=>x.score);
+      const close=e.filter(x=>x.gap<1.0).map(x=>x.score);
+      const jan=e.filter(x=>new Date(x.date+'T12:00:00').getMonth()===0).map(x=>x.score);
+      const late=e.filter(x=>new Date(x.date+'T12:00:00').getMonth()>0).map(x=>x.score);
+      return {
+        ev, n:e.length, avg:gmean(scores), best:Math.max(...scores), sd:gsd(scores), slope,
+        homeAvg:home.length?gmean(home):null, awayAvg:away.length?gmean(away):null,
+        haDiff:home.length&&away.length?gmean(home)-gmean(away):null,
+        winAvg:wins.length?gmean(wins):null, lossAvg:losses.length?gmean(losses):null,
+        wlDiff:wins.length&&losses.length?gmean(wins)-gmean(losses):null,
+        clutch:close.length?gmean(close):null,
+        janAvg:jan.length?gmean(jan):null, lateAvg:late.length?gmean(late):null,
+        seasonDiff:jan.length&&late.length?gmean(late)-gmean(jan):null
+      };
+    }).filter(Boolean);
 
     if(evStats.length===0) return '';
 
@@ -3282,42 +3334,66 @@
 
     const deepDive = buildDeepDive();
 
-    // Lineup position analysis from stats API
-    let lineupPanel = '';
-    const evStatsApi = statsCache.events && statsCache.events[eventKey];
-    if (evStatsApi && evStatsApi.lineupPositionAvgs && Object.keys(evStatsApi.lineupPositionAvgs).length > 0) {
-      const posData = evStatsApi.lineupPositionAvgs;
-      const positions = Object.keys(posData).sort((a, b) => Number(a) - Number(b));
-      const posAvgs = positions.map(p => posData[p].avg);
-      const maxAvg = Math.max(...posAvgs);
-      const minAvg = Math.min(...posAvgs);
-      const anchorPos = positions[positions.length - 1];
-      const anchorAvg = posData[anchorPos]?.avg;
-      const overallAvg = posAvgs.reduce((s, v) => s + v, 0) / posAvgs.length;
+    // Lineup Position Analysis
+    const posStats = Stats.getLineupPositionStats(meets, eventKey);
+    let lineupAnalysisHtml = '';
+    const posKeys = Object.keys(posStats.byPosition).sort();
+    if (posKeys.length > 0) {
+      const posScores = posKeys.map(p => posStats.byPosition[p].avg);
+      const maxPosAvg = posScores.length ? Math.max(...posScores) : 10;
+      const minPosAvg = posScores.length ? Math.min(...posScores) : 9;
 
-      lineupPanel = `
+      const posBars = posKeys.map(p => {
+        const ps = posStats.byPosition[p];
+        const pct = ((ps.avg - 9.0) / 1.0 * 100).toFixed(1);
+        return `<div class="position-bar-item">
+          <div class="position-bar-label">Pos ${p}</div>
+          <div class="position-bar-track"><div class="position-bar-fill" style="width:${Math.max(5, Math.min(100, pct))}%"></div></div>
+          <div class="position-bar-value">${ps.avg.toFixed(3)} <span style="color:var(--text-muted);font-size:0.7rem">(${ps.count})</span></div>
+        </div>`;
+      }).join('');
+
+      const anchor = posStats.byPosition['6'];
+      const leadoff = posStats.byPosition['1'];
+      const anchorCard = anchor ? `<div class="lineup-role-card"><div class="lineup-role-title">Anchor (Pos 6)</div><div class="lineup-role-athlete">${anchor.topAthlete || '—'}</div><div class="lineup-role-avg">${anchor.avg.toFixed(3)} avg</div></div>` : '';
+      const leadoffCard = leadoff ? `<div class="lineup-role-card"><div class="lineup-role-title">Leadoff (Pos 1)</div><div class="lineup-role-athlete">${leadoff.topAthlete || '—'}</div><div class="lineup-role-avg">${leadoff.avg.toFixed(3)} avg</div></div>` : '';
+
+      lineupAnalysisHtml = `
         <div class="section-card">
-          <h2 class="section-title">📋 Lineup Position Analysis</h2>
-          <p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:1rem;">Average score by lineup position across all meets this season</p>
-          <div style="display:grid;grid-template-columns:repeat(${positions.length},1fr);gap:0.5rem;text-align:center;">
-            ${positions.map(pos => {
-              const p = posData[pos];
-              const isAnchor = pos === anchorPos;
-              const aboveAvg = p.avg > overallAvg;
-              const barPct = ((p.avg - minAvg + 0.01) / (maxAvg - minAvg + 0.02) * 100).toFixed(0);
-              return `<div style="padding:0.5rem;background:var(--card);border-radius:8px;border:1px solid ${isAnchor ? 'var(--orange)' : '#333'}">
-                <div style="font-family:Oswald;font-size:0.7rem;color:#888;margin-bottom:0.25rem;">${isAnchor ? '⚓ ANCHOR' : 'POS ' + pos}</div>
-                <div style="font-family:Oswald;font-size:1.1rem;color:${aboveAvg ? '#2ecc71' : '#e74c3c'}">${p.avg.toFixed(3)}</div>
-                <div style="height:4px;background:#333;border-radius:2px;margin-top:0.4rem;overflow:hidden;">
-                  <div style="height:100%;width:${barPct}%;background:${isAnchor ? 'var(--orange)' : aboveAvg ? '#2ecc71' : '#e74c3c'};border-radius:2px;"></div>
-                </div>
-                <div style="font-size:0.65rem;color:#666;margin-top:0.25rem;">${p.count} scores</div>
-              </div>`;
-            }).join('')}
+          <h2 class="section-title">Lineup Analysis — ${evName}</h2>
+          <div class="position-bars">${posBars}</div>
+          <div class="lineup-roles">${leadoffCard}${anchorCard}</div>
+        </div>`;
+    }
+
+    // Box-and-whisker distribution
+    let distChartHtml = '';
+    if (scores.length >= 5) {
+      const sorted = scores.slice().sort((a,b) => a - b);
+      const q1Idx = Math.floor(sorted.length * 0.25);
+      const q3Idx = Math.floor(sorted.length * 0.75);
+      const medIdx = Math.floor(sorted.length * 0.5);
+      const distMin = sorted[0], distMax = sorted[sorted.length - 1];
+      const q1 = sorted[q1Idx], median = sorted[medIdx], q3 = sorted[q3Idx];
+      const range = distMax - distMin || 0.1;
+      const pct = v => ((v - distMin) / range * 80 + 10).toFixed(1);
+
+      distChartHtml = `
+        <div class="section-card">
+          <h2 class="section-title">Score Distribution</h2>
+          <div class="dist-chart">
+            <div class="dist-whisker" style="left:${pct(distMin)}%;width:${(pct(q1) - pct(distMin))}%"></div>
+            <div class="dist-box" style="left:${pct(q1)}%;width:${(pct(q3) - pct(q1))}%"></div>
+            <div class="dist-median" style="left:${pct(median)}%"></div>
+            <div class="dist-whisker" style="left:${pct(q3)}%;width:${(pct(distMax) - pct(q3))}%"></div>
+            <div class="dist-labels">
+              <span class="dist-label" style="left:${pct(distMin)}%">${distMin.toFixed(3)}</span>
+              <span class="dist-label" style="left:${pct(q1)}%">Q1: ${q1.toFixed(3)}</span>
+              <span class="dist-label" style="left:${pct(median)}%">Med: ${median.toFixed(3)}</span>
+              <span class="dist-label" style="left:${pct(q3)}%">Q3: ${q3.toFixed(3)}</span>
+              <span class="dist-label" style="left:${pct(distMax)}%">${distMax.toFixed(3)}</span>
+            </div>
           </div>
-          ${anchorAvg && overallAvg ? `<div style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-muted);">
-            Anchor (pos ${anchorPos}) ${anchorAvg > overallAvg ? '<span style="color:#2ecc71">outperforms</span>' : '<span style="color:#e74c3c">underperforms</span>'} average by <strong>${Math.abs(anchorAvg - overallAvg).toFixed(3)}</strong> pts
-          </div>` : ''}
         </div>`;
     }
 
@@ -3330,7 +3406,8 @@
       </div>
       ${chart}
       ${statsPanel}
-      ${lineupPanel}
+      ${distChartHtml}
+      ${lineupAnalysisHtml}
       ${gymnastSection}
       ${leaderboard}
       ${breakdown}
@@ -3365,38 +3442,61 @@
   function renderLeaderboard(event) {
     document.querySelectorAll('.event-tab').forEach(t => t.classList.toggle('active', t.dataset.event === event));
 
-    let gymnasts;
-
-    if (statsCache.leaderboards && statsCache.leaderboards[event]) {
-      // Use pre-computed leaderboard from stats API
-      gymnasts = statsCache.leaderboards[event].map(g => ({
-        name: g.name,
-        best: { score: g.best, meetDate: g.bestMeetDate, opponent: g.bestOpponent, meetId: g.bestMeetId },
-        avg: g.avg,
-        recent: g.recent,
-        count: g.appearances,
-      }));
-    } else {
-      // Fallback: compute inline
-      const byGymnast = {};
-      const sortedMeets = meets.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-      sortedMeets.forEach(meet => {
-        meet.athletes.forEach(a => {
-          if (a.scores[event] !== undefined) {
-            if (!byGymnast[a.name]) byGymnast[a.name] = [];
-            byGymnast[a.name].push({ score: a.scores[event], meetDate: meet.date, opponent: meet.opponent, meetId: meet.id });
-          }
-        });
-      });
-      gymnasts = Object.entries(byGymnast).map(([name, entries]) => {
-        const scores = entries.map(e => e.score);
-        const best = entries.reduce((a, b) => a.score > b.score ? a : b);
-        const avg = scores.reduce((s, v) => s + v, 0) / scores.length;
-        const recent = entries[entries.length - 1];
-        return { name, best, avg, recent, count: scores.length };
-      });
-      gymnasts.sort((a, b) => b.best.score - a.best.score);
+    // AA leaderboard — special handling
+    if (event === 'aa') {
+      const list = document.getElementById('leaderboardList');
+      const aaData = Stats.getAALeaderboard(meets);
+      if (!aaData.length) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><p class="empty-text">No AA scores recorded this season.</p></div>';
+        return;
+      }
+      list.innerHTML = aaData.map((g, i) => {
+        const photo = photos[g.name];
+        const avatar = photo
+          ? `<img src="${photo}" class="lb-avatar" alt="${g.name}">`
+          : `<div class="lb-avatar lb-avatar-initials">${g.name.split(' ').map(n => n[0]).join('')}</div>`;
+        const trendArrow = g.trend != null ? (g.trend > 0.01 ? '<span style="color:#2ecc71">▲</span>' : g.trend < -0.01 ? '<span style="color:#e74c3c">▼</span>' : '<span style="color:#aaa">►</span>') : '';
+        return `
+        <div class="leaderboard-item">
+          <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
+          ${avatar}
+          <div class="lb-info">
+            <div class="lb-name"><span class="clickable-name" data-gymnast="${g.name}">${g.name}</span></div>
+            <div class="lb-context">${g.count} AA score${g.count !== 1 ? 's' : ''} this season</div>
+          </div>
+          <div class="lb-stats">
+            <div class="lb-stat"><span class="lb-stat-label">BEST</span><span class="lb-stat-val">${g.best.toFixed(3)}</span></div>
+            <div class="lb-stat"><span class="lb-stat-label">AVG</span><span class="lb-stat-val">${g.avg.toFixed(3)}</span></div>
+            <div class="lb-stat"><span class="lb-stat-label">COUNT</span><span class="lb-stat-val">${g.count}</span></div>
+            <div class="lb-stat"><span class="lb-stat-label">TREND</span><span class="lb-stat-val">${trendArrow}</span></div>
+          </div>
+        </div>`;
+      }).join('');
+      return;
     }
+
+    // Group scores by gymnast
+    const byGymnast = {};
+    const sortedMeets = meets.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    sortedMeets.forEach(meet => {
+      meet.athletes.forEach(a => {
+        if (a.scores[event] !== undefined) {
+          if (!byGymnast[a.name]) byGymnast[a.name] = [];
+          byGymnast[a.name].push({ score: a.scores[event], meetDate: meet.date, opponent: meet.opponent, meetId: meet.id });
+        }
+      });
+    });
+
+    // Build per-gymnast stats
+    const gymnasts = Object.entries(byGymnast).map(([name, entries]) => {
+      const scores = entries.map(e => e.score);
+      const best = entries.reduce((a, b) => a.score > b.score ? a : b);
+      const avg = scores.reduce((s, v) => s + v, 0) / scores.length;
+      const recent = entries[entries.length - 1];
+      return { name, best, avg, recent, count: scores.length };
+    });
+
+    gymnasts.sort((a, b) => b.best.score - a.best.score);
 
     const list = document.getElementById('leaderboardList');
     if (gymnasts.length === 0) {
@@ -3429,13 +3529,7 @@
   // ===== Insights =====
   function renderInsights() {
     // --- helpers ---
-    function linReg(pts) {
-      const n = pts.length;
-      if (n < 2) return {slope:0};
-      const sx=pts.reduce((s,p)=>s+p.x,0), sy=pts.reduce((s,p)=>s+p.y,0);
-      const sxy=pts.reduce((s,p)=>s+p.x*p.y,0), sx2=pts.reduce((s,p)=>s+p.x*p.x,0);
-      return {slope:(n*sxy-sx*sy)/(n*sx2-sx*sx)||0};
-    }
+    function linReg(pts) { return Stats.linReg(pts); }
     function fmtDiff(n) { if (typeof n !== 'number' || isNaN(n)) return '—'; return (n>=0?'+':'')+n.toFixed(3); }
 
     const EVS = ['vault','bars','beam','floor'];
@@ -3741,18 +3835,16 @@
         <div class="insight-section-title">🎪 Team Event Breakdown</div>
         <div class="insight-card">
           <p class="insight-note">OSU's average team score per event, split by meet result. Where does OSU win and lose rotations?</p>
-          <div class="info-cards-grid">
-            ${teamEvents.map(e => `<div class="info-card">
-              <div class="info-card-label">${e.label}</div>
-              <div class="info-card-value">${fmt(e.avg)}</div>
-              <div class="info-card-secondary" style="margin-bottom:auto">
-                <div style="display:flex;justify-content:space-between;gap:0.5rem;font-size:0.75rem;margin-top:0.25rem">
-                  <span style="color:#4caf82">W: ${e.winAvg?fmt(e.winAvg):'—'}</span>
-                  <span style="color:#e05c4a">L: ${e.lossAvg?fmt(e.lossAvg):'—'}</span>
-                </div>
-              </div>
-              <div class="info-card-meta" style="border-top:1px solid var(--border);padding-top:0.5rem">Δ: <span style="color:${e.winLossDiff>0?'#4caf82':e.winLossDiff<0?'#e05c4a':'var(--text-muted)'}";font-weight:600">${e.winLossDiff?fmtDiff(e.winLossDiff):'—'}</span></div>
-            </div>`).join('')}
+          <div class="insight-table">
+            <div class="itrow header"><span>Event</span><span>Season Avg</span><span>In Wins</span><span>In Losses</span><span>W/L Diff</span></div>
+            ${teamEvents.map(e => `
+              <div class="itrow">
+                <span style="font-weight:600">${e.label}</span>
+                <span>${fmt(e.avg)}</span>
+                <span style="color:#2ecc71">${e.winAvg?fmt(e.winAvg):'—'}</span>
+                <span style="color:#e74c3c">${e.lossAvg?fmt(e.lossAvg):'—'}</span>
+                <span style="color:${e.winLossDiff>0?'#2ecc71':e.winLossDiff<0?'#e74c3c':'#aaa'};font-weight:600">${e.winLossDiff?fmtDiff(e.winLossDiff):'—'}</span>
+              </div>`).join('')}
           </div>
         </div>
 
@@ -3760,29 +3852,29 @@
         <div class="insight-card">
           <p class="insight-note">Does more time between meets improve performance? Correlation between rest days and team score.</p>
           ${restCorr!==null?`<div class="insight-big-stat">${restCorr>0.2?'📈':'📉'} r = <strong>${restCorr.toFixed(2)}</strong> — ${corrStrength(restCorr)} correlation</div>`:'<p class="insight-note">Not enough data points.</p>'}
-          ${restData.length>0?`<div class="info-cards-grid" style="margin-top:0.75rem">
-            ${restData.map((d, idx) => {
-              const meetDate = compDays[restData.indexOf(d)+1]?.date||'';
-              return `<div class="info-card">
-                <div class="info-card-label">${d.days} days rest</div>
-                <div class="info-card-value">${fmt(d.score)}</div>
-                <div class="info-card-secondary" style="color:${d.result==='W'?'#4caf82':'#e05c4a'};font-weight:600;margin-bottom:auto">${d.result === 'W' ? '✓ Win' : '✗ Loss'}</div>
-              </div>`;
-            }).join('')}
-          </div>`:''}
+          <div class="insight-table" style="margin-top:0.75rem">
+            <div class="itrow header"><span>Meet</span><span>Rest Days</span><span>Team Score</span><span>Result</span></div>
+            ${restData.map(d => `
+              <div class="itrow">
+                <span style="color:var(--text-muted);font-size:0.8rem">${formatDate(compDays[restData.indexOf(d)+1]?.date||'')}</span>
+                <span>${d.days}d</span>
+                <span>${fmt(d.score)}</span>
+                <span style="color:${d.result==='W'?'#2ecc71':'#e74c3c'}">${d.result}</span>
+              </div>`).join('')}
+          </div>
         </div>
 
         <div class="insight-section-title">🔗 Event Correlations</div>
         <div class="insight-card">
           <p class="insight-note">Do gymnasts who score well on one event also score well on another? Pearson r across all athletes' season averages.</p>
-          <div class="info-cards-grid">
+          <div class="insight-table">
+            <div class="itrow header"><span>Events</span><span>Correlation</span><span>Strength</span></div>
             ${corrMatrix.map(c => {
               const pct = Math.round(Math.abs(c.r)*100);
-              const isStrong = Math.abs(c.r) > 0.5;
-              return `<div class="info-card ${isStrong?'info-card-highlight':''}">
-                <div class="info-card-label">${pairLabels[c.e1]} ↔ ${pairLabels[c.e2]}</div>
-                <div class="info-card-value" style="color:${isStrong?'var(--orange)':'var(--text-muted)'}">r = ${c.r.toFixed(2)}</div>
-                <div class="info-card-meta">${corrStrength(c.r)}</div>
+              return `<div class="itrow">
+                <span style="font-weight:600">${pairLabels[c.e1]} ↔ ${pairLabels[c.e2]}</span>
+                <span style="color:${Math.abs(c.r)>0.5?'var(--orange)':'var(--text-muted)'}">r = ${c.r.toFixed(2)}</span>
+                <span style="color:var(--text-muted);font-size:0.8rem">${corrStrength(c.r)}</span>
               </div>`;
             }).join('')}
           </div>
@@ -3794,17 +3886,13 @@
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">🛣️ Road Fatigue Is Real — And It's Brutal</div>
           <p class="insight-note">Each consecutive away meet strips ~0.8 pts off the team score. Not a fluke — it shows up every single time.</p>
-          <div class="info-cards-grid">
+          <div class="streak-bars">
             ${[0,1,2].map(k => {
               const scores = awayStreakGroups[k];
               const avg = scores.length ? mean(scores) : null;
-              const labels = ['🏠 Home', '🛣️ 1st Away', '🛣️ 2nd+ Away'];
-              const icons = ['🏠', '🛣️', '🛣️'];
-              return avg ? `<div class="info-card">
-                <div class="info-card-label">${icons[k]} ${labels[k]}</div>
-                <div class="info-card-value">${fmt(avg)}</div>
-                <div class="info-card-meta">${scores.length} meet${scores.length!==1?'s':''}</div>
-              </div>` : '';
+              const pct = avg ? Math.round(((avg-194)/(198-194))*100) : 0;
+              const labels = ['🏠 Home meets','🛣️ 1st away meet','🛣️ 2nd+ consecutive away'];
+              return avg ? '<div class="streak-row"><span class="streak-label">'+labels[k]+'</span><div class="streak-bar-wrap"><div class="streak-bar" style="width:'+pct+'%"></div></div><span class="streak-val">'+fmt(avg)+'</span></div>' : '';
             }).join('')}
           </div>
         </div>
@@ -3812,26 +3900,20 @@
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">📅 February Is OSU's Best Month — Not March</div>
           <p class="insight-note">Counterintuitive. Teams are supposed to peak for postseason. OSU's best gymnastics happened in February, not heading into March regionals.</p>
-          <div class="info-cards-grid">
-            ${monthSorted.map(([month, scores], i) => `<div class="info-card ${i===0?'info-card-highlight':''}">
-              <div class="info-card-label">${i===0?'🔥 Peak Month':month}</div>
-              <div class="info-card-value">${fmt(mean(scores))}</div>
-              <div class="info-card-meta">${scores.length} meet${scores.length!==1?'s':''}</div>
-            </div>`).join('')}
+          <div class="insight-table">
+            <div class="itrow header"><span>Month</span><span>Avg Team Score</span><span>Meets</span></div>
+            ${monthSorted.map(([month, scores], i) => '<div class="itrow"><span style="font-weight:600">'+(i===0?'🔥 ':'')+month+'</span><span style="color:'+(i===0?'var(--orange)':'var(--text-primary)')+';font-weight:'+(i===0?700:400)+'">'+fmt(mean(scores))+'</span><span style="color:var(--text-muted)">'+scores.length+' meets</span></div>').join('')}
           </div>
         </div>
 
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">📆 Best Day of the Week to Watch OSU</div>
           <p class="insight-note">Small sample, but the trend is clear. OSU's peak day: ${dowSorted[0][0]}.</p>
-          <div class="info-cards-grid">
+          <div class="insight-table">
+            <div class="itrow header"><span>Day</span><span>Avg Score</span><span>Record</span></div>
             ${dowSorted.map(([day, scores], i) => {
               const wins = compDays.filter(m => new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long'})===day && m.result==='W').length;
-              return `<div class="info-card ${i===0?'info-card-highlight':''}">
-                <div class="info-card-label">${i===0?'⭐ Best Day':'📅 '+day}</div>
-                <div class="info-card-value">${fmt(mean(scores))}</div>
-                <div class="info-card-meta">${wins}-${scores.length-wins} record (${scores.length} meets)</div>
-              </div>`;
+              return '<div class="itrow"><span style="font-weight:600">'+(i===0?'⭐ ':'')+day+'</span><span style="color:'+(i===0?'var(--orange)':'var(--text-primary)')+'">'+fmt(mean(scores))+'</span><span style="color:var(--text-muted)">'+wins+'-'+(scores.length-wins)+'</span></div>';
             }).join('')}
           </div>
         </div>
@@ -3839,84 +3921,82 @@
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">🔄 Bounce-Back After Big Losses</div>
           <p class="insight-note">After getting blown out by 1.5+ points, does OSU reset and come back stronger — or does the loss linger?</p>
-          <div class="stat-compare-grid">
-            <div class="stat-compare-card" style="${mean(bigMargin)>mean(smallMargin)?'border-color:var(--orange);background:rgba(46,204,113,0.1);':''}">
-              <div class="stat-compare-card-title">💥 After Blowout</div>
-              <div class="stat-compare-card-value">${bigMargin.length?fmt(mean(bigMargin)):'—'}</div>
-              <div class="stat-compare-card-label">Margin ≥ 1.5 pts (${bigMargin.length} meets)</div>
-            </div>
-            <div class="stat-compare-card" style="${mean(smallMargin)>mean(bigMargin)?'border-color:var(--orange);background:rgba(46,204,113,0.1);':''}">
-              <div class="stat-compare-card-title">⚡ After Close Meet</div>
-              <div class="stat-compare-card-value">${smallMargin.length?fmt(mean(smallMargin)):'—'}</div>
-              <div class="stat-compare-card-label">Margin &lt; 1.5 pts (${smallMargin.length} meets)</div>
-            </div>
+          <div class="insight-table">
+            <div class="itrow header"><span>Scenario</span><span>Next Meet Avg</span><span>Sample</span></div>
+            <div class="itrow"><span>After blowout (margin ≥ 1.5)</span><span style="color:${mean(bigMargin)>mean(smallMargin)?'#2ecc71':'#e74c3c'};font-weight:600">${bigMargin.length?fmt(mean(bigMargin)):'—'}</span><span style="color:var(--text-muted)">${bigMargin.length} meets</span></div>
+            <div class="itrow"><span>After close meet (margin &lt; 1.5)</span><span style="font-weight:600">${smallMargin.length?fmt(mean(smallMargin)):'—'}</span><span style="color:var(--text-muted)">${smallMargin.length} meets</span></div>
+            <div class="itrow" style="color:var(--text-muted);font-size:0.78rem;font-style:italic"><span>${bigMargin.length&&smallMargin.length?(mean(bigMargin)>mean(smallMargin)?'✅ Bounce-back is real — big losses fuel bigger next scores':'❌ No clear bounce-back — big losses carry over'):'Insufficient data'}</span><span></span><span></span></div>
           </div>
-          ${bigMargin.length&&smallMargin.length?`<p style="color:var(--text-muted);font-size:0.75rem;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)">${mean(bigMargin)>mean(smallMargin)?'✅ Bounce-back is real — big losses fuel bigger next scores':'❌ No clear bounce-back — big losses carry over'}</p>`:''}
         </div>
 
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">🎪 Quad Meets vs Dual Meets — Bigger Stage, Better Scores?</div>
           <p class="insight-note">In quad meets there are more teams, bigger atmosphere. Does it lift OSU's scores or add pressure?</p>
-          <div class="stat-compare-grid">
-            <div class="stat-compare-card" style="${mean(quadScores)>mean(dualScores)?'border-color:var(--orange);background:rgba(255,107,53,0.05);':''}">
-              <div class="stat-compare-card-title">🎪 Quad Meets</div>
-              <div class="stat-compare-card-value">${fmt(mean(quadScores))}</div>
-              <div class="stat-compare-card-label">${quadScores.length} meets</div>
-            </div>
-            <div class="stat-compare-card" style="${mean(dualScores)>mean(quadScores)?'border-color:var(--orange);background:rgba(255,107,53,0.05);':''}">
-              <div class="stat-compare-card-title">🤼 Dual Meets</div>
-              <div class="stat-compare-card-value">${fmt(mean(dualScores))}</div>
-              <div class="stat-compare-card-label">${dualScores.length} meets</div>
-            </div>
+          <div class="insight-table">
+            <div class="itrow header"><span>Format</span><span>Avg Score</span><span>Meets</span></div>
+            <div class="itrow"><span>🎪 Quad meets</span><span style="color:${mean(quadScores)>mean(dualScores)?'#2ecc71':'#e74c3c'};font-weight:600">${fmt(mean(quadScores))}</span><span style="color:var(--text-muted)">${quadScores.length}</span></div>
+            <div class="itrow"><span>🤼 Dual meets</span><span style="font-weight:600">${fmt(mean(dualScores))}</span><span style="color:var(--text-muted)">${dualScores.length}</span></div>
           </div>
         </div>
 
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">📈 Who Gets Better As The Season Goes On?</div>
           <p class="insight-note">January vs February/March average. Late-season risers are your postseason players. Decliners may be carrying fatigue or nursing something.</p>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-top:1rem">
-            ${earlyLate.map(g => {
-              const bgStyle = g.delta>0.05 ? 'background:rgba(76,175,130,0.1);border-color:var(--orange);' : g.delta<-0.05 ? 'background:rgba(224,92,74,0.1);' : '';
-              const deltaColor = g.delta>0.05 ? '#4caf82' : g.delta<-0.05 ? '#e05c4a' : '#aaa';
-              return `<div class="info-card" style="${bgStyle}">
-                <div class="info-card-label clickable-name" data-gymnast="${g.name}" style="cursor:pointer;color:var(--orange)">${g.name}</div>
-                <div class="info-card-value" style="font-size:1.3rem">${fmt(g.late)}</div>
-                <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:0.5rem">Late season avg</div>
-                <div style="display:flex;justify-content:space-between;font-size:0.75rem;padding-top:0.5rem;border-top:1px solid var(--border);color:var(--text-muted)">
-                  <span>Jan: ${fmt(g.early)}</span>
-                  <span style="color:${deltaColor};font-weight:600">${fmtDiff(g.delta)}</span>
-                </div>
-              </div>`;
-            }).join('')}
+          <div class="insight-table">
+            <div class="itrow header"><span>Gymnast</span><span>Jan Avg</span><span>Late Season</span><span>Trend</span></div>
+            ${earlyLate.map(g => '<div class="itrow"><span class="clickable-name" data-gymnast="'+g.name+'">'+g.name+'</span><span>'+fmt(g.early)+'</span><span>'+fmt(g.late)+'</span><span style="color:'+(g.delta>0.05?'#2ecc71':g.delta<-0.05?'#e74c3c':'#aaa')+';font-weight:600">'+fmtDiff(g.delta)+'</span></div>').join('')}
           </div>
         </div>
 
         <div class="insight-card" style="margin-bottom:1rem">
           <div class="hidden-pattern-title">🚀 Slow Starters vs Fast Finishers (Vault vs Floor)</div>
           <p class="insight-note">Vault is typically an early rotation. Floor is typically last. A big positive delta means a gymnast who warms up slowly but finishes strong — the classic "anchor" type.</p>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-top:1rem">
-            ${startFinish.map(g => {
-              const bgStyle = g.delta>0.05 ? 'background:rgba(76,175,130,0.1);border-color:var(--orange);' : g.delta<-0.05 ? 'background:rgba(224,92,74,0.1);' : '';
-              return `<div class="info-card" style="${bgStyle}">
-                <div class="info-card-label clickable-name" data-gymnast="${g.name}" style="cursor:pointer;color:var(--orange)">${g.name}</div>
-                <div class="info-card-value" style="font-size:1.1rem">${fmtDiff(g.delta)}</div>
-                <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:0.5rem">Floor − Vault</div>
-                <div style="display:flex;justify-content:space-between;font-size:0.75rem;padding-top:0.5rem;border-top:1px solid var(--border);color:var(--text-muted)">
-                  <span>VT: ${fmt(g.vault)}</span>
-                  <span>FX: ${fmt(g.floor)}</span>
-                </div>
-              </div>`;
-            }).join('')}
+          <div class="insight-table">
+            <div class="itrow header"><span>Gymnast</span><span>Vault Avg</span><span>Floor Avg</span><span>Δ (FX−VT)</span></div>
+            ${startFinish.map(g => '<div class="itrow"><span class="clickable-name" data-gymnast="'+g.name+'">'+g.name+'</span><span>'+fmt(g.vault)+'</span><span>'+fmt(g.floor)+'</span><span style="color:'+(g.delta>0.05?'#2ecc71':g.delta<-0.05?'#e74c3c':'#aaa')+';font-weight:600">'+fmtDiff(g.delta)+'</span></div>').join('')}
           </div>
         </div>
 
       </div>
+      ${renderSeasonRankings()}
       ${renderHotTakes()}
       ${renderDeepCuts()}
       ${renderSeasonWildStats()}
     `;
   }
 
+  // ===== Season Rankings from allTeams (quad meets) =====
+  function renderSeasonRankings() {
+    const rankings = Stats.getSeasonRankings(meets);
+    if (!rankings.length) return '';
+
+    const rows = rankings.map(r => {
+      const isOSU = r.team.toLowerCase().includes('oregon');
+      const rowClass = isOSU ? ' class="rankings-osu-row"' : '';
+      return `<tr${rowClass}>
+        <td>${r.team}</td>
+        <td>${r.appearances}</td>
+        <td style="font-family:Oswald;font-weight:600">${r.avgTotal != null ? r.avgTotal.toFixed(3) : '—'}</td>
+        <td>${r.bestTotal != null ? r.bestTotal.toFixed(3) : '—'}</td>
+        <td>${r.vault != null ? r.vault.toFixed(3) : '—'}</td>
+        <td>${r.bars != null ? r.bars.toFixed(3) : '—'}</td>
+        <td>${r.beam != null ? r.beam.toFixed(3) : '—'}</td>
+        <td>${r.floor != null ? r.floor.toFixed(3) : '—'}</td>
+      </tr>`;
+    }).join('');
+
+    return `
+      <div class="section-card" style="margin-top:1.5rem;">
+        <h2 class="section-title">🏆 Season Rankings (Quad Meets)</h2>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem">Aggregated from allTeams data across quad meets. Sorted by average total score.</p>
+        <div style="overflow-x:auto">
+          <table class="rankings-table">
+            <thead><tr><th>Team</th><th>App.</th><th>Avg Total</th><th>Best Total</th><th>VT Avg</th><th>UB Avg</th><th>BB Avg</th><th>FX Avg</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }
 
   // ===== Deep Cuts: Factor × Event Correlation Matrix =====
   function renderDeepCuts() {
@@ -4625,6 +4705,18 @@
 
     // Gymnast card click
     document.getElementById('gymnastCards').addEventListener('click', e => {
+      // Compare button
+      if (e.target.id === 'compareAthletesBtn') {
+        const ui = document.getElementById('compareSelectUI');
+        if (ui) ui.style.display = ui.style.display === 'none' ? 'flex' : 'none';
+        return;
+      }
+      if (e.target.id === 'compareGoBtn') {
+        const s1 = document.getElementById('compareSelect1')?.value;
+        const s2 = document.getElementById('compareSelect2')?.value;
+        if (s1 && s2 && s1 !== s2) renderAthleteComparison(s1, s2);
+        return;
+      }
       const card = e.target.closest('.gymnast-card');
       if (card) showGymnastProfile(card.dataset.gymnast);
     });

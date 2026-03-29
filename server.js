@@ -2,10 +2,14 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
+const Anthropic = require('@anthropic-ai/sdk');
 const { computeStats } = require('./stats/stats');
 
 const app = express();
 const { execSync } = require('child_process');
+
+// Middleware
+app.use(express.json({ limit: '10mb' }));
 
 // Cache-bust version = git commit hash (short)
 let ASSET_VERSION = 'dev';
@@ -222,6 +226,89 @@ app.post('/api/refresh', async (req, res) => {
 app.get('/healthz', (req, res) => {
   const { name, version } = require('./package.json');
   res.json({ status: 'ok', uptime: process.uptime(), version });
+});
+
+// Claude AI Chatbot Endpoint
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { messages } = req.body;
+
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'Messages array required' });
+    }
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      console.error('ANTHROPIC_API_KEY not set');
+      return res.status(500).json({ error: 'AI service not configured' });
+    }
+
+    const client = new Anthropic({ apiKey });
+
+    // Format messages for Claude API
+    const claudeMessages = messages.map(msg => ({
+      role: msg.role,
+      content: msg.content,
+    }));
+
+    const systemPrompt = `You are an expert gymnastics analytics assistant for the OSU Gymnastics 2026 stats website.
+
+**Your Role:**
+- Provide detailed analysis of gymnastics meet results, team performance, and athlete statistics
+- Answer questions about team rankings, individual event performances, and historical trends
+- Explain gymnastics scoring systems (NQS, team averages, lineup positioning, etc.)
+- Offer insights into athlete strengths, weaknesses, and performance patterns
+- Help users understand statistical relationships and competitive positioning
+
+**Analytics Capabilities:**
+- When users ask for analysis, provide comprehensive metrics, comparisons, and context
+- Break down team performance by event (vault, bars, beam, floor, AA)
+- Compare athlete performances across meets and identify trends
+- Discuss lineup optimization and scoring implications
+- Contextualize individual scores within team and competitive landscapes
+
+**Data Available:**
+- Meet results, scores, and dates
+- Athlete performance statistics and rankings
+- Team seasonal trends and momentum
+- Event-specific analytics and breakdowns
+
+**Communication Style:**
+- Be conversational and friendly while maintaining analytical depth
+- Use clear formatting with headers, bullet points, and numbered lists for complex analysis
+- Provide specific numbers and statistics when discussing performance
+- Offer context and comparisons to help users understand significance
+- Ask clarifying questions if you need more specific information about what they're analyzing
+
+**Important Notes:**
+- You can reference meet data, scores, and athlete information available on this website
+- Users can share specific data or results for you to analyze
+- Always be accurate with numbers and careful with statistical claims
+- Focus on gymnastics-specific analysis rather than general sports commentary`;
+
+    const response = await client.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: claudeMessages,
+    });
+
+    const assistantMessage = response.content[0]?.text || '';
+
+    res.json({
+      success: true,
+      message: assistantMessage,
+    });
+  } catch (error) {
+    console.error('Chat API error:', error.message);
+    if (error.status === 401) {
+      return res.status(500).json({ error: 'Invalid API credentials' });
+    }
+    if (error.status === 429) {
+      return res.status(429).json({ error: 'Rate limited. Please try again later.' });
+    }
+    res.status(500).json({ error: 'Failed to process chat message' });
+  }
 });
 
 const PORT = process.env.PORT || 8888;
