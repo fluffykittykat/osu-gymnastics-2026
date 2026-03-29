@@ -12,6 +12,7 @@
   let lastRefreshedTime = null;
   let autoRefreshInterval = null;
   let autoRefreshEnabled = false;
+  let statsCache = {};
 
   const EVENT_NAMES = {
     vault: 'Vault', bars: 'Bars', beam: 'Beam', floor: 'Floor', aa: 'All-Around'
@@ -106,10 +107,11 @@
       const data = await res.json();
 
       if (data.success) {
-        // Re-fetch the meets data
-        const meetsRes = await fetch('/api/meets');
+        // Re-fetch the meets data and stats
+        const [meetsRes2, statsRes2] = await Promise.all([fetch('/api/meets'), fetch('/api/stats')]);
         const oldMeets = meets.slice();
-        meets = await meetsRes.json();
+        meets = await meetsRes2.json();
+        try { if (statsRes2.ok) statsCache = await statsRes2.json(); } catch (e) { /* keep old cache */ }
 
         lastRefreshedTime = new Date();
         updateLastUpdatedDisplay();
@@ -192,6 +194,17 @@
       photos = await photosRes.json();
       bios = await biosRes.json();
       meetPhotos = await meetPhotosRes.json();
+
+      // Fetch pre-computed stats from backend (non-blocking — fallback to inline if it fails)
+      try {
+        const statsRes = await fetch('/api/stats');
+        if (statsRes.ok) {
+          statsCache = await statsRes.json();
+        }
+      } catch (e) {
+        console.warn('[OSU] Stats API unavailable, using inline computation fallback');
+        statsCache = {};
+      }
 
       // Set initial lastRefreshed from meet data
       const refreshed = meets.find(m => m.lastRefreshed);
@@ -301,7 +314,11 @@
     const mc = document.getElementById('missionControl');
     if (!mc) return;
 
-    // Unique competition days
+    // Use pre-computed stats from API when available
+    const ts = statsCache.team || null;
+    const et = statsCache.eventTrends || null;
+
+    // Unique competition days (fallback computation)
     const compDays = [];
     const seenD = new Set();
     meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(m => {
@@ -312,40 +329,37 @@
         elevFt: m.elevationFt ?? null });
     });
 
-    const scoredMeets = meets.filter(m => m.result === 'W' || m.result === 'L');
-    const wins = meets.filter(m => m.result === 'W').length;
-    const losses = meets.filter(m => m.result === 'L').length;
-
-    // Unique day wins
-    const dayWins = new Set(), dayLosses = new Set();
-    meets.forEach(m => {
-      if (m.result === 'W') dayWins.add(m.date);
-      else if (m.result === 'L') dayLosses.add(m.date);
-    });
+    const wins = ts ? ts.record.wins : meets.filter(m => m.result === 'W').length;
+    const losses = ts ? ts.record.losses : meets.filter(m => m.result === 'L').length;
 
     const allScores = compDays.map(d=>d.total);
     const homeScores = compDays.filter(d=>d.isHome).map(d=>d.total);
     const awayScores = compDays.filter(d=>!d.isHome).map(d=>d.total);
-    const teamAvg = mcMean(allScores);
-    const homeAvg = mcMean(homeScores);
-    const awayAvg = mcMean(awayScores);
-    const seasonHigh = allScores.length ? Math.max(...allScores) : null;
+    const teamAvg = ts ? ts.seasonAvg : mcMean(allScores);
+    const homeAvg = ts ? ts.homeAvg : mcMean(homeScores);
+    const awayAvg = ts ? ts.awayAvg : mcMean(awayScores);
+    const seasonHigh = ts ? ts.seasonHigh : (allScores.length ? Math.max(...allScores) : null);
     const homeDiff = homeAvg && teamAvg ? homeAvg - teamAvg : null;
 
-    // Season trajectory — first half vs second half
-    const half = Math.floor(allScores.length / 2);
-    const firstHalf = mcMean(allScores.slice(0, half));
-    const secondHalf = mcMean(allScores.slice(half));
-    const trajectory = firstHalf && secondHalf ? secondHalf - firstHalf : null;
+    // Season trajectory
+    const trajectory = ts ? ts.trajectory : (() => {
+      const half = Math.floor(allScores.length / 2);
+      const f = mcMean(allScores.slice(0, half));
+      const s = mcMean(allScores.slice(half));
+      return f && s ? s - f : null;
+    })();
     const trajArrow = trajectory == null ? '' : trajectory > 0.1 ? '🚀' : trajectory < -0.1 ? '📉' : '→';
     const trajLabel = trajectory == null ? '' : trajectory > 0.1 ? `Up ${trajectory.toFixed(3)} pts vs early season` : trajectory < -0.1 ? `Down ${Math.abs(trajectory).toFixed(3)} pts vs early season` : 'Flat season trend';
 
-    // Event trends — compare first 5 vs last 5 scored meets
+    // NQS from stats API
+    const nqs = ts ? ts.nqs : null;
+
+    // Event trends
     const EVS = ['vault','bars','beam','floor'];
     const EVlabel = {vault:'VAULT',bars:'BARS',beam:'BEAM',floor:'FLOOR'};
     const EVemoji = {vault:'🤸',bars:'💪',beam:'⚖️',floor:'🔥'};
 
-    function eventTrend(ev) {
+    function eventTrendFallback(ev) {
       const dates = [...seenD].slice().sort();
       const pts = [];
       dates.forEach(date => {
@@ -362,48 +376,59 @@
     }
 
     const evData = {};
-    EVS.forEach(ev => { evData[ev] = eventTrend(ev); });
+    EVS.forEach(ev => {
+      if (et && et[ev]) {
+        evData[ev] = { avg: et[ev].seasonAvg, trend: et[ev].trendDiff || 0, recent: et[ev].recentAvg };
+      } else {
+        evData[ev] = eventTrendFallback(ev);
+      }
+    });
 
-    // Hot/Cold gymnasts — last 3 meets vs season avg
-    function gymnLastN(name, n) {
-      const scored = [];
-      const dates = new Set();
-      meets.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(m => {
-        if (dates.size >= n || dates.has(m.date)) return;
-        const a = m.athletes.find(x=>x.name===name&&x.team==='Oregon State');
-        if (!a) return;
-        const evScores = EVS.map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
-        if (!evScores.length) return;
-        dates.add(m.date);
-        evScores.forEach(s=>scored.push(s));
-      });
-      return mcMean(scored);
+    // Hot/Cold gymnasts from stats API
+    let hot, cold;
+    if (ts && ts.hotCold) {
+      hot = ts.hotCold.hot || [];
+      cold = ts.hotCold.cold || [];
+    } else {
+      // Fallback to inline computation
+      function gymnLastN(name, n) {
+        const scored = [];
+        const dates = new Set();
+        meets.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(m => {
+          if (dates.size >= n || dates.has(m.date)) return;
+          const a = m.athletes.find(x=>x.name===name&&x.team==='Oregon State');
+          if (!a) return;
+          const evScores = EVS.map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
+          if (!evScores.length) return;
+          dates.add(m.date);
+          evScores.forEach(s=>scored.push(s));
+        });
+        return mcMean(scored);
+      }
+      function gymnSeasonAvg(name) {
+        const scores = [];
+        const seen = new Set();
+        meets.forEach(m => {
+          if (seen.has(m.date)) return;
+          const a = m.athletes.find(x=>x.name===name&&x.team==='Oregon State');
+          if (!a) return;
+          const evScores = EVS.map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
+          if (!evScores.length) return;
+          seen.add(m.date);
+          evScores.forEach(s=>scores.push(s));
+        });
+        return mcMean(scores);
+      }
+      const gymnasts = [...new Set(meets.flatMap(m=>m.athletes.filter(a=>a.team==='Oregon State').map(a=>a.name)))];
+      const gymnForm = gymnasts.map(name => {
+        const recent = gymnLastN(name, 3);
+        const season = gymnSeasonAvg(name);
+        if (!recent || !season) return null;
+        return { name, recent, season, diff: recent - season };
+      }).filter(Boolean).sort((a,b)=>b.diff-a.diff);
+      hot = gymnForm.slice(0,3).filter(g=>g.diff>0.01);
+      cold = gymnForm.slice(-3).filter(g=>g.diff<-0.01).reverse();
     }
-    function gymnSeasonAvg(name) {
-      const scores = [];
-      const seen = new Set();
-      meets.forEach(m => {
-        if (seen.has(m.date)) return;
-        const a = m.athletes.find(x=>x.name===name&&x.team==='Oregon State');
-        if (!a) return;
-        const evScores = EVS.map(ev=>a.scores[ev]).filter(s=>s!==undefined&&s>0);
-        if (!evScores.length) return;
-        seen.add(m.date);
-        evScores.forEach(s=>scores.push(s));
-      });
-      return mcMean(scores);
-    }
-
-    const gymnasts = [...new Set(meets.flatMap(m=>m.athletes.filter(a=>a.team==='Oregon State').map(a=>a.name)))];
-    const gymnForm = gymnasts.map(name => {
-      const recent = gymnLastN(name, 3);
-      const season = gymnSeasonAvg(name);
-      if (!recent || !season) return null;
-      return { name, recent, season, diff: recent - season };
-    }).filter(Boolean).sort((a,b)=>b.diff-a.diff);
-
-    const hot = gymnForm.slice(0,3).filter(g=>g.diff>0.01);
-    const cold = gymnForm.slice(-3).filter(g=>g.diff<-0.01).reverse();
 
     // Record context
     const need500 = Math.max(0, losses - wins);
@@ -445,6 +470,11 @@
           <div class="mc-stat-label">Season High 🏆</div>
           <div class="mc-context">${compDays.find(d=>d.total===seasonHigh)?.date || ''}</div>
         </div>
+        ${nqs ? `<div class="mc-stat-card">
+          <div class="mc-stat-value" id="mcNqs">0.000</div>
+          <div class="mc-stat-label">NQS 📊</div>
+          <div class="mc-context">Nat'l Qualifying Score</div>
+        </div>` : ''}
       </div>
 
       <div class="mc-event-row">
@@ -495,6 +525,7 @@
       if (homeAvg) animateValue(document.getElementById('mcHome'), 196, homeAvg, 900, 3);
       if (awayAvg) animateValue(document.getElementById('mcAway'), 196, awayAvg, 900, 3);
       if (seasonHigh) animateValue(document.getElementById('mcHigh'), 196, seasonHigh, 1000, 3);
+      if (nqs) animateValue(document.getElementById('mcNqs'), 196, nqs, 1000, 3);
     }, 100);
   }
 
@@ -697,38 +728,45 @@
     const EVS = ['vault','bars','beam','floor'];
     const EVlabel = {vault:'VAULT',bars:'BARS',beam:'BEAM',floor:'FLOOR'};
 
-    // Per-gymnast, per-event averages
-    const gymnData = {};
-    const seen = new Set();
-    meets.forEach(m => {
-      m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
-        if (!gymnData[a.name]) gymnData[a.name] = {vault:[],bars:[],beam:[],floor:[]};
-        EVS.forEach(ev => {
-          const s = a.scores[ev];
-          if (s !== undefined && s > 0) {
-            // Dedup per date
-            const key = `${a.name}|${ev}|${m.date}`;
-            if (!seen.has(key)) { seen.add(key); gymnData[a.name][ev].push(s); }
-          }
+    let teamAvgs, gymnList;
+
+    if (statsCache.heatmap) {
+      // Use pre-computed heatmap from stats API
+      teamAvgs = statsCache.heatmap.teamAvgs;
+      gymnList = statsCache.heatmap.gymnasts.map(g => ({
+        name: g.name,
+        overallAvg: g.overallAvg,
+        evAvgs: g.evAvgs,
+      }));
+    } else {
+      // Fallback: compute inline
+      const gymnData = {};
+      const seen = new Set();
+      meets.forEach(m => {
+        m.athletes.filter(a=>a.team==='Oregon State').forEach(a => {
+          if (!gymnData[a.name]) gymnData[a.name] = {vault:[],bars:[],beam:[],floor:[]};
+          EVS.forEach(ev => {
+            const s = a.scores[ev];
+            if (s !== undefined && s > 0) {
+              const key = `${a.name}|${ev}|${m.date}`;
+              if (!seen.has(key)) { seen.add(key); gymnData[a.name][ev].push(s); }
+            }
+          });
         });
       });
-    });
-
-    // Team averages per event
-    const teamAvgs = {};
-    EVS.forEach(ev => {
-      const all = Object.values(gymnData).flatMap(g=>g[ev]);
-      teamAvgs[ev] = mcMean(all);
-    });
-
-    // Sort gymnasts by overall avg
-    const gymnList = Object.entries(gymnData).map(([name, evData]) => {
-      const allScores = EVS.flatMap(ev=>evData[ev]);
-      const overallAvg = mcMean(allScores);
-      const evAvgs = {};
-      EVS.forEach(ev => { evAvgs[ev] = mcMean(evData[ev]); });
-      return { name, overallAvg, evAvgs };
-    }).filter(g=>g.overallAvg).sort((a,b)=>b.overallAvg-a.overallAvg);
+      teamAvgs = {};
+      EVS.forEach(ev => {
+        const all = Object.values(gymnData).flatMap(g=>g[ev]);
+        teamAvgs[ev] = mcMean(all);
+      });
+      gymnList = Object.entries(gymnData).map(([name, evData]) => {
+        const allScores = EVS.flatMap(ev=>evData[ev]);
+        const overallAvg = mcMean(allScores);
+        const evAvgs = {};
+        EVS.forEach(ev => { evAvgs[ev] = mcMean(evData[ev]); });
+        return { name, overallAvg, evAvgs };
+      }).filter(g=>g.overallAvg).sort((a,b)=>b.overallAvg-a.overallAvg);
+    }
 
     function heatColor(val, teamAvg) {
       if (!val || !teamAvg) return '#1e1e1e';
@@ -1786,6 +1824,41 @@
       ${(()=>{try{return renderMeetWildStats(meet);}catch(e){return '<div style="color:red;padding:1rem;background:#1a0000;border-radius:8px;margin-bottom:1rem">⚠️ Wild Stats error: '+e.message+'</div>';}})()}
       <h2 class="section-title" style="margin-bottom:1rem;">Event Breakdown</h2>
       <div class="detail-event-grid">${eventCards}</div>
+      ${(() => {
+        // Competitor roster section from stats API
+        const ca = meet.competitorAthletes;
+        if (!ca || typeof ca !== 'object' || Object.keys(ca).length === 0) return '';
+        const compStats = statsCache.competitors || {};
+        let html = '<div class="section-card" style="margin-top:1rem;"><h2 class="section-title">🏅 Competitor Rosters</h2>';
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">';
+        Object.entries(ca).forEach(([team, athletes]) => {
+          if (!athletes || typeof athletes !== 'object') return;
+          const seasonData = compStats[team];
+          html += '<div style="background:var(--card);border:1px solid #333;border-radius:8px;padding:0.75rem;">';
+          html += '<div style="font-family:Oswald;color:#fff;font-size:1rem;margin-bottom:0.5rem;">' + team;
+          if (seasonData) html += ' <span style="color:#888;font-size:0.7rem;">(' + seasonData.meetsPlayed + ' meets this season)</span>';
+          html += '</div>';
+          const entries = Object.entries(athletes);
+          const sorted = entries.map(([name, scores]) => {
+            const allScores = typeof scores === 'object' ? Object.values(scores).filter(s => typeof s === 'number' && s > 0) : [];
+            const best = allScores.length ? Math.max(...allScores) : 0;
+            return { name, scores, best };
+          }).sort((a, b) => b.best - a.best).slice(0, 8);
+          sorted.forEach(({ name, scores }) => {
+            if (typeof scores !== 'object') return;
+            const evs = Object.entries(scores).filter(([,s]) => typeof s === 'number' && s > 0);
+            if (!evs.length) return;
+            html += '<div style="display:flex;justify-content:space-between;padding:0.2rem 0;font-size:0.78rem;border-bottom:1px solid #222;">';
+            html += '<span style="color:#ccc;">' + name + '</span>';
+            html += '<span style="color:#888;">' + evs.map(([ev, s]) => EVENT_SHORT[ev] + ':' + s.toFixed(3)).join(' ') + '</span>';
+            html += '</div>';
+          });
+          if (entries.length > 8) html += '<div style="color:#666;font-size:0.7rem;margin-top:0.25rem;">+ ' + (entries.length - 8) + ' more</div>';
+          html += '</div>';
+        });
+        html += '</div></div>';
+        return html;
+      })()}
     `;
 
     // Bind auto-refresh toggle
@@ -2486,17 +2559,6 @@
     const EVS = ['vault','bars','beam','floor'];
     const EV_LBL = {vault:'Vault',bars:'Bars',beam:'Beam',floor:'Floor'};
     function gmean(arr) { return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : 0; }
-    function gsd(arr) {
-      if (arr.length < 2) return null;
-      const m = gmean(arr);
-      return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1));
-    }
-    function glinReg(pts) {
-      const n=pts.length; if(n<2) return {slope:0};
-      const sx=pts.reduce((s,p)=>s+p.x,0), sy=pts.reduce((s,p)=>s+p.y,0);
-      const sxy=pts.reduce((s,p)=>s+p.x*p.y,0), sx2=pts.reduce((s,p)=>s+p.x*p.x,0);
-      return {slope:(n*sxy-sx*sy)/(n*sx2-sx*sx)||0};
-    }
     function gfmt(n) { return typeof n==='number'&&!isNaN(n)?n.toFixed(3):'—'; }
     function gdiff(n) { if(typeof n!=='number'||isNaN(n)) return '—'; return (n>=0?'+':'')+n.toFixed(3); }
     function arrow(s) {
@@ -2506,49 +2568,83 @@
       return '<span style="color:#aaa">►</span>';
     }
 
-    const sm = meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
-    const t0 = new Date(sm[0].date+'T12:00:00');
+    let evStats;
 
-    function evEntries(ev) {
-      const out=[], seen=new Set();
-      sm.forEach(meet => {
-        if(seen.has(meet.date)) return;
-        const a=meet.athletes.find(x=>x.name===name);
-        if(a&&a.scores[ev]!==undefined){
-          seen.add(meet.date);
-          out.push({
-            score:a.scores[ev], date:meet.date, isHome:meet.isHome,
-            result:meet.result, gap:Math.abs((meet.osuScore||0)-(meet.opponentScore||0)),
-            day:Math.round((new Date(meet.date+'T12:00:00')-t0)/864e5)
-          });
-        }
-      });
-      return out;
+    if (statsCache.athletes && statsCache.athletes[name]) {
+      // Use pre-computed athlete stats from API
+      const ath = statsCache.athletes[name];
+      evStats = EVS.map(ev => {
+        const e = ath.events[ev];
+        if (!e || e.appearances < 2) return null;
+        return {
+          ev, n: e.appearances, avg: e.avg, best: e.best, sd: e.stdDev, slope: e.trendSlope,
+          homeAvg: e.homeAvg, awayAvg: e.awayAvg,
+          haDiff: e.homeDelta,
+          winAvg: e.winAvg, lossAvg: e.lossAvg,
+          wlDiff: e.winLossDelta,
+          clutch: e.clutchAvg,
+          janAvg: e.janAvg, lateAvg: e.lateAvg,
+          seasonDiff: e.seasonDelta
+        };
+      }).filter(Boolean);
+    } else {
+      // Fallback: compute inline
+      function gsd(arr) {
+        if (arr.length < 2) return null;
+        const m = gmean(arr);
+        return Math.sqrt(arr.reduce((s,v)=>s+Math.pow(v-m,2),0)/(arr.length-1));
+      }
+      function glinReg(pts) {
+        const n=pts.length; if(n<2) return {slope:0};
+        const sx=pts.reduce((s,p)=>s+p.x,0), sy=pts.reduce((s,p)=>s+p.y,0);
+        const sxy=pts.reduce((s,p)=>s+p.x*p.y,0), sx2=pts.reduce((s,p)=>s+p.x*p.x,0);
+        return {slope:(n*sxy-sx*sy)/(n*sx2-sx*sx)||0};
+      }
+
+      const sm = meets.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+      const t0 = new Date(sm[0].date+'T12:00:00');
+
+      function evEntries(ev) {
+        const out=[], seen=new Set();
+        sm.forEach(meet => {
+          if(seen.has(meet.date)) return;
+          const a=meet.athletes.find(x=>x.name===name);
+          if(a&&a.scores[ev]!==undefined){
+            seen.add(meet.date);
+            out.push({
+              score:a.scores[ev], date:meet.date, isHome:meet.isHome,
+              result:meet.result, gap:Math.abs((meet.osuScore||0)-(meet.opponentScore||0)),
+              day:Math.round((new Date(meet.date+'T12:00:00')-t0)/864e5)
+            });
+          }
+        });
+        return out;
+      }
+
+      evStats = EVS.map(ev => {
+        const e = evEntries(ev);
+        if(e.length<2) return null;
+        const scores = e.map(x=>x.score);
+        const slope = e.length>=3 ? glinReg(e.map(x=>({x:x.day,y:x.score}))).slope*7 : null;
+        const home=e.filter(x=>x.isHome).map(x=>x.score);
+        const away=e.filter(x=>!x.isHome).map(x=>x.score);
+        const wins=e.filter(x=>x.result==='W').map(x=>x.score);
+        const losses=e.filter(x=>x.result==='L').map(x=>x.score);
+        const close=e.filter(x=>x.gap<1.0).map(x=>x.score);
+        const jan=e.filter(x=>new Date(x.date+'T12:00:00').getMonth()===0).map(x=>x.score);
+        const late=e.filter(x=>new Date(x.date+'T12:00:00').getMonth()>0).map(x=>x.score);
+        return {
+          ev, n:e.length, avg:gmean(scores), best:Math.max(...scores), sd:gsd(scores), slope,
+          homeAvg:home.length?gmean(home):null, awayAvg:away.length?gmean(away):null,
+          haDiff:home.length&&away.length?gmean(home)-gmean(away):null,
+          winAvg:wins.length?gmean(wins):null, lossAvg:losses.length?gmean(losses):null,
+          wlDiff:wins.length&&losses.length?gmean(wins)-gmean(losses):null,
+          clutch:close.length?gmean(close):null,
+          janAvg:jan.length?gmean(jan):null, lateAvg:late.length?gmean(late):null,
+          seasonDiff:jan.length&&late.length?gmean(late)-gmean(jan):null
+        };
+      }).filter(Boolean);
     }
-
-    const evStats = EVS.map(ev => {
-      const e = evEntries(ev);
-      if(e.length<2) return null;
-      const scores = e.map(x=>x.score);
-      const slope = e.length>=3 ? glinReg(e.map(x=>({x:x.day,y:x.score}))).slope*7 : null;
-      const home=e.filter(x=>x.isHome).map(x=>x.score);
-      const away=e.filter(x=>!x.isHome).map(x=>x.score);
-      const wins=e.filter(x=>x.result==='W').map(x=>x.score);
-      const losses=e.filter(x=>x.result==='L').map(x=>x.score);
-      const close=e.filter(x=>x.gap<1.0).map(x=>x.score);
-      const jan=e.filter(x=>new Date(x.date+'T12:00:00').getMonth()===0).map(x=>x.score);
-      const late=e.filter(x=>new Date(x.date+'T12:00:00').getMonth()>0).map(x=>x.score);
-      return {
-        ev, n:e.length, avg:gmean(scores), best:Math.max(...scores), sd:gsd(scores), slope,
-        homeAvg:home.length?gmean(home):null, awayAvg:away.length?gmean(away):null,
-        haDiff:home.length&&away.length?gmean(home)-gmean(away):null,
-        winAvg:wins.length?gmean(wins):null, lossAvg:losses.length?gmean(losses):null,
-        wlDiff:wins.length&&losses.length?gmean(wins)-gmean(losses):null,
-        clutch:close.length?gmean(close):null,
-        janAvg:jan.length?gmean(jan):null, lateAvg:late.length?gmean(late):null,
-        seasonDiff:jan.length&&late.length?gmean(late)-gmean(jan):null
-      };
-    }).filter(Boolean);
 
     if(evStats.length===0) return '';
 
@@ -3186,6 +3282,45 @@
 
     const deepDive = buildDeepDive();
 
+    // Lineup position analysis from stats API
+    let lineupPanel = '';
+    const evStatsApi = statsCache.events && statsCache.events[eventKey];
+    if (evStatsApi && evStatsApi.lineupPositionAvgs && Object.keys(evStatsApi.lineupPositionAvgs).length > 0) {
+      const posData = evStatsApi.lineupPositionAvgs;
+      const positions = Object.keys(posData).sort((a, b) => Number(a) - Number(b));
+      const posAvgs = positions.map(p => posData[p].avg);
+      const maxAvg = Math.max(...posAvgs);
+      const minAvg = Math.min(...posAvgs);
+      const anchorPos = positions[positions.length - 1];
+      const anchorAvg = posData[anchorPos]?.avg;
+      const overallAvg = posAvgs.reduce((s, v) => s + v, 0) / posAvgs.length;
+
+      lineupPanel = `
+        <div class="section-card">
+          <h2 class="section-title">📋 Lineup Position Analysis</h2>
+          <p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:1rem;">Average score by lineup position across all meets this season</p>
+          <div style="display:grid;grid-template-columns:repeat(${positions.length},1fr);gap:0.5rem;text-align:center;">
+            ${positions.map(pos => {
+              const p = posData[pos];
+              const isAnchor = pos === anchorPos;
+              const aboveAvg = p.avg > overallAvg;
+              const barPct = ((p.avg - minAvg + 0.01) / (maxAvg - minAvg + 0.02) * 100).toFixed(0);
+              return `<div style="padding:0.5rem;background:var(--card);border-radius:8px;border:1px solid ${isAnchor ? 'var(--orange)' : '#333'}">
+                <div style="font-family:Oswald;font-size:0.7rem;color:#888;margin-bottom:0.25rem;">${isAnchor ? '⚓ ANCHOR' : 'POS ' + pos}</div>
+                <div style="font-family:Oswald;font-size:1.1rem;color:${aboveAvg ? '#2ecc71' : '#e74c3c'}">${p.avg.toFixed(3)}</div>
+                <div style="height:4px;background:#333;border-radius:2px;margin-top:0.4rem;overflow:hidden;">
+                  <div style="height:100%;width:${barPct}%;background:${isAnchor ? 'var(--orange)' : aboveAvg ? '#2ecc71' : '#e74c3c'};border-radius:2px;"></div>
+                </div>
+                <div style="font-size:0.65rem;color:#666;margin-top:0.25rem;">${p.count} scores</div>
+              </div>`;
+            }).join('')}
+          </div>
+          ${anchorAvg && overallAvg ? `<div style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-muted);">
+            Anchor (pos ${anchorPos}) ${anchorAvg > overallAvg ? '<span style="color:#2ecc71">outperforms</span>' : '<span style="color:#e74c3c">underperforms</span>'} average by <strong>${Math.abs(anchorAvg - overallAvg).toFixed(3)}</strong> pts
+          </div>` : ''}
+        </div>`;
+    }
+
     document.getElementById('eventDetailContent').innerHTML = `
       <div class="event-detail-header">
         <div class="event-banner-content">
@@ -3195,6 +3330,7 @@
       </div>
       ${chart}
       ${statsPanel}
+      ${lineupPanel}
       ${gymnastSection}
       ${leaderboard}
       ${breakdown}
@@ -3229,28 +3365,38 @@
   function renderLeaderboard(event) {
     document.querySelectorAll('.event-tab').forEach(t => t.classList.toggle('active', t.dataset.event === event));
 
-    // Group scores by gymnast
-    const byGymnast = {};
-    const sortedMeets = meets.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
-    sortedMeets.forEach(meet => {
-      meet.athletes.forEach(a => {
-        if (a.scores[event] !== undefined) {
-          if (!byGymnast[a.name]) byGymnast[a.name] = [];
-          byGymnast[a.name].push({ score: a.scores[event], meetDate: meet.date, opponent: meet.opponent, meetId: meet.id });
-        }
+    let gymnasts;
+
+    if (statsCache.leaderboards && statsCache.leaderboards[event]) {
+      // Use pre-computed leaderboard from stats API
+      gymnasts = statsCache.leaderboards[event].map(g => ({
+        name: g.name,
+        best: { score: g.best, meetDate: g.bestMeetDate, opponent: g.bestOpponent, meetId: g.bestMeetId },
+        avg: g.avg,
+        recent: g.recent,
+        count: g.appearances,
+      }));
+    } else {
+      // Fallback: compute inline
+      const byGymnast = {};
+      const sortedMeets = meets.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+      sortedMeets.forEach(meet => {
+        meet.athletes.forEach(a => {
+          if (a.scores[event] !== undefined) {
+            if (!byGymnast[a.name]) byGymnast[a.name] = [];
+            byGymnast[a.name].push({ score: a.scores[event], meetDate: meet.date, opponent: meet.opponent, meetId: meet.id });
+          }
+        });
       });
-    });
-
-    // Build per-gymnast stats
-    const gymnasts = Object.entries(byGymnast).map(([name, entries]) => {
-      const scores = entries.map(e => e.score);
-      const best = entries.reduce((a, b) => a.score > b.score ? a : b);
-      const avg = scores.reduce((s, v) => s + v, 0) / scores.length;
-      const recent = entries[entries.length - 1];
-      return { name, best, avg, recent, count: scores.length };
-    });
-
-    gymnasts.sort((a, b) => b.best.score - a.best.score);
+      gymnasts = Object.entries(byGymnast).map(([name, entries]) => {
+        const scores = entries.map(e => e.score);
+        const best = entries.reduce((a, b) => a.score > b.score ? a : b);
+        const avg = scores.reduce((s, v) => s + v, 0) / scores.length;
+        const recent = entries[entries.length - 1];
+        return { name, best, avg, recent, count: scores.length };
+      });
+      gymnasts.sort((a, b) => b.best.score - a.best.score);
+    }
 
     const list = document.getElementById('leaderboardList');
     if (gymnasts.length === 0) {
