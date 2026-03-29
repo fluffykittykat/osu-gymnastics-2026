@@ -441,6 +441,37 @@ function computeAthleteStats(meets, bios, athleteName) {
   };
 }
 
+function computeTeamRankings(athletes) {
+  /**
+   * Compute overall team ranking for each athlete based on season average.
+   * Returns a map of { athleteName: rank (1-based) }
+   */
+  const athletesWithAvg = Object.entries(athletes).map(([name, stats]) => {
+    // Calculate overall season average across all events
+    const allScores = [];
+    Object.values(stats.events || {}).forEach(eventStats => {
+      if (eventStats.entries && Array.isArray(eventStats.entries)) {
+        eventStats.entries.forEach(entry => {
+          if (typeof entry.score === 'number' && entry.score > 0) {
+            allScores.push(entry.score);
+          }
+        });
+      }
+    });
+    const seasonAvg = allScores.length > 0 
+      ? allScores.reduce((a, b) => a + b) / allScores.length 
+      : null;
+    return { name, seasonAvg };
+  }).filter(a => a.seasonAvg !== null)
+    .sort((a, b) => b.seasonAvg - a.seasonAvg);
+
+  const rankings = {};
+  athletesWithAvg.forEach((athlete, index) => {
+    rankings[athlete.name] = index + 1; // 1-based ranking
+  });
+  return rankings;
+}
+
 function computeAllAthleteStats(meets, bios) {
   const names = getAllAthleteNames(meets);
   const result = {};
@@ -675,6 +706,12 @@ function computeStats(meets, bios) {
   const heatmap = computeHeatmap(meets);
   const competitors = computeCompetitorStats(meets);
   const summary = computeSummary(meets);
+  
+  // Add team rankings to each athlete
+  const teamRankings = computeTeamRankings(athletes);
+  Object.keys(athletes).forEach(name => {
+    athletes[name].teamRank = teamRankings[name] || null;
+  });
 
   return {
     team: { ...team, nqs: nqs.nqs, nqsDetail: nqs, hotCold },
@@ -746,6 +783,7 @@ module.exports = {
   computeLineupPositionStats,
   computeAthleteStats,
   computeAllAthleteStats,
+  computeTeamRankings,
   computeLeaderboards,
   computeHeatmap,
   computeCompetitorStats,
