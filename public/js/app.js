@@ -437,6 +437,23 @@
           <div class="mc-stat-label">Season High 🏆</div>
           <div class="mc-context">${compDays.find(d=>d.total===seasonHigh)?.date || ''}</div>
         </div>
+        ${(() => {
+          // Projected NQS: best NQS per event across all meets
+          const nqsEvents = ['vault','bars','beam','floor'];
+          let bestNqs = 0;
+          let hasNqs = false;
+          nqsEvents.forEach(ev => {
+            let bestEvNqs = 0;
+            meets.forEach(m => {
+              if (!m.lineups || !m.lineups[ev] || m.lineups[ev].length < 5) return;
+              const scores = m.lineups[ev].map(e => e.score).slice().sort((a,b) => a - b);
+              const nqs = scores.length >= 6 ? scores.slice(1).reduce((s,v) => s+v, 0) : scores.reduce((s,v) => s+v, 0);
+              if (nqs > bestEvNqs) bestEvNqs = nqs;
+            });
+            if (bestEvNqs > 0) { bestNqs += bestEvNqs; hasNqs = true; }
+          });
+          return hasNqs ? `<div class="mc-stat-card"><div class="mc-stat-value" style="color:var(--orange)">${bestNqs.toFixed(3)}</div><div class="mc-stat-label">Proj. NQS</div><div class="mc-context">Best per-event NQS combined</div></div>` : '';
+        })()}
       </div>
 
       <div class="mc-event-row">
@@ -1645,7 +1662,7 @@
         </div>`;
     }
 
-    // Event detail cards with athlete lineups
+    // Event detail cards with athlete lineups + NQS
     const eventCards = (!meet.events || !meet.events.vault) ? [] : ['vault', 'bars', 'beam', 'floor'].map(event => {
       const osuScore = meet.events[event]?.osu;
       const oppScore = meet.events[event]?.opponent;
@@ -1653,21 +1670,32 @@
       const barPct = ((osuScore / 50) * 100).toFixed(1);
 
       let rows;
+      let nqsHtml = '';
       if (meet.lineups && meet.lineups[event] && meet.lineups[event].length > 0) {
-        // Render in competition order using lineup data
         const lineup = meet.lineups[event];
         const topScore = Math.max(...lineup.map(e => e.score));
+        // NQS: top 5 of 6 count
+        const sortedScores = lineup.map(e => e.score).slice().sort((a,b) => a - b);
+        const droppedScore = sortedScores.length >= 6 ? sortedScores[0] : null;
+        const nqsTotal = sortedScores.length >= 6
+          ? sortedScores.slice(1).reduce((s,v) => s+v, 0)
+          : sortedScores.reduce((s,v) => s+v, 0);
+
         rows = lineup.map(entry => {
           const isTop = entry.score === topScore;
+          const isDropped = droppedScore !== null && entry.score === droppedScore;
           return `
             <tr class="lineup-row">
               <td style="color:#aaa;font-size:0.75rem;font-family:monospace;width:1.5rem;">${entry.position}</td>
               <td><span class="clickable-name lineup-gymnast" data-gymnast="${entry.name}" data-event="${event}" data-meet="${meet.id}">${entry.name}</span></td>
-              <td class="score-cell${isTop ? ' score-top' : ''}">${entry.score.toFixed(3)}</td>
+              <td class="score-cell${isTop ? ' score-top' : ''}${isDropped ? ' nqs-dropped' : ''}">${entry.score.toFixed(3)}</td>
             </tr>`;
         }).join('');
+
+        if (lineup.length >= 5) {
+          nqsHtml = `<div class="nqs-breakdown"><div class="nqs-label">NQS (top ${Math.min(5, lineup.length)})</div><div class="nqs-value">${nqsTotal.toFixed(3)}</div>${droppedScore !== null ? `<div class="nqs-dropped-label">Dropped: ${droppedScore.toFixed(3)}</div>` : ''}</div>`;
+        }
       } else {
-        // Fallback: sort by score descending (legacy behaviour)
         const eventAthletes = meet.athletes
           .filter(a => a.scores[event] !== undefined);
         rows = eventAthletes.map((a, i) => `
@@ -1692,6 +1720,7 @@
             <thead><tr><th>#</th><th>Athlete</th><th style="text-align:right">Score</th></tr></thead>
             <tbody>${rows || '<tr><td colspan="3" style="color:var(--text-muted)">No data</td></tr>'}</tbody>
           </table>
+          ${nqsHtml}
         </div>`;
     }).join('');
 
