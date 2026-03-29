@@ -3221,6 +3221,39 @@
   function renderLeaderboard(event) {
     document.querySelectorAll('.event-tab').forEach(t => t.classList.toggle('active', t.dataset.event === event));
 
+    // AA leaderboard — special handling
+    if (event === 'aa') {
+      const list = document.getElementById('leaderboardList');
+      const aaData = Stats.getAALeaderboard(meets);
+      if (!aaData.length) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><p class="empty-text">No AA scores recorded this season.</p></div>';
+        return;
+      }
+      list.innerHTML = aaData.map((g, i) => {
+        const photo = photos[g.name];
+        const avatar = photo
+          ? `<img src="${photo}" class="lb-avatar" alt="${g.name}">`
+          : `<div class="lb-avatar lb-avatar-initials">${g.name.split(' ').map(n => n[0]).join('')}</div>`;
+        const trendArrow = g.trend != null ? (g.trend > 0.01 ? '<span style="color:#2ecc71">▲</span>' : g.trend < -0.01 ? '<span style="color:#e74c3c">▼</span>' : '<span style="color:#aaa">►</span>') : '';
+        return `
+        <div class="leaderboard-item">
+          <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
+          ${avatar}
+          <div class="lb-info">
+            <div class="lb-name"><span class="clickable-name" data-gymnast="${g.name}">${g.name}</span></div>
+            <div class="lb-context">${g.count} AA score${g.count !== 1 ? 's' : ''} this season</div>
+          </div>
+          <div class="lb-stats">
+            <div class="lb-stat"><span class="lb-stat-label">BEST</span><span class="lb-stat-val">${g.best.toFixed(3)}</span></div>
+            <div class="lb-stat"><span class="lb-stat-label">AVG</span><span class="lb-stat-val">${g.avg.toFixed(3)}</span></div>
+            <div class="lb-stat"><span class="lb-stat-label">COUNT</span><span class="lb-stat-val">${g.count}</span></div>
+            <div class="lb-stat"><span class="lb-stat-label">TREND</span><span class="lb-stat-val">${trendArrow}</span></div>
+          </div>
+        </div>`;
+      }).join('');
+      return;
+    }
+
     // Group scores by gymnast
     const byGymnast = {};
     const sortedMeets = meets.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
