@@ -25,6 +25,7 @@ try {
 let meetsData = null;
 let biosData = null;
 let statsCache = null;
+let athleteProfilesCache = null; // For chatbot context
 
 // WebSocket server and connected clients
 let wss = null;
@@ -77,11 +78,75 @@ function broadcastToClients(message) {
 function recomputeStats() {
   try {
     statsCache = computeStats(meetsData || [], biosData || {});
+    athleteProfilesCache = buildAthleteProfiles(); // Build chatbot data too
     console.log(`Stats computed: ${Object.keys(statsCache.athletes).length} athletes, ${Object.keys(statsCache.competitors).length} competitors`);
   } catch (err) {
     console.error('Failed to compute stats:', err.message);
     statsCache = null;
+    athleteProfilesCache = null;
   }
+}
+
+/**
+ * Build comprehensive athlete profiles for chatbot analysis
+ */
+function buildAthleteProfiles() {
+  const profiles = {};
+  try {
+    if (!statsCache || !statsCache.athletes) return profiles;
+    
+    for (const [name, athleteStats] of Object.entries(statsCache.athletes)) {
+      try {
+        const allScores = [];
+        const eventProfiles = {};
+        let strongestEvent = null;
+        let strongestScore = 0;
+
+        if (athleteStats.events) {
+          for (const [event, eventData] of Object.entries(athleteStats.events)) {
+            if (eventData && eventData.entries && eventData.entries.length > 0) {
+              const scores = eventData.entries.map(e => e.score);
+              scores.forEach(s => allScores.push(s));
+
+              const consistency = eventData.avg > 0 ? Math.max(0, 100 - (eventData.stdDev / eventData.avg * 100)) : 0;
+
+              eventProfiles[event] = {
+                average: eventData.avg ? parseFloat(eventData.avg.toFixed(3)) : 0,
+                high: eventData.best ? parseFloat(eventData.best.toFixed(3)) : 0,
+                low: eventData.worst ? parseFloat(eventData.worst.toFixed(3)) : 0,
+                count: eventData.appearances || 0,
+                consistency: parseFloat(consistency.toFixed(1)),
+              };
+
+              if ((eventData.avg || 0) > strongestScore) {
+                strongestScore = eventData.avg || 0;
+                strongestEvent = event;
+              }
+            }
+          }
+        }
+
+        const seasonAvg = allScores.length ? allScores.reduce((a, b) => a + b) / allScores.length : 0;
+        const seasonHigh = allScores.length ? Math.max(...allScores) : 0;
+        const seasonLow = allScores.length ? Math.min(...allScores) : 0;
+
+        profiles[name] = {
+          lineup_appearances: athleteStats.totalAppearances || 0,
+          season_average: parseFloat(seasonAvg.toFixed(3)),
+          season_high: parseFloat(seasonHigh.toFixed(3)),
+          season_low: parseFloat(seasonLow.toFixed(3)),
+          strongest_event: strongestEvent,
+          events: eventProfiles,
+          bio: athleteStats.bio || {}
+        };
+      } catch (err) {
+        console.warn(`[Profiles] Error processing ${name}:`, err.message);
+      }
+    }
+  } catch (err) {
+    console.error('[Profiles] Error building profiles:', err.message);
+  }
+  return profiles;
 }
 
 // Load on startup
@@ -144,8 +209,6 @@ app.get('/api/meets', (req, res) => {
   }
 });
 
-// ── Stats API endpoints ──────────────────────────────────────────────────────
-
 app.get('/api/stats', (req, res) => {
   if (statsCache) {
     res.json(statsCache);
@@ -191,51 +254,92 @@ app.get('/api/stats/athletes/:name', (req, res) => {
   }
 });
 
-// Fast athlete search endpoint (alias for /api/stats/athletes/:name)
-app.get('/api/athlete/:name', (req, res) => {
-  if (!statsCache) {
-    return res.status(503).json({ error: 'Stats not yet computed' });
-  }
-  const name = decodeURIComponent(req.params.name);
-  const athlete = statsCache.athletes[name];
-  if (athlete) {
-    // Enhance with analysis context
-    const profile = buildAthleteProfiles()[name];
-    res.json({
-      ...athlete,
-      profile: profile
+// Claude AI Chatbot Endpoint
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { messages } = req.body;
+
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'Messages array required' });
+    }
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'AI service not configured' });
+    }
+
+    const client = new Anthropic({ apiKey });
+
+    // Format messages for Claude API
+    const claudeMessages = messages.map(msg => ({
+      role: msg.role,
+      content: msg.content,
+    }));
+
+    // Build rich context for chatbot
+    const athleteList = athleteProfilesCache ? Object.keys(athleteProfilesCache) : [];
+    const dataContext = athleteProfilesCache && athleteList.length > 0 
+      ? `## 2026 OSU GYMNASTICS ATHLETE DATA\n\n${athleteList.map(name => {
+          const p = athleteProfilesCache[name];
+          return `**${name}**: ${p.lineup_appearances} meets, avg ${p.season_average}, strongest: ${p.strongest_event}`;
+        }).join('\n')}`
+      : '';
+
+    const systemPrompt = `You are an elite gymnastics analytics AI for OSU Gymnastics 2026.
+
+You have COMPLETE access to real athlete performance data. Provide specific, data-driven analysis.
+
+${dataContext}
+
+When asked about an athlete:
+1. Look up their stats in the data above
+2. Provide SPECIFIC numbers (averages, highs, lows)
+3. Identify trends and patterns
+4. Compare to teammates
+5. Give coaching-level insights
+
+Answer questions like:
+- "How has [athlete] done?" - Full breakdown
+- "Compare [athlete1] vs [athlete2]" - Side-by-side
+- "Which events is [athlete] strongest?" - Event analysis
+- "Who's improving?" - Trend analysis
+
+Be data-driven, analytical, and insightful. Use specific numbers always.`;
+
+    const response = await client.messages.create({
+      model: 'claude-opus-4-1-20250805',
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: claudeMessages,
     });
-  } else {
-    res.status(404).json({ error: `Athlete "${name}" not found` });
+
+    const assistantMessage = response.content[0]?.text || '';
+
+    res.json({
+      success: true,
+      message: assistantMessage,
+    });
+  } catch (error) {
+    console.error('[Chat API] Error:', error.message);
+    
+    // Handle timeout/network errors gracefully
+    if (error.message?.includes('timeout') || error.code?.includes('TIMEOUT')) {
+      return res.status(504).json({ error: 'Request timed out. Please try again.' });
+    }
+    
+    res.status(500).json({ error: 'Failed to process chat message' });
   }
 });
 
-app.get('/api/stats/events/:event', (req, res) => {
-  if (!statsCache) {
-    return res.status(503).json({ error: 'Stats not yet computed' });
-  }
-  const event = req.params.event;
-  const eventData = statsCache.events[event];
-  if (eventData) {
-    res.json(eventData);
-  } else {
-    res.status(404).json({ error: `Event "${event}" not found. Valid: vault, bars, beam, floor` });
-  }
-});
-
-app.get('/api/competitor-scores', (req, res) => {
-  const meets = meetsData || [];
-  res.json(meets.map(m => ({
-    id: m.id,
-    date: m.date,
-    competitorAthletes: m.competitorAthletes || {},
-    competitorLineups: m.competitorLineups || {},
-  })));
+app.get('/healthz', (req, res) => {
+  const { name, version } = require('./package.json');
+  res.json({ status: 'ok', uptime: process.uptime(), version });
 });
 
 let refreshInProgress = false;
 
 app.post('/api/refresh', async (req, res) => {
+  const REFRESH_SECRET = process.env.REFRESH_SECRET;
   if (REFRESH_SECRET && req.headers['x-refresh-secret'] !== REFRESH_SECRET) {
     return res.status(403).json({ success: false, error: 'Forbidden' });
   }
@@ -255,7 +359,6 @@ app.post('/api/refresh', async (req, res) => {
       });
     });
 
-    // Reload data into memory and recompute stats
     loadMeetsData();
     loadBiosData();
     recomputeStats();
@@ -267,7 +370,6 @@ app.post('/api/refresh', async (req, res) => {
       summary = { raw: result.trim() };
     }
 
-    // Broadcast score updates to all connected clients
     const newChecksum = getMeetsChecksum();
     if (newChecksum !== lastMeetsChecksum) {
       lastMeetsChecksum = newChecksum;
@@ -287,330 +389,34 @@ app.post('/api/refresh', async (req, res) => {
   }
 });
 
-app.get('/healthz', (req, res) => {
-  const { name, version } = require('./package.json');
-  res.json({ status: 'ok', uptime: process.uptime(), version });
-});
-
-// ── Chatbot Data Preparation ────────────────────────────────────────────────
-
-/**
- * Build comprehensive athlete profiles for chatbot analysis
- * Extracts detailed stats from the computed stats cache
- */
-function buildAthleteProfiles() {
-  const profiles = {};
-  if (!statsCache || !statsCache.athletes) return profiles;
-  
-  for (const [name, athleteStats] of Object.entries(statsCache.athletes)) {
-    // Compute overall season metrics from all events
-    const allScores = [];
-    const eventProfiles = {};
-    let strongestEvent = null;
-    let strongestScore = 0;
-    let consistencyScores = [];
-
-    // Process each event
-    if (athleteStats.events) {
-      for (const [event, eventData] of Object.entries(athleteStats.events)) {
-        if (eventData.entries && eventData.entries.length > 0) {
-          const scores = eventData.entries.map(e => e.score);
-          scores.forEach(s => allScores.push(s));
-
-          // Calculate consistency (inverse of coefficient of variation)
-          const avg = eventData.avg || 0;
-          const stdDev = eventData.stdDev || 0;
-          const cv = avg > 0 ? stdDev / avg : 0;
-          const consistency = Math.max(0, (1 - Math.min(cv / 0.1, 1)) * 100);
-          consistencyScores.push(consistency);
-
-          eventProfiles[event] = {
-            average: eventData.avg ? parseFloat(eventData.avg.toFixed(3)) : null,
-            high: eventData.best ? parseFloat(eventData.best.toFixed(3)) : null,
-            low: eventData.worst ? parseFloat(eventData.worst.toFixed(3)) : null,
-            count: eventData.appearances || 0,
-            consistency: parseFloat(consistency.toFixed(1)),
-            trend: eventData.trendSlope > 0.01 ? 'improving' : eventData.trendSlope < -0.01 ? 'declining' : 'stable',
-            home_avg: eventData.homeAvg ? parseFloat(eventData.homeAvg.toFixed(3)) : null,
-            away_avg: eventData.awayAvg ? parseFloat(eventData.awayAvg.toFixed(3)) : null,
-            win_avg: eventData.winAvg ? parseFloat(eventData.winAvg.toFixed(3)) : null,
-            loss_avg: eventData.lossAvg ? parseFloat(eventData.lossAvg.toFixed(3)) : null,
-          };
-
-          // Track strongest event
-          if ((eventData.avg || 0) > strongestScore) {
-            strongestScore = eventData.avg || 0;
-            strongestEvent = event;
-          }
-        }
-      }
-    }
-
-    // Overall season metrics
-    const seasonAvg = allScores.length ? allScores.reduce((a, b) => a + b) / allScores.length : null;
-    const seasonHigh = allScores.length ? Math.max(...allScores) : null;
-    const seasonLow = allScores.length ? Math.min(...allScores) : null;
-    const overallConsistency = consistencyScores.length 
-      ? consistencyScores.reduce((a, b) => a + b) / consistencyScores.length 
-      : null;
-
-    profiles[name] = {
-      lineup_appearances: athleteStats.totalAppearances || 0,
-      season_average: seasonAvg ? parseFloat(seasonAvg.toFixed(3)) : null,
-      season_high: seasonHigh ? parseFloat(seasonHigh.toFixed(3)) : null,
-      season_low: seasonLow ? parseFloat(seasonLow.toFixed(3)) : null,
-      overall_consistency: overallConsistency ? parseFloat(overallConsistency.toFixed(1)) : null,
-      strongest_event: strongestEvent,
-      bio: athleteStats.bio || {},
-      events: eventProfiles
-    };
-  }
-
-  return profiles;
-}
-
-/**
- * Get team statistics summary for chatbot context
- */
-function buildTeamContext() {
-  if (!statsCache || !statsCache.team) return {};
-  
-  const team = statsCache.team;
-  return {
-    record: team.record,
-    season_average: team.seasonAvg ? parseFloat(team.seasonAvg.toFixed(3)) : null,
-    season_high: team.seasonHigh ? parseFloat(team.seasonHigh.toFixed(3)) : null,
-    home_average: team.homeAvg ? parseFloat(team.homeAvg.toFixed(3)) : null,
-    away_average: team.awayAvg ? parseFloat(team.awayAvg.toFixed(3)) : null,
-    meets_played: team.meetsPlayed || 0,
-    nqs: team.nqs ? parseFloat(team.nqs.toFixed(3)) : null,
-  };
-}
-
-// Claude AI Chatbot Endpoint
-app.post('/api/chat', async (req, res) => {
-  try {
-    console.log('[Chat API] Received message request');
-    
-    const { messages } = req.body;
-
-    if (!messages || !Array.isArray(messages)) {
-      console.error('[Chat API] Invalid request: messages not an array');
-      return res.status(400).json({ error: 'Messages array required' });
-    }
-
-    console.log(`[Chat API] Processing ${messages.length} message(s)`);
-
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      console.error('[Chat API] ANTHROPIC_API_KEY not set in environment');
-      return res.status(500).json({ error: 'AI service not configured' });
-    }
-
-    console.log(`[Chat API] API Key found: ${apiKey.substring(0, 10)}...`);
-
-    const client = new Anthropic({ 
-      apiKey,
-      timeout: 30000, // 30 second timeout for API requests
-      maxRetries: 1    // Retry once on transient failures
-    });
-    console.log('[Chat API] Anthropic client initialized with 30s timeout');
-
-    // Format messages for Claude API
-    const claudeMessages = messages.map(msg => ({
-      role: msg.role,
-      content: msg.content,
-    }));
-
-    // Build rich athlete and team context for Claude
-    const athleteProfiles = buildAthleteProfiles();
-    const teamContext = buildTeamContext();
-    const athleteIndex = Object.keys(athleteProfiles).sort();
-
-    // Build data context string
-    const dataContext = `
-## REAL 2026 OSU GYMNASTICS DATA
-
-### Team Overview
-${JSON.stringify(teamContext, null, 2)}
-
-### Available Athletes & Their Performance
-${athleteIndex.slice(0, 25).map(name => {
-  const profile = athleteProfiles[name];
-  return `
-**${name}**
-- Lineup appearances: ${profile.lineup_appearances}
-- Season average: ${profile.season_average}
-- Season range: ${profile.season_low} - ${profile.season_high}
-- Overall consistency: ${profile.overall_consistency}%
-- Strongest event: ${profile.strongest_event}
-- Events: ${Object.entries(profile.events).map(([ev, stats]) => 
-  `${ev} (${stats.average}, count: ${stats.count})`
-).join(', ')}`;
-}).join('\n')}
-${athleteIndex.length > 25 ? `\n[...and ${athleteIndex.length - 25} more athletes]` : ''}
-
-### All Athletes Index
-${athleteIndex.join(', ')}
-`;
-
-    const systemPrompt = `You are an ELITE gymnastics analytics AI for OSU Gymnastics 2026 season.
-
-# YOUR POWER
-
-You have COMPLETE access to all real athlete and team performance data for 2026. You are NOT a generic assistant—you are a specialized gymnastics analytics engine.
-
-${dataContext}
-
-# ANALYTICAL FRAMEWORK
-
-## When asked about an athlete:
-1. Look up their stats in the provided data above
-2. Provide SPECIFIC numbers (averages, highs, lows, event breakdown)
-3. Identify TRENDS and patterns (improving, declining, stable)
-4. Compare to team averages and other athletes
-5. Give coaching-level insights about strengths and weaknesses
-
-## Analysis Capabilities:
-- **Event Strengths**: Which apparatus are they strongest/weakest on?
-- **Consistency**: How reliable are they? (% score shows this)
-- **Trends**: Are they improving or declining by event?
-- **Team Impact**: How do they contribute to team totals?
-- **Competitive Position**: Where do they rank among teammates?
-- **Comparison Analysis**: How do two athletes stack up?
-
-## Questions you can answer instantly:
-- "How has [athlete] done this season?"
-- "Compare [athlete1] vs [athlete2]"
-- "Which events is [athlete] strongest in?"
-- "What's [team] average on vault?"
-- "Who's trending up/down?"
-- "Show me consistency metrics"
-- "Who's the most improved?"
-- "Deep dive analysis on [meet/athlete]"
-
-# COMMUNICATION RULES
-
-- Be DATA-DRIVEN, never generic
-- Always show specific numbers and percentages
-- Use clear formatting: headers, bullets, tables
-- Provide statistical context and comparisons
-- Be analytical and insightful, not just conversational
-- When you mention a stat, cite the exact data you're using
-
-# CRITICAL
-
-You HAVE THE DATA—USE IT! When someone asks "How has [athlete] done?", you have their stats RIGHT HERE. Analyze them immediately using the provided data. Never ask users to provide data you already have.`;
-
-    console.log('[Chat API] Building athlete profiles for context...');
-    console.log(`[Chat API] Context includes ${athleteIndex.length} athletes`);
-    console.log('[Chat API] Making request to Claude API...');
-    const startTime = Date.now();
-    
-    const response = await client.messages.create({
-      model: 'claude-opus-4-1-20250805',
-      max_tokens: 2048,
-      system: systemPrompt,
-      messages: claudeMessages,
-    });
-
-    const duration = Date.now() - startTime;
-    console.log(`[Chat API] Successfully received response from Claude API (took ${duration}ms)`);
-
-    const assistantMessage = response.content[0]?.text || '';
-
-    res.json({
-      success: true,
-      message: assistantMessage,
-    });
-  } catch (error) {
-    console.error('[Chat API] Error caught:', {
-      name: error.name,
-      message: error.message,
-      status: error.status,
-      type: error.type,
-      code: error.code,
-      stack: error.stack?.split('\n').slice(0, 3).join('\n'), // First 3 lines of stack
-    });
-    
-    // Handle timeout errors
-    if (error.name === 'APIConnectionTimeoutError' || error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
-      console.error('[Chat API] Request timed out - Claude API may be slow or unreachable');
-      return res.status(504).json({ error: 'Request timed out. Please try again.' });
-    }
-    
-    // Handle network/connection errors
-    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED' || error.code === 'EAI_AGAIN') {
-      console.error('[Chat API] Network error - cannot reach Claude API');
-      return res.status(503).json({ error: 'Cannot reach AI service. Please check network connection.' });
-    }
-    
-    // Handle authentication errors
-    if (error.status === 401) {
-      console.error('[Chat API] Authentication failed - invalid API key');
-      return res.status(500).json({ error: 'Invalid API credentials' });
-    }
-    
-    // Handle rate limiting
-    if (error.status === 429) {
-      console.error('[Chat API] Rate limited');
-      return res.status(429).json({ error: 'Rate limited. Please try again later.' });
-    }
-    
-    // Generic error fallback
-    res.status(500).json({ error: 'Failed to process chat message' });
-  }
-});
-
 const PORT = process.env.PORT || 8888;
-const REFRESH_SECRET = process.env.REFRESH_SECRET;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-// Create HTTP server and attach WebSocket server
 const server = http.createServer(app);
 wss = new WebSocket.Server({ server, path: '/ws' });
 
-// Handle WebSocket connections
 wss.on('connection', (ws) => {
-  console.log(`[WebSocket] Client connected. Total clients: ${connectedClients.size + 1}`);
+  console.log(`[WebSocket] Client connected. Total: ${connectedClients.size + 1}`);
   connectedClients.add(ws);
 
-  // Send initial data to newly connected client
   ws.send(JSON.stringify({
     event: 'connected',
     meets: meetsData,
     timestamp: new Date().toISOString(),
   }));
 
-  // Handle client disconnect
   ws.on('close', () => {
     connectedClients.delete(ws);
-    console.log(`[WebSocket] Client disconnected. Total clients: ${connectedClients.size}`);
+    console.log(`[WebSocket] Client disconnected. Total: ${connectedClients.size}`);
   });
 
-  // Handle errors
   ws.on('error', (error) => {
     console.error('[WebSocket] Error:', error.message);
   });
-
-  // Echo ping/pong for keep-alive
-  ws.on('message', (data) => {
-    try {
-      const message = JSON.parse(data);
-      if (message.type === 'ping') {
-        ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
-      }
-    } catch (e) {
-      // Ignore parse errors
-    }
-  });
 });
 
-// Initialize checksum on startup
 lastMeetsChecksum = getMeetsChecksum();
 
-// Periodic check for file changes (every 10 seconds)
-// This enables auto-refresh when meets.json is updated externally
 setInterval(() => {
   try {
     const fileChecksum = require('crypto')
@@ -622,7 +428,7 @@ setInterval(() => {
       console.log('[Live Updates] Detected changes in meets.json, broadcasting to clients...');
       loadMeetsData();
       recomputeStats();
-      lastMeetsChecksum = getMeetsChecksum();
+      lastMeetsChecksum = fileChecksum;
       
       broadcastToClients({
         event: 'scoresUpdated',
@@ -631,25 +437,22 @@ setInterval(() => {
       });
     }
   } catch (err) {
-    // Silently ignore file read errors
+    // Silently ignore
   }
 }, 10000);
 
 server.listen(PORT, () => {
-  console.log(`🤸 OSU Gymnastics 2026 running on http://localhost:${PORT}`);
-  console.log(`📡 WebSocket server available at ws://localhost:${PORT}/ws`);
+  console.log(`🤸 OSU Gymnastics 2026 running on http://0.0.0.0:${PORT} (accessible on all interfaces)`);
+  console.log(`📡 WebSocket server available at ws://0.0.0.0:${PORT}/ws`);
   
-  // Check for required and optional configuration
   if (!ANTHROPIC_API_KEY) {
     console.warn('⚠️  WARNING: ANTHROPIC_API_KEY env var is not set');
-    console.warn('   Chatbot AI features will not work');
-    console.warn('   See CHATBOT_SETUP.md for configuration instructions');
   } else {
     const keyLength = ANTHROPIC_API_KEY.length;
-    const keyPreview = ANTHROPIC_API_KEY.substring(0, 10) + '...' + ANTHROPIC_API_KEY.substring(keyLength - 5);
-    console.log(`✅ ANTHROPIC_API_KEY loaded: ${keyPreview} (${keyLength} chars)`);
+    console.log(`✅ ANTHROPIC_API_KEY loaded: ${ANTHROPIC_API_KEY.substring(0, 10)}...${ANTHROPIC_API_KEY.substring(keyLength - 5)} (${keyLength} chars)`);
   }
-  if (!REFRESH_SECRET) {
+  
+  if (!process.env.REFRESH_SECRET) {
     console.warn('⚠️  WARNING: REFRESH_SECRET env var is not set — POST /api/refresh is unprotected');
   }
 });
