@@ -332,6 +332,13 @@
     const trajArrow = trajectory == null ? '' : trajectory > 0.1 ? '🚀' : trajectory < -0.1 ? '📉' : '→';
     const trajLabel = trajectory == null ? '' : trajectory > 0.1 ? `Up ${trajectory.toFixed(3)} pts vs early season` : trajectory < -0.1 ? `Down ${Math.abs(trajectory).toFixed(3)} pts vs early season` : 'Flat season trend';
 
+    // Momentum indicator: last 3 meets vs season avg
+    const last3Scores = allScores.slice(-3);
+    const last3Avg = last3Scores.length >= 3 ? mcMean(last3Scores) : null;
+    const momArrow = last3Avg == null || teamAvg == null ? '' : last3Avg > teamAvg + 0.1 ? '↑' : last3Avg < teamAvg - 0.1 ? '↓' : '→';
+    const momColor = momArrow === '↑' ? '#2ecc71' : momArrow === '↓' ? '#e74c3c' : '#aaa';
+    const momLabel = momArrow === '↑' ? 'Trending up' : momArrow === '↓' ? 'Trending down' : 'Steady';
+
     // Event trends — compare first 5 vs last 5 scored meets
     const EVS = ['vault','bars','beam','floor'];
     const EVlabel = {vault:'VAULT',bars:'BARS',beam:'BEAM',floor:'FLOOR'};
@@ -454,6 +461,7 @@
           });
           return hasNqs ? `<div class="mc-stat-card"><div class="mc-stat-value" style="color:var(--orange)">${bestNqs.toFixed(3)}</div><div class="mc-stat-label">Proj. NQS</div><div class="mc-context">Best per-event NQS combined</div></div>` : '';
         })()}
+        ${momArrow ? `<div class="mc-stat-card"><div class="mc-stat-value" style="color:${momColor};font-size:2rem">${momArrow}</div><div class="mc-stat-label" style="color:${momColor}">${momLabel}</div><div class="mc-context">Last 3 meets vs season avg</div></div>` : ''}
       </div>
 
       <div class="mc-event-row">
@@ -862,10 +870,22 @@
       return `<text x="${x}" y="${h - 5}" text-anchor="middle" fill="#999" font-size="9" font-family="Inter">${formatDate(m.date)}</text>`;
     }).join('');
 
+    // Rolling 3-meet average dashed line
+    let rollingPath = '';
+    if (scores.length >= 3) {
+      const rollingPts = [];
+      for (let ri = 2; ri < scores.length; ri++) {
+        const avg3 = (scores[ri] + scores[ri-1] + scores[ri-2]) / 3;
+        rollingPts.push(`${ri === 2 ? 'M' : 'L'}${xScale(ri).toFixed(1)},${yScale(avg3).toFixed(1)}`);
+      }
+      rollingPath = `<path d="${rollingPts.join(' ')}" fill="none" stroke="#888" stroke-width="1.5" stroke-dasharray="6,4" stroke-linejoin="round" opacity="0.7"><title>Rolling 3-meet avg</title></path>`;
+    }
+
     container.innerHTML = `
       <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
         ${yGridLines}
         <path d="${pathD}" fill="none" stroke="var(--orange)" stroke-width="2.5" stroke-linejoin="round"/>
+        ${rollingPath}
         ${dots}
         ${yLabels}
         ${xLabels}
@@ -3239,6 +3259,37 @@
         </div>`;
     }
 
+    // Box-and-whisker distribution
+    let distChartHtml = '';
+    if (scores.length >= 5) {
+      const sorted = scores.slice().sort((a,b) => a - b);
+      const q1Idx = Math.floor(sorted.length * 0.25);
+      const q3Idx = Math.floor(sorted.length * 0.75);
+      const medIdx = Math.floor(sorted.length * 0.5);
+      const distMin = sorted[0], distMax = sorted[sorted.length - 1];
+      const q1 = sorted[q1Idx], median = sorted[medIdx], q3 = sorted[q3Idx];
+      const range = distMax - distMin || 0.1;
+      const pct = v => ((v - distMin) / range * 80 + 10).toFixed(1);
+
+      distChartHtml = `
+        <div class="section-card">
+          <h2 class="section-title">Score Distribution</h2>
+          <div class="dist-chart">
+            <div class="dist-whisker" style="left:${pct(distMin)}%;width:${(pct(q1) - pct(distMin))}%"></div>
+            <div class="dist-box" style="left:${pct(q1)}%;width:${(pct(q3) - pct(q1))}%"></div>
+            <div class="dist-median" style="left:${pct(median)}%"></div>
+            <div class="dist-whisker" style="left:${pct(q3)}%;width:${(pct(distMax) - pct(q3))}%"></div>
+            <div class="dist-labels">
+              <span class="dist-label" style="left:${pct(distMin)}%">${distMin.toFixed(3)}</span>
+              <span class="dist-label" style="left:${pct(q1)}%">Q1: ${q1.toFixed(3)}</span>
+              <span class="dist-label" style="left:${pct(median)}%">Med: ${median.toFixed(3)}</span>
+              <span class="dist-label" style="left:${pct(q3)}%">Q3: ${q3.toFixed(3)}</span>
+              <span class="dist-label" style="left:${pct(distMax)}%">${distMax.toFixed(3)}</span>
+            </div>
+          </div>
+        </div>`;
+    }
+
     document.getElementById('eventDetailContent').innerHTML = `
       <div class="event-detail-header">
         <div class="event-banner-content">
@@ -3248,6 +3299,7 @@
       </div>
       ${chart}
       ${statsPanel}
+      ${distChartHtml}
       ${lineupAnalysisHtml}
       ${gymnastSection}
       ${leaderboard}
