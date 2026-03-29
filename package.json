@@ -16,6 +16,9 @@
   "license": "ISC",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "jspdf": "^4.2.1",
+    "papaparse": "^5.5.3",
+    "pdfkit": "^0.18.0"
   }
 }

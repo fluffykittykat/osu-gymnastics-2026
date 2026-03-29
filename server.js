@@ -4,6 +4,7 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const Anthropic = require('@anthropic-ai/sdk');
 const { computeStats } = require('./stats/stats');
+const { generateComparisonCSV, generateComparisonPDF } = require('./utils/exportUtils');
 
 const app = express();
 const { execSync } = require('child_process');
@@ -309,6 +310,116 @@ app.post('/api/chat', async (req, res) => {
     }
     res.status(500).json({ error: 'Failed to process chat message' });
   }
+});
+
+// ── Export API endpoints ─────────────────────────────────────────────────────
+
+/**
+ * Export athlete comparison as CSV
+ * GET /api/export/compare-csv?a1=name1&a2=name2
+ */
+app.get('/api/export/compare-csv', (req, res) => {
+  if (!statsCache) {
+    return res.status(503).json({ error: 'Stats not yet computed' });
+  }
+  
+  const { a1, a2 } = req.query;
+  
+  if (!a1 || !a2) {
+    return res.status(400).json({ error: 'Both a1 and a2 athlete names are required' });
+  }
+  
+  const athlete1 = statsCache.athletes[a1];
+  const athlete2 = statsCache.athletes[a2];
+  
+  if (!athlete1 || !athlete2) {
+    return res.status(404).json({ error: 'One or both athletes not found' });
+  }
+  
+  try {
+    const csv = generateComparisonCSV(athlete1, athlete2, a1, a2);
+    
+    // Sanitize filenames
+    const sanitizeName = (name) => name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const filename = `comparison_${sanitizeName(a1)}_vs_${sanitizeName(a2)}.csv`;
+    
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+  } catch (err) {
+    console.error('CSV export error:', err.message);
+    res.status(500).json({ error: 'Failed to generate CSV' });
+  }
+});
+
+/**
+ * Export athlete comparison as PDF
+ * GET /api/export/compare-pdf?a1=name1&a2=name2
+ */
+app.get('/api/export/compare-pdf', (req, res) => {
+  if (!statsCache) {
+    return res.status(503).json({ error: 'Stats not yet computed' });
+  }
+  
+  const { a1, a2 } = req.query;
+  
+  if (!a1 || !a2) {
+    return res.status(400).json({ error: 'Both a1 and a2 athlete names are required' });
+  }
+  
+  const athlete1 = statsCache.athletes[a1];
+  const athlete2 = statsCache.athletes[a2];
+  
+  if (!athlete1 || !athlete2) {
+    return res.status(404).json({ error: 'One or both athletes not found' });
+  }
+  
+  try {
+    const doc = generateComparisonPDF(athlete1, athlete2, a1, a2);
+    
+    // Sanitize filenames
+    const sanitizeName = (name) => name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const filename = `comparison_${sanitizeName(a1)}_vs_${sanitizeName(a2)}.pdf`;
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    doc.pipe(res);
+    doc.end();
+  } catch (err) {
+    console.error('PDF export error:', err.message);
+    res.status(500).json({ error: 'Failed to generate PDF' });
+  }
+});
+
+/**
+ * Get share link information
+ * GET /api/compare?a1=name1&a2=name2
+ * This allows comparison state to be loaded from URL parameters
+ */
+app.get('/api/compare', (req, res) => {
+  if (!statsCache) {
+    return res.status(503).json({ error: 'Stats not yet computed' });
+  }
+  
+  const { a1, a2 } = req.query;
+  
+  if (!a1 || !a2) {
+    return res.status(400).json({ error: 'Both a1 and a2 athlete names are required' });
+  }
+  
+  const athlete1 = statsCache.athletes[a1];
+  const athlete2 = statsCache.athletes[a2];
+  
+  if (!athlete1 || !athlete2) {
+    return res.status(404).json({ error: 'One or both athletes not found' });
+  }
+  
+  // Return comparison data
+  res.json({
+    athlete1: { name: a1, stats: athlete1 },
+    athlete2: { name: a2, stats: athlete2 }
+  });
 });
 
 const PORT = process.env.PORT || 8888;

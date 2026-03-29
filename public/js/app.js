@@ -2153,6 +2153,22 @@
           </div>
         </div>
         <div class="compare-legend"><span style="color:var(--orange)">■ ${name1.split(' ')[0]}</span> <span style="color:#3498db">■ ${name2.split(' ')[0]}</span></div>
+        
+        <div class="compare-export-actions">
+          <button class="export-btn export-csv" id="exportCSVBtn" title="Export as CSV">
+            <span class="export-icon">📥</span>
+            <span class="export-label">CSV</span>
+          </button>
+          <button class="export-btn export-pdf" id="exportPDFBtn" title="Export as PDF">
+            <span class="export-icon">📄</span>
+            <span class="export-label">PDF</span>
+          </button>
+          <button class="export-btn export-share" id="shareBtn" title="Copy share link">
+            <span class="export-icon">🔗</span>
+            <span class="export-label">Share</span>
+          </button>
+        </div>
+        
         <div class="compare-grid">${eventCards}</div>
       </div>`;
 
@@ -2160,6 +2176,98 @@
       detail.style.display = 'none';
       document.getElementById('gymnastCards').style.display = 'grid';
     });
+
+    // Export functionality
+    document.getElementById('exportCSVBtn').addEventListener('click', () => {
+      exportComparisonAsCSV(name1, name2);
+    });
+
+    document.getElementById('exportPDFBtn').addEventListener('click', () => {
+      exportComparisonAsPDF(name1, name2);
+    });
+
+    document.getElementById('shareBtn').addEventListener('click', () => {
+      copyComparisonShareLink(name1, name2);
+    });
+  }
+
+  // ===== Export Functions =====
+  function exportComparisonAsCSV(name1, name2) {
+    const stats1 = Stats.getAthleteStats(meets, name1);
+    const stats2 = Stats.getAthleteStats(meets, name2);
+    const events = ['vault', 'bars', 'beam', 'floor', 'aa'];
+
+    const rows = [['Metric', name1, name2]];
+
+    // Season stats
+    rows.push(['', '', '']);
+    rows.push(['SEASON STATS', '', '']);
+    
+    events.forEach(ev => {
+      const eventName = EVENT_NAMES[ev];
+      const stat1 = stats1.perEvent[ev] || stats1.aa;
+      const stat2 = stats2.perEvent[ev] || stats2.aa;
+      
+      rows.push([`${eventName} - Average`, stat1.avg ? stat1.avg.toFixed(3) : 'N/A', stat2.avg ? stat2.avg.toFixed(3) : 'N/A']);
+      rows.push([`${eventName} - Best`, stat1.best ? stat1.best.toFixed(3) : 'N/A', stat2.best ? stat2.best.toFixed(3) : 'N/A']);
+      rows.push([`${eventName} - Worst`, stat1.worst ? stat1.worst.toFixed(3) : 'N/A', stat2.worst ? stat2.worst.toFixed(3) : 'N/A']);
+      rows.push([`${eventName} - Appearances`, stat1.entries ? stat1.entries.length : 0, stat2.entries ? stat2.entries.length : 0]);
+    });
+
+    // Prepare CSV
+    const csv = Papa.unparse(rows);
+    const filename = `${name1.replace(/\s+/g, '_')}_vs_${name2.replace(/\s+/g, '_')}_comparison.csv`;
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.setAttribute('href', URL.createObjectURL(blob));
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast(`✅ Downloaded ${filename}`, 'success');
+  }
+
+  function exportComparisonAsPDF(name1, name2) {
+    // Use server endpoint for PDF generation
+    const params = new URLSearchParams({
+      athlete1: name1,
+      athlete2: name2
+    });
+    
+    const filename = `${name1.replace(/\s+/g, '_')}_vs_${name2.replace(/\s+/g, '_')}_comparison.pdf`;
+    const url = `/api/export/pdf?${params.toString()}`;
+    
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast(`✅ Generating PDF...`, 'success');
+  }
+
+  function copyComparisonShareLink(name1, name2) {
+    const url = `${window.location.origin}/?compare=${encodeURIComponent(name1)}&with=${encodeURIComponent(name2)}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `${name1} vs ${name2}`,
+        text: `Compare OSU Gymnastics athletes`,
+        url: url
+      }).catch(err => console.log('Share cancelled:', err));
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('✅ Share link copied to clipboard', 'success');
+      }).catch(err => {
+        showToast('❌ Failed to copy link', 'error');
+      });
+    }
   }
 
   function renderGymnasts(searchTerm = '') {
