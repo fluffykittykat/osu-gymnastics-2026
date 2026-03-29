@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -274,19 +276,27 @@ app.get('/healthz', (req, res) => {
 // Claude AI Chatbot Endpoint
 app.post('/api/chat', async (req, res) => {
   try {
+    console.log('[Chat API] Received message request');
+    
     const { messages } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
+      console.error('[Chat API] Invalid request: messages not an array');
       return res.status(400).json({ error: 'Messages array required' });
     }
 
+    console.log(`[Chat API] Processing ${messages.length} message(s)`);
+
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      console.error('ANTHROPIC_API_KEY not set');
+      console.error('[Chat API] ANTHROPIC_API_KEY not set in environment');
       return res.status(500).json({ error: 'AI service not configured' });
     }
 
+    console.log(`[Chat API] API Key found: ${apiKey.substring(0, 10)}...`);
+
     const client = new Anthropic({ apiKey });
+    console.log('[Chat API] Anthropic client initialized');
 
     // Format messages for Claude API
     const claudeMessages = messages.map(msg => ({
@@ -329,12 +339,16 @@ app.post('/api/chat', async (req, res) => {
 - Always be accurate with numbers and careful with statistical claims
 - Focus on gymnastics-specific analysis rather than general sports commentary`;
 
+    console.log('[Chat API] Making request to Claude API...');
+    
     const response = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-opus-4-1-20250805',
       max_tokens: 1024,
       system: systemPrompt,
       messages: claudeMessages,
     });
+
+    console.log('[Chat API] Successfully received response from Claude API');
 
     const assistantMessage = response.content[0]?.text || '';
 
@@ -343,13 +357,22 @@ app.post('/api/chat', async (req, res) => {
       message: assistantMessage,
     });
   } catch (error) {
-    console.error('Chat API error:', error.message);
+    console.error('[Chat API] Error caught:', {
+      name: error.name,
+      message: error.message,
+      status: error.status,
+      type: error.type,
+    });
+    
     if (error.status === 401) {
+      console.error('[Chat API] Authentication failed - invalid API key');
       return res.status(500).json({ error: 'Invalid API credentials' });
     }
     if (error.status === 429) {
+      console.error('[Chat API] Rate limited');
       return res.status(429).json({ error: 'Rate limited. Please try again later.' });
     }
+    
     res.status(500).json({ error: 'Failed to process chat message' });
   }
 });
@@ -436,6 +459,10 @@ server.listen(PORT, () => {
     console.warn('⚠️  WARNING: ANTHROPIC_API_KEY env var is not set');
     console.warn('   Chatbot AI features will not work');
     console.warn('   See CHATBOT_SETUP.md for configuration instructions');
+  } else {
+    const keyLength = ANTHROPIC_API_KEY.length;
+    const keyPreview = ANTHROPIC_API_KEY.substring(0, 10) + '...' + ANTHROPIC_API_KEY.substring(keyLength - 5);
+    console.log(`✅ ANTHROPIC_API_KEY loaded: ${keyPreview} (${keyLength} chars)`);
   }
   if (!REFRESH_SECRET) {
     console.warn('⚠️  WARNING: REFRESH_SECRET env var is not set — POST /api/refresh is unprotected');
