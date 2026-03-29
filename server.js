@@ -295,8 +295,12 @@ app.post('/api/chat', async (req, res) => {
 
     console.log(`[Chat API] API Key found: ${apiKey.substring(0, 10)}...`);
 
-    const client = new Anthropic({ apiKey });
-    console.log('[Chat API] Anthropic client initialized');
+    const client = new Anthropic({ 
+      apiKey,
+      timeout: 30000, // 30 second timeout for API requests
+      maxRetries: 1    // Retry once on transient failures
+    });
+    console.log('[Chat API] Anthropic client initialized with 30s timeout');
 
     // Format messages for Claude API
     const claudeMessages = messages.map(msg => ({
@@ -340,6 +344,7 @@ app.post('/api/chat', async (req, res) => {
 - Focus on gymnastics-specific analysis rather than general sports commentary`;
 
     console.log('[Chat API] Making request to Claude API...');
+    const startTime = Date.now();
     
     const response = await client.messages.create({
       model: 'claude-opus-4-1-20250805',
@@ -348,7 +353,8 @@ app.post('/api/chat', async (req, res) => {
       messages: claudeMessages,
     });
 
-    console.log('[Chat API] Successfully received response from Claude API');
+    const duration = Date.now() - startTime;
+    console.log(`[Chat API] Successfully received response from Claude API (took ${duration}ms)`);
 
     const assistantMessage = response.content[0]?.text || '';
 
@@ -362,17 +368,35 @@ app.post('/api/chat', async (req, res) => {
       message: error.message,
       status: error.status,
       type: error.type,
+      code: error.code,
+      stack: error.stack?.split('\n').slice(0, 3).join('\n'), // First 3 lines of stack
     });
     
+    // Handle timeout errors
+    if (error.name === 'APIConnectionTimeoutError' || error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
+      console.error('[Chat API] Request timed out - Claude API may be slow or unreachable');
+      return res.status(504).json({ error: 'Request timed out. Please try again.' });
+    }
+    
+    // Handle network/connection errors
+    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED' || error.code === 'EAI_AGAIN') {
+      console.error('[Chat API] Network error - cannot reach Claude API');
+      return res.status(503).json({ error: 'Cannot reach AI service. Please check network connection.' });
+    }
+    
+    // Handle authentication errors
     if (error.status === 401) {
       console.error('[Chat API] Authentication failed - invalid API key');
       return res.status(500).json({ error: 'Invalid API credentials' });
     }
+    
+    // Handle rate limiting
     if (error.status === 429) {
       console.error('[Chat API] Rate limited');
       return res.status(429).json({ error: 'Rate limited. Please try again later.' });
     }
     
+    // Generic error fallback
     res.status(500).json({ error: 'Failed to process chat message' });
   }
 });
