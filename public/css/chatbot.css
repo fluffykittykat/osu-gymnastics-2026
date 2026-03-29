@@ -1,5 +1,6 @@
 /**
  * Chatbot Widget Styles - Facebook Messenger inspired
+ * OSU Gymnastics branding: Scarlet (#BA0021), Gray (#333333), Gold (#FFD700)
  */
 
 #chatbot-widget {
@@ -12,15 +13,15 @@
 
 /* Floating Chat Bubble */
 .chatbot-bubble {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0084ff 0%, #0066dd 100%);
+  background: linear-gradient(135deg, #BA0021 0%, #8B0015 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 132, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(186, 0, 33, 0.4);
   transition: all 0.3s ease;
   border: none;
   padding: 0;
@@ -28,12 +29,13 @@
 
 .chatbot-bubble:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(0, 132, 255, 0.5);
+  box-shadow: 0 6px 20px rgba(186, 0, 33, 0.6);
 }
 
 .chatbot-bubble.active {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+  background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%);
+  color: #BA0021;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
 }
 
 .bubble-content {
@@ -90,7 +92,7 @@
 
 /* Header */
 .chatbot-header {
-  background: linear-gradient(135deg, #0084ff 0%, #0066dd 100%);
+  background: linear-gradient(135deg, #BA0021 0%, #8B0015 100%);
   color: white;
   padding: 16px;
   display: flex;
@@ -189,7 +191,7 @@
 }
 
 .user-message .message-content {
-  background: #0084ff;
+  background: #BA0021;
   color: white;
   border-radius: 18px 18px 4px 18px;
   padding: 10px 14px;
@@ -323,7 +325,7 @@
 }
 
 .chatbot-input:focus {
-  border-color: #0084ff;
+  border-color: #BA0021;
 }
 
 .chatbot-input::placeholder {
@@ -381,8 +383,8 @@
   }
 
   .chatbot-bubble {
-    width: 56px;
-    height: 56px;
+    width: 70px;
+    height: 70px;
     font-size: 28px;
   }
 
