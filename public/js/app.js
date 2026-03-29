@@ -257,10 +257,16 @@
       el.style.animation = '';
     }
 
-    if (view === 'season') renderSeason();
-    else if (view === 'gymnasts') renderGymnasts();
-    else if (view === 'leaderboards') { renderHeatMap(); renderLeaderboard('vault'); }
-    else if (view === 'insights') renderInsights();
+    try {
+      if (view === 'season') renderSeason();
+      else if (view === 'gymnasts') renderGymnasts();
+      else if (view === 'leaderboards') { renderHeatMap(); renderLeaderboard('vault'); }
+      else if (view === 'insights') renderInsights();
+    } catch (err) {
+      console.error('Render error in view "' + view + '":', err);
+      const el = document.getElementById('view-' + view);
+      if (el) el.innerHTML = '<div style="padding:2rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">⚠️</div><div style="color:#e74c3c;font-family:Oswald;font-size:1.2rem;">Something went wrong</div><p style="color:var(--text-muted);margin-top:0.5rem;">Error rendering this view. Try refreshing the page.</p><pre style="color:#888;font-size:0.75rem;margin-top:1rem;text-align:left;overflow-x:auto;">' + err.message + '</pre></div>';
+    }
   }
 
 
@@ -882,10 +888,16 @@
           seenQuads.add(m.quadName);
           // Gather all matchups for this quad
           const quadMeets = filtered.filter(q => q.quadName === m.quadName);
-          rendered.push(renderQuadGroup(quadMeets));
+          try { rendered.push(renderQuadGroup(quadMeets)); } catch (err) {
+            console.error('Error rendering quad group:', err);
+            rendered.push('<div class="meet-card" style="border:1px solid #e74c3c;padding:1rem;text-align:center;"><span style="color:#e74c3c;">⚠️ Error loading meet group</span></div>');
+          }
         }
       } else {
-        rendered.push(renderMeetCard(m));
+        try { rendered.push(renderMeetCard(m)); } catch (err) {
+          console.error('Error rendering meet card:', err);
+          rendered.push('<div class="meet-card" style="border:1px solid #e74c3c;padding:1rem;text-align:center;"><span style="color:#e74c3c;">⚠️ Error loading meet: ' + (m.opponent || m.id) + '</span></div>');
+        }
       }
     });
 
@@ -947,15 +959,19 @@
         </div>`;
     }
 
-    const resultBadge = `<span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>`;
+    const resultBadge = m.result
+      ? `<span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>`
+      : '<span class="badge badge-upcoming">—</span>';
 
-    const eventBars = ['vault', 'bars', 'beam', 'floor'].map(e => {
-      const pct = ((m.events[e].osu / 50) * 100).toFixed(1);
+    const eventBars = (!m.events || !m.events.vault) ? '' : ['vault', 'bars', 'beam', 'floor'].map(e => {
+      const evData = m.events[e];
+      if (!evData || evData.osu == null) return '';
+      const pct = ((evData.osu / 50) * 100).toFixed(1);
       return `
         <div class="event-bar-item">
           <div class="event-bar-label">
             <span>${EVENT_SHORT[e]}</span>
-            <span>${m.events[e].osu.toFixed(3)}</span>
+            <span>${evData.osu.toFixed(3)}</span>
           </div>
           <div class="event-bar-track">
             <div class="event-bar-fill" style="width: ${pct}%"></div>
@@ -1035,7 +1051,7 @@
             <span style="font-family:Oswald;color:var(--orange);font-size:1rem;">${m.osuScore != null ? m.osuScore.toFixed(3) : "TBD"}</span>
             <span style="color:var(--text-muted);">–</span>
             <span style="font-size:1rem;">${m.opponentScore != null ? m.opponentScore.toFixed(3) : "TBD"}</span>
-            <span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>
+            ${m.result ? `<span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>` : ''}
           </div>
         </div>
       </div>`).join('');
@@ -1055,7 +1071,7 @@
           </div>
         </div>
         <div style="padding:0.75rem;display:flex;flex-direction:column;gap:0.5rem;">
-          <div style="color:#888;font-size:0.8rem;padding-bottom:0.25rem;">OSU: ${first.osuScore.toFixed(3)}</div>
+          <div style="color:#888;font-size:0.8rem;padding-bottom:0.25rem;">OSU: ${first.osuScore != null ? first.osuScore.toFixed(3) : 'TBD'}</div>
           ${matchupRows}
         </div>
       </div>`;
@@ -1115,7 +1131,7 @@
         <td>${t.bars?.toFixed(3) ?? '—'}</td>
         <td>${t.beam?.toFixed(3) ?? '—'}</td>
         <td>${t.floor?.toFixed(3) ?? '—'}</td>
-        <td style="font-family:Oswald;font-size:1.05rem;color:${isOSU?'var(--osu-orange)':'inherit'}">${t.total.toFixed(3)}</td>
+        <td style="font-family:Oswald;font-size:1.05rem;color:${isOSU?'var(--osu-orange)':'inherit'}">${t.total != null ? t.total.toFixed(3) : '—'}</td>
       </tr>`;
     }).join('');
 
@@ -1203,10 +1219,10 @@
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
           <div>
             <div style="font-family:Oswald;font-size:1.3rem">${rankEmoji} Oregon State finished <strong style="color:${summaryColor}">${['1st','2nd','3rd','4th'][osuRank-1]||osuRank+'th'}</strong></div>
-            <div style="color:#aaa;font-size:0.85rem;margin-top:0.2rem">${osuScore.toFixed(3)} total · ${osuWins}W–${osuLosses}L in matchups</div>
+            <div style="color:#aaa;font-size:0.85rem;margin-top:0.2rem">${osuScore != null ? osuScore.toFixed(3) : 'TBD'} total · ${osuWins}W–${osuLosses}L in matchups</div>
           </div>
           <div style="text-align:right">
-            <div style="font-family:Oswald;font-size:1.8rem;color:var(--osu-orange)">${osuScore.toFixed(3)}</div>
+            <div style="font-family:Oswald;font-size:1.8rem;color:var(--osu-orange)">${osuScore != null ? osuScore.toFixed(3) : 'TBD'}</div>
             <div style="font-size:0.7rem;color:#888">Oregon State</div>
           </div>
         </div>
@@ -1590,6 +1606,14 @@
 
     const content = document.getElementById('meetDetailContent');
 
+    try { _showMeetDetailInner(meet, content, view); } catch (err) {
+      console.error('Error rendering meet detail:', err);
+      content.innerHTML = '<div style="padding:2rem;text-align:center;"><div style="font-size:2rem;margin-bottom:0.5rem;">⚠️</div><div style="color:#e74c3c;font-family:Oswald;font-size:1.2rem;">Error loading meet details</div><p style="color:var(--text-muted);margin-top:0.5rem;">Could not render this meet. It may have incomplete data.</p><pre style="color:#888;font-size:0.75rem;margin-top:1rem;text-align:left;overflow-x:auto;">' + err.message + '</pre><button class="back-btn" onclick="history.back()" style="margin-top:1rem;">← Go Back</button></div>';
+    }
+  }
+
+  function _showMeetDetailInner(meet, content, view) {
+
     // Live banner
     let liveBanner = '';
     if (meet.status === 'in_progress') {
@@ -1620,9 +1644,9 @@
               ${meet.allTeams.map(t => `
                 <tr class="${t.team.toLowerCase().includes('oregon') ? 'osu-row' : ''}">
                   <td>${t.rank}</td><td><span class="clickable-team" data-team="${t.team}">${t.team}</span></td>
-                  <td>${t.vault.toFixed(3)}</td><td>${t.bars.toFixed(3)}</td>
-                  <td>${t.beam.toFixed(3)}</td><td>${t.floor.toFixed(3)}</td>
-                  <td><strong>${t.total.toFixed(3)}</strong></td>
+                  <td>${t.vault?.toFixed(3) ?? '—'}</td><td>${t.bars?.toFixed(3) ?? '—'}</td>
+                  <td>${t.beam?.toFixed(3) ?? '—'}</td><td>${t.floor?.toFixed(3) ?? '—'}</td>
+                  <td><strong>${t.total != null ? t.total.toFixed(3) : '—'}</strong></td>
                 </tr>`).join('')}
             </tbody>
           </table>
@@ -1631,8 +1655,9 @@
 
     // Event detail cards with athlete lineups
     const eventCards = (!meet.events || !meet.events.vault) ? [] : ['vault', 'bars', 'beam', 'floor'].map(event => {
-      const osuScore = meet.events[event].osu;
-      const oppScore = meet.events[event].opponent;
+      const osuScore = meet.events[event]?.osu;
+      const oppScore = meet.events[event]?.opponent;
+      if (osuScore == null) return '';
       const barPct = ((osuScore / 50) * 100).toFixed(1);
 
       let rows;
@@ -1680,7 +1705,7 @@
 
     const resultBadge = meet.status === 'upcoming'
       ? '<span class="badge badge-upcoming" style="font-size:1rem;padding:0.3rem 0.8rem;">UPCOMING</span>'
-      : `<span class="badge badge-${meet.result.toLowerCase()}" style="font-size:1rem;padding:0.3rem 0.8rem;">${meet.result}</span>`;
+      : meet.result ? `<span class="badge badge-${meet.result.toLowerCase()}" style="font-size:1rem;padding:0.3rem 0.8rem;">${meet.result}</span>` : '';
 
     // Quad meet sibling navigation + Overview tab
     let quadNav = '';
