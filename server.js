@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
 const Anthropic = require('@anthropic-ai/sdk');
+const { computeStats } = require('./stats/stats');
 
 const app = express();
 const { execSync } = require('child_process');
@@ -16,8 +17,19 @@ try {
   ASSET_VERSION = execSync('git rev-parse --short HEAD', { cwd: __dirname }).toString().trim();
 } catch (e) {}
 
-// Keep meets data in memory for fast serving
+// Keep meets + bios data in memory for fast serving
 let meetsData = null;
+let biosData = null;
+let statsCache = null;
+
+function loadBiosData() {
+  try {
+    biosData = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'bios.json'), 'utf-8'));
+  } catch (err) {
+    console.error('Failed to load bios.json:', err.message);
+    biosData = {};
+  }
+}
 
 function loadMeetsData() {
   try {
@@ -28,8 +40,20 @@ function loadMeetsData() {
   }
 }
 
+function recomputeStats() {
+  try {
+    statsCache = computeStats(meetsData || [], biosData || {});
+    console.log(`Stats computed: ${Object.keys(statsCache.athletes).length} athletes, ${Object.keys(statsCache.competitors).length} competitors`);
+  } catch (err) {
+    console.error('Failed to compute stats:', err.message);
+    statsCache = null;
+  }
+}
+
 // Load on startup
+loadBiosData();
 loadMeetsData();
+recomputeStats();
 
 // Serve index.html with injected asset version for automatic cache-busting
 app.get('/', async (req, res) => {
@@ -52,11 +76,12 @@ app.use(express.static('public', {
   }
 }));
 
-app.get('/api/bios', async (req, res) => {
-  try {
-    const raw = await fs.promises.readFile(path.join(__dirname, 'data/bios.json'), 'utf8');
-    res.json(JSON.parse(raw));
-  } catch (e) { res.json({}); }
+app.get('/api/bios', (req, res) => {
+  if (biosData) {
+    res.json(biosData);
+  } else {
+    res.json({});
+  }
 });
 
 app.get('/api/photos', async (req, res) => {
@@ -82,6 +107,66 @@ app.get('/api/meets', (req, res) => {
     res.json(meetsData);
   } else {
     res.sendFile(path.join(__dirname, 'data', 'meets.json'));
+  }
+});
+
+// ── Stats API endpoints ──────────────────────────────────────────────────────
+
+app.get('/api/stats', (req, res) => {
+  if (statsCache) {
+    res.json(statsCache);
+  } else {
+    res.status(503).json({ error: 'Stats not yet computed' });
+  }
+});
+
+app.get('/api/stats/summary', (req, res) => {
+  if (statsCache) {
+    res.json(statsCache.summary);
+  } else {
+    res.status(503).json({ error: 'Stats not yet computed' });
+  }
+});
+
+app.get('/api/stats/team', (req, res) => {
+  if (statsCache) {
+    res.json(statsCache.team);
+  } else {
+    res.status(503).json({ error: 'Stats not yet computed' });
+  }
+});
+
+app.get('/api/stats/athletes', (req, res) => {
+  if (statsCache) {
+    res.json(statsCache.athletes);
+  } else {
+    res.status(503).json({ error: 'Stats not yet computed' });
+  }
+});
+
+app.get('/api/stats/athletes/:name', (req, res) => {
+  if (!statsCache) {
+    return res.status(503).json({ error: 'Stats not yet computed' });
+  }
+  const name = decodeURIComponent(req.params.name);
+  const athlete = statsCache.athletes[name];
+  if (athlete) {
+    res.json(athlete);
+  } else {
+    res.status(404).json({ error: `Athlete "${name}" not found` });
+  }
+});
+
+app.get('/api/stats/events/:event', (req, res) => {
+  if (!statsCache) {
+    return res.status(503).json({ error: 'Stats not yet computed' });
+  }
+  const event = req.params.event;
+  const eventData = statsCache.events[event];
+  if (eventData) {
+    res.json(eventData);
+  } else {
+    res.status(404).json({ error: `Event "${event}" not found. Valid: vault, bars, beam, floor` });
   }
 });
 
@@ -117,8 +202,10 @@ app.post('/api/refresh', async (req, res) => {
       });
     });
 
-    // Reload meets.json into memory
+    // Reload data into memory and recompute stats
     loadMeetsData();
+    loadBiosData();
+    recomputeStats();
 
     let summary;
     try {
