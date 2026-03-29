@@ -9,7 +9,10 @@ class ChatbotWidget {
     this.messages = [];
     this.isLoading = false;
     this.sessionId = this.generateSessionId();
+    this.sendDebounceTimer = null;
+    this.lastSendTime = 0;
     this.init();
+    this.loadConversationFromStorage();
   }
 
   generateSessionId() {
@@ -19,6 +22,35 @@ class ChatbotWidget {
   init() {
     this.createWidget();
     this.attachEventListeners();
+  }
+
+  /**
+   * Load conversation history from localStorage if available
+   */
+  loadConversationFromStorage() {
+    try {
+      const stored = localStorage.getItem(`chatbot_conversation_${this.sessionId}`);
+      if (stored) {
+        const data = JSON.parse(stored);
+        this.messages = data.map(m => ({
+          ...m,
+          timestamp: new Date(m.timestamp),
+        }));
+      }
+    } catch (e) {
+      console.warn('Failed to load conversation from storage:', e);
+    }
+  }
+
+  /**
+   * Save conversation history to localStorage
+   */
+  saveConversationToStorage() {
+    try {
+      localStorage.setItem(`chatbot_conversation_${this.sessionId}`, JSON.stringify(this.messages));
+    } catch (e) {
+      console.warn('Failed to save conversation to storage:', e);
+    }
   }
 
   createWidget() {
@@ -106,21 +138,26 @@ class ChatbotWidget {
     // Minimize button
     minimizeBtn.addEventListener('click', () => this.minimizeWindow());
 
-    // Send message on button click
-    sendBtn.addEventListener('click', () => this.sendMessage());
+    // Send message on button click with debouncing
+    sendBtn.addEventListener('click', () => this.debouncedSend());
 
     // Send message on Enter (but allow Shift+Enter for newline)
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        this.sendMessage();
+        this.debouncedSend();
       }
     });
 
-    // Auto-resize textarea
+    // Auto-resize textarea and enforce max length
     input.addEventListener('input', () => {
       input.style.height = 'auto';
       input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+      
+      // Enforce max length of 2000 characters
+      if (input.value.length > 2000) {
+        input.value = input.value.substring(0, 2000);
+      }
     });
 
     // Greet user when widget is first opened
@@ -128,11 +165,32 @@ class ChatbotWidget {
       this.messages = [
         {
           role: 'assistant',
-          content: 'Hi! 👋 I\'m your gymnastics AI assistant. Ask me about team stats, athlete performance, meet results, or anything else about OSU Gymnastics 2026!',
+          content: 'Hi! 👋 I\'m your gymnastics AI assistant. Ask me about team stats, athlete performance, meet results, or request detailed analysis of gymnastics data. What would you like to know?',
           timestamp: new Date(),
         },
       ];
+      this.saveConversationToStorage();
     }
+  }
+
+  /**
+   * Debounce sending messages to prevent rapid-fire API requests
+   */
+  debouncedSend() {
+    const now = Date.now();
+    const timeSinceLastSend = now - this.lastSendTime;
+
+    if (timeSinceLastSend < 500) {
+      // Too soon, reschedule
+      clearTimeout(this.sendDebounceTimer);
+      this.sendDebounceTimer = setTimeout(() => {
+        this.debouncedSend();
+      }, 500 - timeSinceLastSend);
+      return;
+    }
+
+    this.lastSendTime = now;
+    this.sendMessage();
   }
 
   openWindow() {
@@ -167,7 +225,12 @@ class ChatbotWidget {
     const input = document.getElementById('chatbotInput');
     const userMessage = input.value.trim();
 
+    // Validation: empty message, whitespace-only, or already loading
     if (!userMessage || this.isLoading) return;
+    if (userMessage.length > 2000) {
+      alert('Message is too long (max 2000 characters)');
+      return;
+    }
 
     // Add user message to conversation
     this.messages.push({
@@ -180,8 +243,9 @@ class ChatbotWidget {
     input.value = '';
     input.style.height = 'auto';
 
-    // Render messages
+    // Render messages and save to storage
     this.renderMessages();
+    this.saveConversationToStorage();
 
     // Show typing indicator
     this.showTypingIndicator();
@@ -200,6 +264,9 @@ class ChatbotWidget {
       });
 
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('Too many requests. Please wait a moment before sending another message.');
+        }
         throw new Error(`API error: ${response.status}`);
       }
 
@@ -227,6 +294,7 @@ class ChatbotWidget {
     } finally {
       this.hideTypingIndicator();
       this.renderMessages();
+      this.saveConversationToStorage();
     }
   }
 
@@ -257,15 +325,22 @@ class ChatbotWidget {
   }
 
   formatMessage(content) {
-    // Escape HTML
+    // Escape HTML first
     let html = content
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
 
-    // Convert URLs to links
+    // Convert markdown images ![alt](url) to <img> tags
+    // Only allow images from common sources for security
     html = html.replace(
-      /(https?:\/\/[^\s]+)/g,
+      /!\[([^\]]*)\]\((https?:\/\/[^\s)]+(?:\.(?:jpg|jpeg|png|gif|webp)))\)/gi,
+      '<img src="$2" alt="$1" style="max-width: 100%; height: auto; border-radius: 8px; margin: 8px 0;" />'
+    );
+
+    // Convert URLs to links (but not image URLs already processed)
+    html = html.replace(
+      /(https?:\/\/[^\s<]+)/g,
       '<a href="$1" target="_blank" rel="noopener">$1</a>'
     );
 
@@ -273,10 +348,15 @@ class ChatbotWidget {
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
     // Convert *italic* to <em>
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
 
     // Convert `code` to <code>
-    html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+    html = html.replace(/`([^`]+?)`/g, '<code>$1</code>');
+
+    // Convert ### Heading to <h4>, ## to <h3>, # to <h2>
+    html = html.replace(/^### (.+?)$/gm, '<h4 style="margin: 8px 0; font-weight: 600;">$1</h4>');
+    html = html.replace(/^## (.+?)$/gm, '<h3 style="margin: 8px 0; font-weight: 600;">$1</h3>');
+    html = html.replace(/^# (.+?)$/gm, '<h2 style="margin: 8px 0; font-weight: 600;">$1</h2>');
 
     // Convert line breaks
     html = html.replace(/\n/g, '<br>');
