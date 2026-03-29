@@ -24,6 +24,10 @@
       <a href="#" class="nav-link" data-view="insights">🔍 Insights</a>
     </div>
     <div class="nav-actions">
+      <div id="liveIndicator" class="live-indicator disconnected" title="Live updates connecting...">
+        <span class="live-pulse"></span>
+        <span class="live-label">Live</span>
+      </div>
       <button class="refresh-btn" id="refreshBtn" title="Refresh data">
         <span class="refresh-icon">🔄</span>
         <span class="refresh-label">Refresh</span>
@@ -140,6 +144,7 @@
 
   <script src="js/stats.js?v=0"></script>
   <script src="js/search.js?v=0"></script>
+  <script src="js/live-updates.js?v=0"></script>
   <script src="js/app.js?v=0"></script>
   <script src="js/chatbot.js?v=0"></script>
 </body>

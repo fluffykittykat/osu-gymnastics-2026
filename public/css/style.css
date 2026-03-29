@@ -3112,3 +3112,117 @@ main {
   cursor: pointer;
   font-weight: 600;
 }
+
+/* ===== Live Updates Indicator ===== */
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all var(--transition);
+  position: relative;
+}
+
+.live-indicator.connected {
+  background: rgba(76, 175, 130, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(76, 175, 130, 0.3);
+}
+
+.live-indicator.disconnected {
+  background: rgba(224, 92, 74, 0.15);
+  color: var(--red);
+  border: 1px solid rgba(224, 92, 74, 0.3);
+}
+
+.live-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+.live-indicator.disconnected .live-pulse {
+  animation: none;
+  opacity: 0.5;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+/* ===== Live Badge on Meet Cards ===== */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(76, 175, 130, 0.2);
+  color: var(--green);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(76, 175, 130, 0.4);
+}
+
+.live-badge::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-badge 1.5s infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ===== Highlight for Recently Updated Scores ===== */
+.score-updated {
+  animation: score-highlight 0.6s ease-out;
+}
+
+@keyframes score-highlight {
+  0% {
+    background-color: rgba(76, 175, 130, 0.3);
+    transform: scale(1.05);
+  }
+  100% {
+    background-color: transparent;
+    transform: scale(1);
+  }
+}
+
+/* ===== Mobile responsive for live indicator ===== */
+@media (max-width: 768px) {
+  .live-indicator {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+  }
+
+  .live-pulse {
+    width: 6px;
+    height: 6px;
+  }
+}
