@@ -913,9 +913,41 @@
 
   function renderMeetCard(m) {
     const statusBadge = getStatusBadge(m);
-    const resultBadge = m.status !== 'upcoming'
-      ? `<span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>`
-      : '';
+
+    // Meet card thumbnail from photos
+    const mpThumb = meetPhotos[m.date]?.heroImage;
+    const thumbHtml = mpThumb ? `
+      <div class="meet-card-thumb" style="position:relative;height:110px;overflow:hidden;border-radius:8px 8px 0 0;margin:-1rem -1rem 0.75rem -1rem;">
+        <img src="${mpThumb}" alt="${m.opponent}" style="width:100%;height:100%;object-fit:cover;object-position:center center;" loading="lazy" onerror="this.parentElement.style.display='none'">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(26,26,26,0.95) 0%,rgba(26,26,26,0.1) 60%,transparent 100%)"></div>
+      </div>` : '';
+
+    // Upcoming placeholder card
+    if (m.status === 'upcoming') {
+      const competitorsList = m.competitors ? m.competitors.map(c =>
+        `<div style="padding:0.25rem 0;color:${c.includes('Oregon State') ? 'var(--orange)' : '#ccc'};font-size:0.85rem;">${c}</div>`
+      ).join('') : '';
+      const noteHtml = m.note ? `<div style="color:var(--text-muted);font-size:0.75rem;margin-top:0.5rem;font-style:italic;">${m.note}</div>` : '';
+      return `
+        <div class="meet-card" data-meet-id="${m.id}" style="overflow:hidden;border:1px solid var(--orange);border-top:3px solid var(--orange);">
+          ${thumbHtml}
+          <div class="meet-header">
+            <div>
+              <div class="meet-opponent">${m.opponent}${m.isHome ? '<span class="badge badge-home">HOME</span>' : ''} ${statusBadge}</div>
+              <div class="meet-date">${formatDateLong(m.date)}</div>
+              <div class="meet-location">${m.location}</div>
+            </div>
+            <span class="badge badge-upcoming">UPCOMING</span>
+          </div>
+          ${competitorsList ? `<div style="margin-top:0.75rem;padding:0.5rem 0.75rem;background:rgba(255,255,255,0.03);border-radius:6px;">
+            <div style="font-size:0.7rem;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">Competitors</div>
+            ${competitorsList}
+          </div>` : ''}
+          ${noteHtml}
+        </div>`;
+    }
+
+    const resultBadge = `<span class="badge badge-${m.result.toLowerCase()}">${m.result}</span>`;
 
     const eventBars = ['vault', 'bars', 'beam', 'floor'].map(e => {
       const pct = ((m.events[e].osu / 50) * 100).toFixed(1);
@@ -930,14 +962,6 @@
           </div>
         </div>`;
     }).join('');
-
-    // Meet card thumbnail from photos
-    const mpThumb = meetPhotos[m.date]?.heroImage;
-    const thumbHtml = mpThumb ? `
-      <div class="meet-card-thumb" style="position:relative;height:110px;overflow:hidden;border-radius:8px 8px 0 0;margin:-1rem -1rem 0.75rem -1rem;">
-        <img src="${mpThumb}" alt="${m.opponent}" style="width:100%;height:100%;object-fit:cover;object-position:center center;" loading="lazy" onerror="this.parentElement.style.display='none'">
-        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(26,26,26,0.95) 0%,rgba(26,26,26,0.1) 60%,transparent 100%)"></div>
-      </div>` : '';
 
     return `
       <div class="meet-card${m.status === 'in_progress' ? ' meet-card-live' : ''}" data-meet-id="${m.id}" style="overflow:hidden;">
@@ -961,10 +985,45 @@
 
   function renderQuadGroup(quadMeets) {
     const first = quadMeets[0];
-    const wins = quadMeets.filter(m => m.result === 'W').length;
-    const losses = quadMeets.filter(m => m.result === 'L').length;
+    const isUpcoming = first.status === 'upcoming';
     const isLive = quadMeets.some(m => m.status === 'in_progress');
     const liveBadge = isLive ? '<span class="badge badge-live">🔴 LIVE</span>' : '';
+
+    // Quad card photo banner
+    const qThumb = meetPhotos[first.date]?.heroImage;
+    const qThumbHtml = qThumb ? `<div class="quad-banner-click" data-quad-name="${first.quadName}" data-quad-date="${first.date}" style="height:90px;overflow:hidden;position:relative;cursor:pointer;">
+      <img src="${qThumb}" alt="${first.quadName}" style="width:100%;height:100%;object-fit:cover;object-position:center center;" loading="lazy" onerror="this.parentElement.style.display='none'">
+      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,var(--card))"></div>
+    </div>` : '';
+
+    // Upcoming quad placeholder
+    if (isUpcoming) {
+      const competitorsList = first.competitors ? first.competitors.map(c =>
+        `<div style="padding:0.3rem 0.5rem;color:${c.includes('Oregon State') ? 'var(--orange)' : '#ccc'};font-size:0.9rem;${c.includes('Oregon State') ? 'font-weight:600;' : ''}">${c}</div>`
+      ).join('') : '';
+      const noteHtml = first.note ? `<div style="color:var(--text-muted);font-size:0.75rem;padding:0 0.75rem 0.75rem;font-style:italic;">${first.note}</div>` : '';
+      return `
+        <div class="quad-group meet-card" data-meet-id="${first.id}" style="border:1px solid var(--orange);border-top:3px solid var(--orange);border-radius:12px;overflow:hidden;background:var(--card);cursor:pointer;">
+          ${qThumbHtml}
+          <div style="background:var(--black);padding:0.75rem 1rem;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <span style="font-family:Oswald;font-size:1.1rem;color:var(--orange);">${first.quadName}</span>
+              <span class="badge badge-upcoming" style="margin-left:0.5rem;">UPCOMING</span>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <span style="color:#999;font-size:0.8rem;">${formatDate(first.date)} · ${first.location}</span>
+            </div>
+          </div>
+          ${competitorsList ? `<div style="padding:0.75rem;">
+            <div style="font-size:0.7rem;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">Competitors</div>
+            ${competitorsList}
+          </div>` : ''}
+          ${noteHtml}
+        </div>`;
+    }
+
+    const wins = quadMeets.filter(m => m.result === 'W').length;
+    const losses = quadMeets.filter(m => m.result === 'L').length;
 
     const matchupRows = quadMeets.map(m => `
       <div class="quad-matchup meet-card" data-meet-id="${m.id}" style="margin:0;border-radius:8px;cursor:pointer;">
@@ -980,13 +1039,6 @@
           </div>
         </div>
       </div>`).join('');
-
-    // Quad card photo banner
-    const qThumb = meetPhotos[first.date]?.heroImage;
-    const qThumbHtml = qThumb ? `<div class="quad-banner-click" data-quad-name="${first.quadName}" data-quad-date="${first.date}" style="height:90px;overflow:hidden;position:relative;cursor:pointer;">
-      <img src="${qThumb}" alt="${first.quadName}" style="width:100%;height:100%;object-fit:cover;object-position:center center;" loading="lazy" onerror="this.parentElement.style.display='none'">
-      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,var(--card))"></div>
-    </div>` : '';
 
     return `
       <div class="quad-group" style="border:1px solid ${isLive ? 'rgba(255,68,68,0.5)' : '#333'};border-radius:12px;overflow:hidden;background:var(--card);">
@@ -1578,7 +1630,7 @@
     }
 
     // Event detail cards with athlete lineups
-    const eventCards = ['vault', 'bars', 'beam', 'floor'].map(event => {
+    const eventCards = (!meet.events || !meet.events.vault) ? [] : ['vault', 'bars', 'beam', 'floor'].map(event => {
       const osuScore = meet.events[event].osu;
       const oppScore = meet.events[event].opponent;
       const barPct = ((osuScore / 50) * 100).toFixed(1);
@@ -1674,11 +1726,19 @@
           </div>
           ${resultBadge}
         </div>
+        ${meet.status === 'upcoming' ? `
+        <div style="margin-top:1rem;">
+          ${meet.competitors ? `<div style="margin-bottom:0.75rem;">
+            <div style="font-size:0.8rem;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">Competitors</div>
+            ${meet.competitors.map(c => `<div style="padding:0.3rem 0;color:${c.includes('Oregon State') ? 'var(--orange)' : '#ccc'};font-size:1rem;${c.includes('Oregon State') ? 'font-weight:600;' : ''}">${c}</div>`).join('')}
+          </div>` : ''}
+          ${meet.note ? `<div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;margin-top:0.5rem;">${meet.note}</div>` : ''}
+        </div>` : `
         <div class="meet-scores" style="margin-top:1rem;">
-          <div class="team-score"><div class="team-name">Oregon State</div><div class="score score-osu" style="font-size:2rem;">${meet.osuScore.toFixed(3)}</div></div>
+          <div class="team-score"><div class="team-name">Oregon State</div><div class="score score-osu" style="font-size:2rem;">${meet.osuScore?.toFixed(3) || '—'}</div></div>
           <div class="score-vs">vs</div>
-          <div class="team-score"><div class="team-name">Opponent</div><div class="score" style="font-size:2rem;">${meet.opponentScore.toFixed(3)}</div></div>
-        </div>
+          <div class="team-score"><div class="team-name">Opponent</div><div class="score" style="font-size:2rem;">${meet.opponentScore?.toFixed(3) || '—'}</div></div>
+        </div>`}
       </div>
       ${(()=>{try{return renderMeetSpotlight(meet);}catch(e){return '';}})()}
       ${teamsTable}

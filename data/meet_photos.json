@@ -38,5 +38,14 @@
   "2026-03-06": {
     "heroImage": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/oregonstate.sidearmsports.com/images/2026/3/6/USU--20.jpg",
     "recapUrl": "https://osubeavers.com/news/2026/3/6/womens-gymnastics-beaver-gymnastics-falls-to-utah-state"
+  },
+  "2026-03-14": {
+    "heroImage": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/oregonstate.sidearmsports.com/images/2026/3/14/Gym-10.jpg",
+    "recapUrl": "https://osubeavers.com/news/2026/3/14/womens-gymnastics-beavers-victorious-on-senior-day"
+  },
+  "2026-04-03": {
+    "heroImage": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/oregonstate.sidearmsports.com/images/logos/site/site.png",
+    "recapUrl": "https://osubeavers.com/news/2026/3/23/womens-gymnastics-oregon-state-gymnastics-to-host-2026-regional",
+    "isPlaceholder": true
   }
 }

@@ -394,6 +394,19 @@ main {
   margin-left: 0.3rem;
 }
 
+.badge-upcoming {
+  background: var(--orange);
+  color: white;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.badge-live {
+  background: #e74c3c;
+  color: white;
+  font-weight: 700;
+}
+
 .meet-scores {
   display: flex;
   justify-content: space-between;

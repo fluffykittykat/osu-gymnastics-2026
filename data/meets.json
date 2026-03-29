@@ -10302,5 +10302,25 @@
     "competitorAthletes": {},
     "competitorLineups": {},
     "imageBasedPdf": true
+  },
+  {
+    "id": "ncaa-regional-apr-3",
+    "date": "2026-04-03",
+    "opponent": "NCAA Regional",
+    "location": "Gill Coliseum, Corvallis, OR",
+    "isHome": true,
+    "status": "upcoming",
+    "result": null,
+    "osuScore": null,
+    "opponentScore": null,
+    "quadMeet": true,
+    "quadName": "2026 NCAA Corvallis Regional",
+    "competitors": ["No. 5 Alabama", "No. 12 Utah", "No. 23 Denver", "No. 25 Oregon State"],
+    "note": "OSU hosts — first Regional at Gill since 2019. Session I: Friday April 3, 1pm PT",
+    "events": {},
+    "athletes": [],
+    "lineups": {},
+    "competitorAthletes": {},
+    "competitorLineups": {}
   }
 ]
