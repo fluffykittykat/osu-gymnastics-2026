@@ -1,14 +1,46 @@
 # OSU Gymnastics 2026
 
-## 🤖 AI Chatbot
+## 🤖 AI Chatbot - Super Intelligent Analytics Engine
 
-The website includes an AI-powered gymnastics analytics assistant powered by Claude. To enable the chatbot:
+The website includes an AI-powered gymnastics analytics assistant that provides instant, detailed analysis of athlete performance using real 2026 OSU data.
+
+### Features
+
+✨ **Real-Time Athlete Analytics**
+- Instant performance breakdown for any athlete
+- Season averages, highs, lows per event
+- Meet-by-meet historical data
+- Consistency metrics and trend analysis
+- Team ranking and comparison
+
+💪 **Smart Analysis Capabilities**
+- "How has [athlete] done this season?" → Full performance breakdown
+- "Compare [athlete1] vs [athlete2]" → Side-by-side stats
+- "Which events is [athlete] strongest in?" → Event rankings with specific numbers
+- "Who's most improved?" → Trend analysis and comparisons
+- "What's [athlete]'s consistency like?" → Standard deviation analysis
+- "Deep dive on [athlete]'s meet performance" → Detailed meet-by-meet analysis
+
+🔒 **Graceful Degradation**
+- Chatbot works even if stats fail to load
+- Falls back to general gymnastics discussion
+- No console errors or app crashes
+- Seamless user experience
+
+### Setup
 
 1. Get your Anthropic API key from [console.anthropic.com](https://console.anthropic.com)
 2. Add it to your `.env` file: `ANTHROPIC_API_KEY=sk-ant-...`
-3. Restart the server and the chatbot will be active
+3. Restart the server and the chatbot will be active with full athlete analytics
 
 **See [CHATBOT_SETUP.md](./CHATBOT_SETUP.md) for detailed setup instructions.**
+
+### How It Works
+
+- **Startup**: Chatbot loads comprehensive athlete profiles from the stats cache
+- **Smart Matching**: When you mention an athlete name, the chatbot injects their full stats into context
+- **Context Injection**: All athlete data is included in Claude's system prompt for immediate analysis
+- **Error Handling**: If stats fail to load, chatbot still works with general gymnastics knowledge
 
 ## Stats API
 
@@ -24,6 +56,8 @@ All stats are pre-computed server-side when data loads and cached in memory. Sta
 | `GET /api/stats/athletes` | All athlete stats keyed by name |
 | `GET /api/stats/athletes/:name` | Single athlete stats (URL-encode the name, e.g. `/api/stats/athletes/Taylor%20DeVries`) |
 | `GET /api/stats/events/:event` | Single event stats: `vault`, `bars`, `beam`, or `floor` |
+| `GET /api/athlete-stats` | **[NEW]** Comprehensive athlete profiles for chatbot analytics - includes full performance metrics |
+| `GET /api/athlete-stats/compare?names=Athlete1,Athlete2` | **[NEW]** Side-by-side comparison of multiple athletes |
 
 ### Stats Bundle Schema
 
