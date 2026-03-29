@@ -1,3 +1,6 @@
+// Load environment variables from .env file
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -277,15 +280,20 @@ app.post('/api/chat', async (req, res) => {
     const { messages } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
+      console.error('[Chat API] Invalid request - messages array required');
       return res.status(400).json({ error: 'Messages array required' });
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      console.error('ANTHROPIC_API_KEY not set');
-      return res.status(500).json({ error: 'AI service not configured' });
+      console.error('[Chat API] ANTHROPIC_API_KEY environment variable is not set');
+      console.error('[Chat API] Please create .env file with your API key (see .env.example)');
+      return res.status(500).json({ 
+        error: 'AI service not configured. Please add ANTHROPIC_API_KEY to .env file.' 
+      });
     }
 
+    console.log('[Chat API] Processing request with', messages.length, 'messages');
     const client = new Anthropic({ apiKey });
 
     // Format messages for Claude API
@@ -338,19 +346,32 @@ app.post('/api/chat', async (req, res) => {
 
     const assistantMessage = response.content[0]?.text || '';
 
+    console.log('[Chat API] Successfully generated response');
     res.json({
       success: true,
       message: assistantMessage,
     });
   } catch (error) {
-    console.error('Chat API error:', error.message);
+    console.error('[Chat API] Error:', error.message);
+    console.error('[Chat API] Error details:', {
+      status: error.status,
+      type: error.type,
+      name: error.name
+    });
+    
     if (error.status === 401) {
-      return res.status(500).json({ error: 'Invalid API credentials' });
+      console.error('[Chat API] Authentication failed - check if your ANTHROPIC_API_KEY is valid');
+      return res.status(500).json({ 
+        error: 'Invalid API credentials. Please check your ANTHROPIC_API_KEY in .env file.' 
+      });
     }
     if (error.status === 429) {
+      console.error('[Chat API] Rate limit exceeded');
       return res.status(429).json({ error: 'Rate limited. Please try again later.' });
     }
-    res.status(500).json({ error: 'Failed to process chat message' });
+    res.status(500).json({ 
+      error: 'Failed to process chat message: ' + error.message 
+    });
   }
 });
 
@@ -430,14 +451,28 @@ setInterval(() => {
 server.listen(PORT, () => {
   console.log(`🤸 OSU Gymnastics 2026 running on http://localhost:${PORT}`);
   console.log(`📡 WebSocket server available at ws://localhost:${PORT}/ws`);
+  console.log('');
   
   // Check for required and optional configuration
-  if (!ANTHROPIC_API_KEY) {
-    console.warn('⚠️  WARNING: ANTHROPIC_API_KEY env var is not set');
-    console.warn('   Chatbot AI features will not work');
-    console.warn('   See CHATBOT_SETUP.md for configuration instructions');
+  console.log('📋 Configuration Status:');
+  if (ANTHROPIC_API_KEY) {
+    const keyPreview = ANTHROPIC_API_KEY.substring(0, 12) + '...' + ANTHROPIC_API_KEY.substring(ANTHROPIC_API_KEY.length - 4);
+    console.log(`   ✅ ANTHROPIC_API_KEY is loaded (${keyPreview})`);
+    console.log('   💬 Chatbot features enabled');
+  } else {
+    console.warn('   ⚠️  ANTHROPIC_API_KEY is NOT set');
+    console.warn('   ❌ Chatbot AI features will not work');
+    console.warn('   📝 Action required:');
+    console.warn('      1. Copy .env.example to .env: cp .env.example .env');
+    console.warn('      2. Edit .env and add your Anthropic API key');
+    console.warn('      3. Get API key from: https://console.anthropic.com');
+    console.warn('      4. Restart the server: npm start');
   }
+  
   if (!REFRESH_SECRET) {
-    console.warn('⚠️  WARNING: REFRESH_SECRET env var is not set — POST /api/refresh is unprotected');
+    console.warn('   ⚠️  REFRESH_SECRET is not set — POST /api/refresh is unprotected');
+  } else {
+    console.log('   ✅ REFRESH_SECRET is set');
   }
+  console.log('');
 });
