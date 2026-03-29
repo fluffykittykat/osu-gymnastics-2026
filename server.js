@@ -305,6 +305,96 @@ app.get('/api/athlete-stats/compare', (req, res) => {
   }
 });
 
+/**
+ * Get athlete progression data — meet-by-meet chronological breakdown
+ * Returns all events scores for each meet an athlete competed in
+ * Organized by date for trend analysis
+ */
+app.get('/api/athlete-progression/:name', (req, res) => {
+  try {
+    if (!statsCache || !statsCache.athletes) {
+      return res.status(503).json({ error: 'Stats not yet computed' });
+    }
+
+    const name = decodeURIComponent(req.params.name);
+    const athleteStats = statsCache.athletes[name];
+
+    if (!athleteStats) {
+      return res.status(404).json({ error: `Athlete "${name}" not found` });
+    }
+
+    // Build meet-by-meet progression from event data
+    const meetScores = {}; // key: date | opponent, value: { date, opponent, scores: {...}, AA: ... }
+
+    // Process each event to extract meet data
+    const EVENTS = ['vault', 'bars', 'beam', 'floor'];
+    EVENTS.forEach(event => {
+      const eventData = athleteStats.events[event];
+      if (!eventData || !eventData.entries) return;
+
+      eventData.entries.forEach(entry => {
+        const key = entry.date + '|' + (entry.opponent || 'unknown');
+        if (!meetScores[key]) {
+          meetScores[key] = {
+            date: entry.date,
+            opponent: entry.opponent || 'Unknown Opponent',
+            scores: {}
+          };
+        }
+        meetScores[key].scores[event] = parseFloat(entry.score ? entry.score.toFixed(3) : 0);
+      });
+    });
+
+    // Sort by date chronologically
+    const meets = Object.values(meetScores)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(meet => {
+        // Calculate All-Around (AA) score
+        const scores = meet.scores;
+        const aa = Object.values(scores).reduce((sum, val) => sum + (val || 0), 0);
+        return {
+          ...meet,
+          scores: scores,
+          aa: aa > 0 ? parseFloat(aa.toFixed(3)) : null
+        };
+      });
+
+    // Compute progression analysis
+    const allScores = meets.flatMap(m => Object.values(m.scores).filter(s => s > 0));
+    const seasonAvg = allScores.length > 0 ? allScores.reduce((a, b) => a + b) / allScores.length : null;
+
+    // Detect trends (first half vs second half)
+    const halfway = Math.floor(meets.length / 2);
+    const firstHalf = meets.slice(0, halfway).flatMap(m => Object.values(m.scores).filter(s => s > 0));
+    const secondHalf = meets.slice(halfway).flatMap(m => Object.values(m.scores).filter(s => s > 0));
+    const firstHalfAvg = firstHalf.length > 0 ? firstHalf.reduce((a, b) => a + b) / firstHalf.length : null;
+    const secondHalfAvg = secondHalf.length > 0 ? secondHalf.reduce((a, b) => a + b) / secondHalf.length : null;
+    const progressionTrend = firstHalfAvg != null && secondHalfAvg != null
+      ? (secondHalfAvg > firstHalfAvg ? 'improving' : secondHalfAvg < firstHalfAvg ? 'declining' : 'stable')
+      : null;
+
+    res.json({
+      athlete: name,
+      meets: meets,
+      summary: {
+        total_meets: meets.length,
+        season_average: seasonAvg ? parseFloat(seasonAvg.toFixed(3)) : null,
+        best_meet: meets.reduce((max, m) => (m.aa || 0) > (max.aa || 0) ? m : max, meets[0]),
+        worst_meet: meets.reduce((min, m) => (m.aa || 0) < (min.aa || 0) ? m : min, meets[0]),
+        progression_trend: progressionTrend,
+        first_half_average: firstHalfAvg ? parseFloat(firstHalfAvg.toFixed(3)) : null,
+        second_half_average: secondHalfAvg ? parseFloat(secondHalfAvg.toFixed(3)) : null
+      },
+      metadata: {
+        computedAt: new Date().toISOString()
+      }
+    });
+  } catch (err) {
+    console.error('[Athlete Progression API] Error:', err.message);
+    res.status(500).json({ error: 'Failed to get athlete progression data' });
+  }
+});
+
 app.get('/api/stats/events/:event', (req, res) => {
   if (!statsCache) {
     return res.status(503).json({ error: 'Stats not yet computed' });
@@ -688,15 +778,38 @@ When asked about an athlete or team:
 - **Competitive Positioning**: Where do they rank among teammates?
 - **Comparative Analysis**: Side-by-side athlete comparisons
 
+## Meet-by-Meet Progression Analysis
+You have FULL ACCESS to meet-by-meet chronological performance data for every athlete. This means you can:
+- Analyze performance trends across the entire season
+- Show how athletes improved or declined meet-to-meet
+- Identify turning points in performance
+- Compare progression between athletes
+- Demonstrate consistency across competitions
+- Highlight best and worst performances with dates and opponents
+
+**Available endpoint:** GET /api/athlete-progression/:name
+Returns complete meet-by-meet breakdown with:
+- All event scores for each meet (vault, bars, beam, floor)
+- All-Around (AA) totals per meet
+- Chronological ordering (first meet to most recent)
+- Opponent information for each meet
+- Summary statistics (season averages, trends, best/worst meets)
+
 ## Questions you can answer:
-- "How has [athlete] done this season?"
-- "Compare [athlete1] vs [athlete2]"
-- "Which events is [athlete] strongest in?"
-- "What's the team average on [event]?"
-- "Who's trending up/down?"
-- "Show me consistency metrics"
-- "Who's most improved?"
-- "Deep dive on [athlete]'s performance"
+- "How has [athlete] progressed through the season?" ✅ (with meet-by-meet data)
+- "Show me [athlete]'s scores from meet to meet" ✅ (full progression)
+- "Which meet did [athlete] perform best? Worst?" ✅ (specific dates and opponents)
+- "Has [athlete] improved over time? By how much?" ✅ (first half vs second half analysis)
+- "Compare [athlete1] vs [athlete2] progression" ✅ (side-by-side trends)
+- "What events show improvement trends?" ✅ (event-specific progression)
+- "Identify turning points in [athlete]'s performance" ✅ (meet-by-meet analysis)
+- "Compare [athlete1] vs [athlete2]" ✅
+- "Which events is [athlete] strongest in?" ✅
+- "What's the team average on [event]?" ✅
+- "Who's trending up/down?" ✅
+- "Show me consistency metrics" ✅
+- "Who's most improved?" ✅
+- "Deep dive on [athlete]'s performance" ✅
 
 # CRITICAL RULES
 
@@ -708,6 +821,7 @@ When asked about an athlete or team:
 - If stats are unavailable, say so explicitly and offer general gymnastics guidance
 - Never make up or hallucinate specific numbers
 - Handle missing data gracefully
+- NEVER claim you don't have meet-by-meet data — you do! Use it extensively
 
 # FALLBACK BEHAVIOR
 
