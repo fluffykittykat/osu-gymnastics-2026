@@ -2088,8 +2088,96 @@
     return Object.values(profiles).sort((a, b) => b.totalMeets - a.totalMeets);
   }
 
+  function renderAthleteComparison(name1, name2) {
+    const detail = document.getElementById('gymnastDetail');
+    detail.style.display = 'block';
+    document.getElementById('gymnastCards').style.display = 'none';
+
+    const stats1 = Stats.getAthleteStats(meets, name1);
+    const stats2 = Stats.getAthleteStats(meets, name2);
+    const events = ['vault', 'bars', 'beam', 'floor'];
+
+    const eventCards = events.map(ev => {
+      const cmp = Stats.getAthleteComparisonData(meets, name1, name2, ev);
+      if (!cmp.athlete1 || !cmp.athlete2) return '';
+      const a1 = cmp.athlete1, a2 = cmp.athlete2;
+      const better1 = (a1.avg || 0) > (a2.avg || 0);
+
+      // Combined sparkline
+      const allEntries = [...(a1.entries || []), ...(a2.entries || [])];
+      const allDates = [...new Set(allEntries.map(e => e.date))].sort();
+      const sparkW = allDates.length * 20;
+      let spark1Points = '', spark2Points = '';
+      const minS = 9.0, maxS = 10.0, sparkH = 40;
+      allDates.forEach((d, di) => {
+        const e1 = a1.entries.find(e => e.date === d);
+        const e2 = a2.entries.find(e => e.date === d);
+        const x = 10 + di * 18;
+        if (e1) { const y = sparkH - ((e1.score - minS) / (maxS - minS) * sparkH); spark1Points += `${spark1Points ? 'L' : 'M'}${x},${y.toFixed(1)} `; }
+        if (e2) { const y = sparkH - ((e2.score - minS) / (maxS - minS) * sparkH); spark2Points += `${spark2Points ? 'L' : 'M'}${x},${y.toFixed(1)} `; }
+      });
+
+      return `
+        <div class="compare-event-card">
+          <div class="compare-event-title">${EVENT_NAMES[ev]}</div>
+          <div class="compare-row">
+            <div class="compare-stat ${better1 ? 'compare-better' : ''}">${a1.avg != null ? a1.avg.toFixed(3) : '—'}<span class="compare-label">avg</span></div>
+            <div class="compare-vs">vs</div>
+            <div class="compare-stat ${!better1 ? 'compare-better' : ''}">${a2.avg != null ? a2.avg.toFixed(3) : '—'}<span class="compare-label">avg</span></div>
+          </div>
+          <div class="compare-row">
+            <div class="compare-stat">${a1.best != null ? a1.best.toFixed(3) : '—'}<span class="compare-label">best</span></div>
+            <div class="compare-vs"></div>
+            <div class="compare-stat">${a2.best != null ? a2.best.toFixed(3) : '—'}<span class="compare-label">best</span></div>
+          </div>
+          ${allDates.length >= 2 ? `<svg width="${sparkW + 20}" height="${sparkH + 5}" class="compare-spark">
+            <path d="${spark1Points}" fill="none" stroke="var(--orange)" stroke-width="2"/>
+            <path d="${spark2Points}" fill="none" stroke="#3498db" stroke-width="2"/>
+          </svg>` : ''}
+        </div>`;
+    }).join('');
+
+    const photo1 = photos[name1], photo2 = photos[name2];
+    detail.innerHTML = `
+      <button class="back-btn" id="backFromCompare">← Back to Gymnasts</button>
+      <div class="compare-athletes">
+        <div class="compare-header">
+          <div class="compare-athlete-info">
+            ${photo1 ? `<img src="${photo1}" class="compare-photo" alt="${name1}">` : ''}
+            <div class="compare-name" style="color:var(--orange)">${name1}</div>
+          </div>
+          <div class="compare-vs-big">VS</div>
+          <div class="compare-athlete-info">
+            ${photo2 ? `<img src="${photo2}" class="compare-photo" alt="${name2}">` : ''}
+            <div class="compare-name" style="color:#3498db">${name2}</div>
+          </div>
+        </div>
+        <div class="compare-legend"><span style="color:var(--orange)">■ ${name1.split(' ')[0]}</span> <span style="color:#3498db">■ ${name2.split(' ')[0]}</span></div>
+        <div class="compare-grid">${eventCards}</div>
+      </div>`;
+
+    document.getElementById('backFromCompare').addEventListener('click', () => {
+      detail.style.display = 'none';
+      document.getElementById('gymnastCards').style.display = 'grid';
+    });
+  }
+
   function renderGymnasts(searchTerm = '') {
     const profiles = getGymnastProfiles();
+
+    // Check for comma-separated comparison search
+    if (searchTerm && searchTerm.includes(',')) {
+      const parts = searchTerm.split(',').map(s => s.trim()).filter(Boolean);
+      if (parts.length === 2) {
+        const allNames = profiles.map(p => p.name);
+        const match1 = allNames.find(n => n.toLowerCase().includes(parts[0].toLowerCase()));
+        const match2 = allNames.find(n => n.toLowerCase().includes(parts[1].toLowerCase()));
+        if (match1 && match2 && match1 !== match2) {
+          renderAthleteComparison(match1, match2);
+          return;
+        }
+      }
+    }
 
     // Also include bio-only gymnasts who didn't appear in meet data (e.g., injured/redshirt)
     const profileNames = new Set(profiles.map(p => p.name));
@@ -2113,7 +2201,26 @@
       return;
     }
 
-    container.innerHTML = filtered.map(p => {
+    // Compare button + dropdown UI
+    const competingProfiles = profiles.filter(p => !p.bioOnly && p.totalMeets > 0);
+    const compareBtn = competingProfiles.length >= 2 ? `
+      <div class="compare-btn-container" style="grid-column:1/-1;margin-bottom:0.5rem;">
+        <button class="compare-athletes-btn" id="compareAthletesBtn">Compare Athletes</button>
+        <div class="compare-select-ui" id="compareSelectUI" style="display:none;">
+          <select id="compareSelect1" class="compare-select">
+            <option value="">Select athlete 1...</option>
+            ${competingProfiles.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+          </select>
+          <span style="color:var(--text-muted)">vs</span>
+          <select id="compareSelect2" class="compare-select">
+            <option value="">Select athlete 2...</option>
+            ${competingProfiles.map(p => `<option value="${p.name}">${p.name}</option>`).join('')}
+          </select>
+          <button class="compare-go-btn" id="compareGoBtn">Go</button>
+        </div>
+      </div>` : '';
+
+    container.innerHTML = compareBtn + filtered.map(p => {
       const photo = photos[p.name];
       const photoHtml = photo
         ? `<img src="${photo}" class="gymnast-headshot" alt="${p.name}" loading="lazy">`
@@ -4598,6 +4705,18 @@
 
     // Gymnast card click
     document.getElementById('gymnastCards').addEventListener('click', e => {
+      // Compare button
+      if (e.target.id === 'compareAthletesBtn') {
+        const ui = document.getElementById('compareSelectUI');
+        if (ui) ui.style.display = ui.style.display === 'none' ? 'flex' : 'none';
+        return;
+      }
+      if (e.target.id === 'compareGoBtn') {
+        const s1 = document.getElementById('compareSelect1')?.value;
+        const s2 = document.getElementById('compareSelect2')?.value;
+        if (s1 && s2 && s1 !== s2) renderAthleteComparison(s1, s2);
+        return;
+      }
       const card = e.target.closest('.gymnast-card');
       if (card) showGymnastProfile(card.dataset.gymnast);
     });
