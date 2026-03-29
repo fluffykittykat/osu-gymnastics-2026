@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saved Notes & Analysis - OSU Gymnastics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=0">
+  <link rel="stylesheet" href="css/chatbot.css?v=0">
+  <link rel="stylesheet" href="css/saved-notes.css?v=0">
+</head>
+<body>
+  <!-- Top Nav (desktop) -->
+  <nav class="top-nav" id="topNav">
+    <div class="nav-brand">
+      <span class="brand-icon">🦫</span>
+      <span class="brand-text">OSU GYMNASTICS</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link" data-view="season">🏠 Season</a>
+      <a href="index.html" class="nav-link" data-view="gymnasts">🤸 Gymnasts</a>
+      <a href="index.html" class="nav-link" data-view="leaderboards">📊 Leaderboards</a>
+      <a href="index.html" class="nav-link" data-view="insights">🔍 Insights</a>
+      <a href="saved-notes.html" class="nav-link active">📔 Saved Notes</a>
+    </div>
+    <div class="nav-actions">
+      <button class="refresh-btn" id="refreshBtn" title="Refresh data">
+        <span class="refresh-icon">🔄</span>
+        <span class="refresh-label">Refresh</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main id="app" class="saved-notes-page">
+    <!-- Loading State -->
+    <div id="loading" class="loading-container" style="display: none;">
+      <div class="spinner"></div>
+      <p>Loading saved analyses...</p>
+    </div>
+
+    <!-- List View -->
+    <section id="listView" class="list-view">
+      <div class="page-header">
+        <div class="header-content">
+          <h1>📔 Saved Notes & Analysis</h1>
+          <p class="subtitle">Your personal notebook of chatbot insights about athlete performance</p>
+        </div>
+        <button class="btn btn-primary" id="backToChatBtn">← Back to Chat</button>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-section">
+        <input 
+          type="text" 
+          id="searchInput" 
+          class="search-input" 
+          placeholder="Search saved analyses... (title, summary, category)"
+        >
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="athlete">🤸 Athlete</button>
+          <button class="filter-btn" data-filter="comparison">⚖️ Comparison</button>
+          <button class="filter-btn" data-filter="trends">📈 Trends</button>
+          <button class="filter-btn" data-filter="other">📌 Other</button>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">📔</div>
+        <h2>No saved analyses yet</h2>
+        <p>Start a chat with the AI assistant and save your insights to build your personal knowledge base.</p>
+        <button class="btn btn-primary" id="startChatBtn">💬 Start a Chat</button>
+      </div>
+
+      <!-- Saved Analyses Grid -->
+      <div id="analysesGrid" class="analyses-grid" style="display: none;"></div>
+    </section>
+
+    <!-- Detail View -->
+    <section id="detailView" class="detail-view" style="display: none;">
+      <button class="back-btn" id="backToListBtn">← Back to List</button>
+      
+      <div class="detail-container">
+        <div class="detail-header">
+          <div class="header-info">
+            <h1 id="detailTitle"></h1>
+            <div class="meta-info">
+              <span class="meta-item">
+                <span class="icon">📅</span>
+                <span id="detailDate"></span>
+              </span>
+              <span class="meta-item" id="categoryBadge"></span>
+              <span class="meta-item" id="insightCountBadge"></span>
+            </div>
+            <p id="detailSummary" class="detail-summary"></p>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn" id="deleteAnalysisBtn" title="Delete analysis">
+              <span>🗑️</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat History -->
+        <div class="section chat-section">
+          <h2 class="section-title">💬 Chat History</h2>
+          <div id="chatHistoryContainer" class="chat-history"></div>
+        </div>
+
+        <!-- Insights Section -->
+        <div class="section insights-section">
+          <div class="insights-header">
+            <h2 class="section-title">📌 Insights & Notes</h2>
+            <button class="btn btn-secondary" id="addInsightBtn">+ Add Insight</button>
+          </div>
+
+          <!-- Add Insight Form (hidden by default) -->
+          <div id="addInsightForm" class="add-insight-form" style="display: none;">
+            <textarea 
+              id="insightTextarea" 
+              placeholder="Add a new insight, finding, or note about this analysis..."
+              rows="4"
+            ></textarea>
+            <div class="form-actions">
+              <button class="btn btn-primary" id="saveInsightBtn">Save Insight</button>
+              <button class="btn btn-secondary" id="cancelInsightBtn">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Insights List -->
+          <div id="insightsList" class="insights-list"></div>
+
+          <!-- Empty Insights State -->
+          <div id="emptyInsights" class="empty-message">
+            <p>No insights added yet. Click "Add Insight" to start building your notes.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Nav (mobile) -->
+  <nav class="bottom-nav" id="bottomNav">
+    <a href="index.html" class="bottom-nav-item" data-view="season">
+      <span class="nav-icon">⚡</span>
+      <span class="nav-label">War Room</span>
+    </a>
+    <a href="index.html" class="bottom-nav-item" data-view="gymnasts">
+      <span class="nav-icon">🤸</span>
+      <span class="nav-label">Roster</span>
+    </a>
+    <a href="index.html" class="bottom-nav-item" data-view="leaderboards">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Leaders</span>
+    </a>
+    <a href="index.html" class="bottom-nav-item" data-view="insights">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">Insights</span>
+    </a>
+    <a href="saved-notes.html" class="bottom-nav-item active">
+      <span class="nav-icon">📔</span>
+      <span class="nav-label">Notes</span>
+    </a>
+  </nav>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="js/saved-notes.js?v=0"></script>
+</body>
+</html>

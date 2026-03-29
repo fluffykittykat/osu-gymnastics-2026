@@ -105,9 +105,69 @@ class ChatbotWidget {
           </button>
         </div>
 
+        <!-- Save Chat Section -->
+        <div class="chatbot-save-section" id="saveChatSection" style="display: none;">
+          <button class="save-chat-btn" id="saveChatBtn" title="Save this chat to your notes">
+            <span>💾</span> Save This Chat
+          </button>
+          <a href="saved-notes.html" class="view-notes-btn" title="View your saved analyses">
+            <span>📔</span> View Saved Notes
+          </a>
+        </div>
+
         <!-- Footer Info -->
         <div class="chatbot-footer">
           <small>💡 Ask about meet results, athlete stats, or gymnastics analysis</small>
+        </div>
+      </div>
+
+      <!-- Save Chat Modal -->
+      <div class="save-chat-modal" id="saveChatModal" style="display: none;">
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Save This Analysis</h2>
+            <button class="modal-close-btn" id="modalCloseBtn">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="analysisTitleInput">Title *</label>
+              <input 
+                type="text" 
+                id="analysisTitleInput" 
+                placeholder="e.g., Savannah Mill Season Analysis"
+                maxlength="200"
+              >
+              <small class="char-count"><span id="titleCharCount">0</span>/200</small>
+            </div>
+
+            <div class="form-group">
+              <label for="analysisSummaryInput">Summary (optional)</label>
+              <textarea 
+                id="analysisSummaryInput" 
+                placeholder="Add a brief summary of this analysis..."
+                rows="3"
+                maxlength="500"
+              ></textarea>
+              <small class="char-count"><span id="summaryCharCount">0</span>/500</small>
+            </div>
+
+            <div class="form-group">
+              <label for="analysisCategorySelect">Category</label>
+              <select id="analysisCategorySelect">
+                <option value="other">📌 Other</option>
+                <option value="athlete">🤸 Athlete Performance</option>
+                <option value="comparison">⚖️ Athlete Comparison</option>
+                <option value="trends">📈 Performance Trends</option>
+              </select>
+            </div>
+
+            <div class="form-message" id="formMessage"></div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-secondary" id="modalCancelBtn">Cancel</button>
+            <button class="btn-primary" id="modalSaveBtn">Save Analysis</button>
+          </div>
         </div>
       </div>
     `;
@@ -158,6 +218,22 @@ class ChatbotWidget {
       if (input.value.length > 2000) {
         input.value = input.value.substring(0, 2000);
       }
+    });
+
+    // Save chat functionality
+    document.getElementById('saveChatBtn')?.addEventListener('click', () => this.openSaveChatModal());
+    document.getElementById('modalCloseBtn')?.addEventListener('click', () => this.closeSaveChatModal());
+    document.getElementById('modalOverlay')?.addEventListener('click', () => this.closeSaveChatModal());
+    document.getElementById('modalCancelBtn')?.addEventListener('click', () => this.closeSaveChatModal());
+    document.getElementById('modalSaveBtn')?.addEventListener('click', () => this.saveChat());
+
+    // Character counters for save modal
+    document.getElementById('analysisTitleInput')?.addEventListener('input', (e) => {
+      document.getElementById('titleCharCount').textContent = e.target.value.length;
+    });
+
+    document.getElementById('analysisSummaryInput')?.addEventListener('input', (e) => {
+      document.getElementById('summaryCharCount').textContent = e.target.value.length;
     });
 
     // Greet user when widget is first opened
@@ -338,6 +414,12 @@ class ChatbotWidget {
       messagesContainer.appendChild(messageEl);
     });
 
+    // Show save button if there are at least 2 messages (user + assistant response)
+    const saveSection = document.getElementById('saveChatSection');
+    if (saveSection && this.messages.length >= 2) {
+      saveSection.style.display = 'flex';
+    }
+
     // Scroll to bottom
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
@@ -394,6 +476,109 @@ class ChatbotWidget {
     const indicator = document.getElementById('typingIndicator');
     indicator.style.display = 'none';
     this.isLoading = false;
+  }
+
+  /**
+   * Open the save chat modal
+   */
+  openSaveChatModal() {
+    const modal = document.getElementById('saveChatModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.getElementById('analysisTitleInput').focus();
+      // Reset form
+      document.getElementById('analysisTitleInput').value = '';
+      document.getElementById('analysisSummaryInput').value = '';
+      document.getElementById('analysisCategorySelect').value = 'other';
+      document.getElementById('titleCharCount').textContent = '0';
+      document.getElementById('summaryCharCount').textContent = '0';
+      document.getElementById('formMessage').textContent = '';
+      document.getElementById('formMessage').className = 'form-message';
+    }
+  }
+
+  /**
+   * Close the save chat modal
+   */
+  closeSaveChatModal() {
+    const modal = document.getElementById('saveChatModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  /**
+   * Save the current chat as an analysis
+   */
+  saveChat() {
+    const title = document.getElementById('analysisTitleInput').value.trim();
+    const summary = document.getElementById('analysisSummaryInput').value.trim();
+    const category = document.getElementById('analysisCategorySelect').value;
+
+    // Validation
+    if (!title) {
+      this.showFormMessage('Please enter a title for your analysis', 'error');
+      document.getElementById('analysisTitleInput').focus();
+      return;
+    }
+
+    if (title.length < 5) {
+      this.showFormMessage('Title must be at least 5 characters', 'error');
+      return;
+    }
+
+    // Create analysis object
+    const analysis = {
+      id: `analysis_${Date.now()}`,
+      title,
+      summary: summary || '',
+      category,
+      chatHistory: this.messages.map(m => ({
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : m.timestamp,
+      })),
+      insights: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Load existing analyses from localStorage
+    let analyses = [];
+    try {
+      const stored = localStorage.getItem('gym_saved_analyses');
+      if (stored) {
+        analyses = JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error('Failed to load analyses:', e);
+    }
+
+    // Add new analysis
+    analyses.push(analysis);
+
+    // Save to localStorage
+    try {
+      localStorage.setItem('gym_saved_analyses', JSON.stringify(analyses));
+      this.showFormMessage('✓ Analysis saved successfully!', 'success');
+      
+      // Close modal after a short delay
+      setTimeout(() => {
+        this.closeSaveChatModal();
+      }, 1000);
+    } catch (e) {
+      console.error('Failed to save analysis:', e);
+      this.showFormMessage('Error saving analysis. Please try again.', 'error');
+    }
+  }
+
+  /**
+   * Show a message in the save modal form
+   */
+  showFormMessage(message, type = 'info') {
+    const messageEl = document.getElementById('formMessage');
+    messageEl.textContent = message;
+    messageEl.className = `form-message ${type}`;
   }
 }
 
