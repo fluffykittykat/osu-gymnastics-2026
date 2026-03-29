@@ -2202,67 +2202,11 @@
     });
   }
 
-  // ===== Export Functions =====
-  function exportComparisonAsCSV(name1, name2) {
-    // Use server endpoint for CSV generation
-    const params = new URLSearchParams({
-      a1: name1,
-      a2: name2
-    });
-    
-    const filename = `${name1.replace(/\s+/g, '_')}_vs_${name2.replace(/\s+/g, '_')}_comparison.csv`;
-    const url = `/api/export/compare-csv?${params.toString()}`;
-    
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    showToast(`✅ Downloading CSV...`, 'success');
-  }
-
-  function exportComparisonAsPDF(name1, name2) {
-    // Use server endpoint for PDF generation
-    const params = new URLSearchParams({
-      a1: name1,
-      a2: name2
-    });
-    
-    const filename = `${name1.replace(/\s+/g, '_')}_vs_${name2.replace(/\s+/g, '_')}_comparison.pdf`;
-    const url = `/api/export/compare-pdf?${params.toString()}`;
-    
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    showToast(`✅ Generating PDF...`, 'success');
-  }
-
-  function copyComparisonShareLink(name1, name2) {
-    const url = `${window.location.origin}/?compare=${encodeURIComponent(name1)}&with=${encodeURIComponent(name2)}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: `${name1} vs ${name2}`,
-        text: `Compare OSU Gymnastics athletes`,
-        url: url
-      }).catch(err => console.log('Share cancelled:', err));
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(url).then(() => {
-        showToast('✅ Share link copied to clipboard', 'success');
-      }).catch(err => {
-        showToast('❌ Failed to copy link', 'error');
-      });
-    }
-  }
+  // Export functions are now defined in export.js (avoid duplication)
+  // - exportComparisonAsCSV(name1, name2)
+  // - exportComparisonAsPDF(name1, name2)
+  // - copyComparisonShareLink(name1, name2)
+  // These are called from the comparison view buttons below
 
   function renderGymnasts(searchTerm = '') {
     const profiles = getGymnastProfiles();

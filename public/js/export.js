@@ -68,31 +68,35 @@
    */
   window.generateComparisonShareLink = function(name1, name2) {
     const baseUrl = window.location.origin;
-    const params = new URLSearchParams({
-      a1: name1,
-      a2: name2
-    });
-    
-    return `${baseUrl}/?view=gymnasts&compare=${params.toString()}`;
+    return `${baseUrl}/?compare=${encodeURIComponent(name1)}&with=${encodeURIComponent(name2)}`;
   };
 
   /**
-   * Copy share link to clipboard
+   * Copy share link to clipboard (or use native share if available)
    * @param {string} name1 - First athlete name
    * @param {string} name2 - Second athlete name
    */
   window.copyComparisonShareLink = function(name1, name2) {
-    const link = generateComparisonShareLink(name1, name2);
+    const url = generateComparisonShareLink(name1, name2);
     
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(link).then(() => {
-        showToast('Share link copied to clipboard', 'success');
+    // Try native share API first
+    if (navigator.share) {
+      navigator.share({
+        title: `${name1} vs ${name2}`,
+        text: 'Compare OSU Gymnastics athletes',
+        url: url
+      }).catch(err => console.log('Share cancelled:', err));
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('✅ Share link copied to clipboard', 'success');
       }).catch(err => {
         console.error('Failed to copy link:', err);
-        fallbackCopyToClipboard(link);
+        fallbackCopyToClipboard(url);
       });
     } else {
-      fallbackCopyToClipboard(link);
+      // Oldest fallback for browsers without clipboard API
+      fallbackCopyToClipboard(url);
     }
   };
 
@@ -147,13 +151,13 @@
    */
   window.loadComparisonFromURL = function() {
     const params = new URLSearchParams(window.location.search);
-    const compareParam = params.get('compare');
+    const compareAthlete = params.get('compare');
+    const withAthlete = params.get('with');
     
-    if (compareParam) {
+    if (compareAthlete && withAthlete) {
       try {
-        const compareParams = new URLSearchParams(compareParam);
-        const a1 = compareParams.get('a1');
-        const a2 = compareParams.get('a2');
+        const a1 = decodeURIComponent(compareAthlete);
+        const a2 = decodeURIComponent(withAthlete);
         
         if (a1 && a2) {
           // Trigger comparison view with these athletes

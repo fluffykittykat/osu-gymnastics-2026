@@ -9,7 +9,7 @@
     "pm2:restart": "pm2 restart osu-gymnastics",
     "pm2:stop": "pm2 stop osu-gymnastics",
     "pm2:logs": "pm2 logs osu-gymnastics",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tests/export.test.js"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +17,6 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
     "express": "^5.2.1",
-    "jspdf": "^4.2.1",
     "papaparse": "^5.5.3",
     "pdfkit": "^0.18.0"
   }
