@@ -3799,12 +3799,45 @@
         </div>
 
       </div>
+      ${renderSeasonRankings()}
       ${renderHotTakes()}
       ${renderDeepCuts()}
       ${renderSeasonWildStats()}
     `;
   }
 
+  // ===== Season Rankings from allTeams (quad meets) =====
+  function renderSeasonRankings() {
+    const rankings = Stats.getSeasonRankings(meets);
+    if (!rankings.length) return '';
+
+    const rows = rankings.map(r => {
+      const isOSU = r.team.toLowerCase().includes('oregon');
+      const rowClass = isOSU ? ' class="rankings-osu-row"' : '';
+      return `<tr${rowClass}>
+        <td>${r.team}</td>
+        <td>${r.appearances}</td>
+        <td style="font-family:Oswald;font-weight:600">${r.avgTotal != null ? r.avgTotal.toFixed(3) : '—'}</td>
+        <td>${r.bestTotal != null ? r.bestTotal.toFixed(3) : '—'}</td>
+        <td>${r.vault != null ? r.vault.toFixed(3) : '—'}</td>
+        <td>${r.bars != null ? r.bars.toFixed(3) : '—'}</td>
+        <td>${r.beam != null ? r.beam.toFixed(3) : '—'}</td>
+        <td>${r.floor != null ? r.floor.toFixed(3) : '—'}</td>
+      </tr>`;
+    }).join('');
+
+    return `
+      <div class="section-card" style="margin-top:1.5rem;">
+        <h2 class="section-title">🏆 Season Rankings (Quad Meets)</h2>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem">Aggregated from allTeams data across quad meets. Sorted by average total score.</p>
+        <div style="overflow-x:auto">
+          <table class="rankings-table">
+            <thead><tr><th>Team</th><th>App.</th><th>Avg Total</th><th>Best Total</th><th>VT Avg</th><th>UB Avg</th><th>BB Avg</th><th>FX Avg</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
+  }
 
   // ===== Deep Cuts: Factor × Event Correlation Matrix =====
   function renderDeepCuts() {
