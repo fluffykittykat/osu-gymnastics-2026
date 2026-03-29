@@ -134,8 +134,74 @@ meets.forEach((m, i) => {
 });
 
 console.log(`\nResults: ${errors} error(s), ${warnings} warning(s)`);
+
+// ===== Stats.js Module Tests =====
+console.log('\n--- Stats.js Module Tests ---\n');
+
+// Mock window and load stats.js
+const vm = require('vm');
+const statsCode = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'stats.js'), 'utf-8');
+const sandbox = { window: {} };
+vm.createContext(sandbox);
+vm.runInContext(statsCode, sandbox);
+const Stats = sandbox.window.Stats;
+
+let statErrors = 0;
+function assert(condition, msg) {
+  if (!condition) {
+    console.error(`  STAT FAIL: ${msg}`);
+    statErrors++;
+  } else {
+    console.log(`  STAT OK: ${msg}`);
+  }
+}
+
+// Test basic stats functions
+assert(Stats.mean([1, 2, 3]) === 2, 'mean([1,2,3]) === 2');
+assert(Stats.mean([]) === null, 'mean([]) === null');
+assert(Stats.stddev([1]) === 0, 'stddev single item returns 0');
+assert(Stats.stddev([1, 3]) > 0, 'stddev([1,3]) > 0');
+assert(Stats.pearson([1,2], [1,2]) === null, 'pearson with < 3 items returns null');
+assert(Stats.pearson([1,2,3], [1,2,3]) !== null, 'pearson with 3+ items returns value');
+const lr = Stats.linReg([{x:0,y:0},{x:1,y:1},{x:2,y:2}]);
+assert(Math.abs(lr.slope - 1) < 0.001, 'linReg slope for y=x is 1');
+
+// Test with real meets data
+const sopVault = Stats.getAthleteEntries(meets, 'Sophia Esposito', 'vault');
+const sopBest = sopVault.length ? Math.max(...sopVault.map(e => e.score)) : null;
+assert(sopBest === 9.95, `Sophia Esposito best vault is ${sopBest} (expected 9.95)`);
+
+const aaLB = Stats.getAALeaderboard(meets);
+assert(aaLB.length >= 1, `getAALeaderboard returns ${aaLB.length} entries (expected >= 1)`);
+assert(aaLB[0].name === 'Sophia Esposito', `AA leader is ${aaLB[0]?.name} (expected Sophia Esposito)`);
+
+const rankings = Stats.getSeasonRankings(meets);
+const osuRank = rankings.find(r => r.team === 'Oregon State');
+assert(osuRank !== undefined, 'getSeasonRankings includes Oregon State');
+assert(rankings.length > 0, `getSeasonRankings returns ${rankings.length} teams`);
+
+const teamStats = Stats.getTeamSeasonStats(meets);
+assert(teamStats.record.w > 0 || teamStats.record.l > 0, 'getTeamSeasonStats has W/L record');
+assert(teamStats.totalAvg > 190, `Team avg is ${teamStats.totalAvg} (expected > 190)`);
+
+const eventStats = Stats.getEventStats(meets, 'vault');
+assert(eventStats.avg > 0, `Vault avg is ${eventStats.avg}`);
+assert(eventStats.byMeet.length > 0, `Vault has ${eventStats.byMeet.length} meet entries`);
+
+const lineupStats = Stats.getLineupPositionStats(meets, 'vault');
+assert(Object.keys(lineupStats.byPosition).length > 0, 'getLineupPositionStats has positions');
+
+const rolling = Stats.getRollingAverage(meets, 3);
+assert(rolling.length > 0, `getRollingAverage(3) returns ${rolling.length} entries`);
+
+const cmpData = Stats.getAthleteComparisonData(meets, 'Sophia Esposito', 'Jade Carey', 'vault');
+assert(cmpData.athlete1 && cmpData.athlete1.name === 'Sophia Esposito', 'Comparison athlete1 is correct');
+
+console.log(`\nStats test results: ${statErrors} failure(s)`);
+if (statErrors > 0) errors += statErrors;
+
 if (errors > 0) {
-  console.log('FAIL: Data validation found errors that must be fixed.');
+  console.log('\nFAIL: Data validation found errors that must be fixed.');
   process.exit(1);
 } else if (warnings > 0) {
   console.log('PASS with warnings.');
