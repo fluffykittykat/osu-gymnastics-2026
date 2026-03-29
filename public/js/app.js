@@ -3511,6 +3511,12 @@
           </g>`;
       }).join('');
 
+      const spotlightHtml = posResult.anchor || posResult.leadoff ? `
+        <div class="position-spotlight">
+          ${posResult.leadoff ? `<div class="position-spotlight-card"><div class="spotlight-role" style="color:#f39c12">Leadoff</div><div class="spotlight-name">${posResult.leadoff.name}</div><div class="spotlight-stat">${posResult.leadoff.avg?.toFixed(3)} avg · ${posResult.leadoff.count} meets</div></div>` : ''}
+          ${posResult.anchor ? `<div class="position-spotlight-card"><div class="spotlight-role" style="color:#D73F09">Anchor</div><div class="spotlight-name">${posResult.anchor.name}</div><div class="spotlight-stat">${posResult.anchor.avg?.toFixed(3)} avg · ${posResult.anchor.count} meets</div></div>` : ''}
+        </div>` : '';
+
       positionChart = `
         <div class="section-card">
           <h2 class="section-title">Lineup Position Analysis</h2>
@@ -3518,6 +3524,7 @@
           <svg viewBox="0 0 ${posPad.left + 6*(barW+barGap)} ${posH + 5}" preserveAspectRatio="xMidYMid meet" style="display:block;max-width:100%;">
             ${posBars}
           </svg>
+          ${spotlightHtml}
         </div>`;
     }
 
@@ -3619,7 +3626,6 @@
         trendHtml = `<div class="lb-stat"><span class="lb-stat-label">n</span><span class="lb-stat-val" style="color:var(--text-muted)">${g.count}</span></div>`;
       }
 
-      const dp = isAA ? 3 : 3;
       return `
       <div class="leaderboard-item">
         <div class="lb-rank ${i < 3 ? 'top-3' : ''}">${i + 1}</div>
@@ -3629,9 +3635,9 @@
           <div class="lb-context">Best: <span class="clickable-meet" data-meet-id="${g.best.meetId}">${formatDate(g.best.meetDate)} vs ${g.best.opponent}</span>${isAA ? ` <span style="color:var(--text-muted);font-size:0.75rem">(${g.count} AA entries)</span>` : ''}</div>
         </div>
         <div class="lb-stats">
-          <div class="lb-stat"><span class="lb-stat-label">HIGH</span><span class="lb-stat-val">${g.best.score.toFixed(dp)}</span></div>
-          <div class="lb-stat"><span class="lb-stat-label">AVG</span><span class="lb-stat-val">${g.avg.toFixed(dp)}</span></div>
-          <div class="lb-stat"><span class="lb-stat-label">LAST</span><span class="lb-stat-val">${g.recent.score.toFixed(dp)}</span></div>
+          <div class="lb-stat"><span class="lb-stat-label">HIGH</span><span class="lb-stat-val">${g.best.score.toFixed(3)}</span></div>
+          <div class="lb-stat"><span class="lb-stat-label">AVG</span><span class="lb-stat-val">${g.avg.toFixed(3)}</span></div>
+          <div class="lb-stat"><span class="lb-stat-label">LAST</span><span class="lb-stat-val">${g.recent.score.toFixed(3)}</span></div>
           ${trendHtml}
         </div>
       </div>`;
