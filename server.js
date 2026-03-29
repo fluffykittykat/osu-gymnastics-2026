@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
+const http = require('http');
+const WebSocket = require('ws');
 const Anthropic = require('@anthropic-ai/sdk');
 const { computeStats } = require('./stats/stats');
 
@@ -54,6 +56,53 @@ function recomputeStats() {
 loadBiosData();
 loadMeetsData();
 recomputeStats();
+
+// ── WebSocket Setup ──────────────────────────────────────────────────────────
+
+// Track connected WebSocket clients
+const wsClients = new Set();
+
+// Get active meets (meets that are currently in progress)
+function getActiveMeets() {
+  if (!meetsData || !Array.isArray(meetsData)) return [];
+  
+  // Consider a meet "active" if it was within the last 24 hours or scheduled for today/tomorrow
+  // For demo purposes, we'll consider recent meets as active
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  
+  return meetsData.filter(meet => {
+    try {
+      const meetDate = new Date(meet.date);
+      return meetDate >= oneWeekAgo;
+    } catch (e) {
+      return false;
+    }
+  });
+}
+
+// Broadcast a message to all connected WebSocket clients
+function broadcastToClients(type, data) {
+  const message = JSON.stringify({ type, data, timestamp: Date.now() });
+  wsClients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+}
+
+// Periodically check for meet updates and broadcast changes
+let lastBroadcastData = null;
+setInterval(() => {
+  const activeMeets = getActiveMeets();
+  const broadcastData = JSON.stringify(activeMeets);
+  
+  // Only broadcast if data has changed
+  if (broadcastData !== lastBroadcastData && wsClients.size > 0) {
+    lastBroadcastData = broadcastData;
+    broadcastToClients('meetsUpdate', activeMeets);
+  }
+}, 5000); // Check every 5 seconds
 
 // Serve index.html with injected asset version for automatic cache-busting
 app.get('/', async (req, res) => {
@@ -206,6 +255,13 @@ app.post('/api/refresh', async (req, res) => {
     loadMeetsData();
     loadBiosData();
     recomputeStats();
+    
+    // Broadcast score updates to connected WebSocket clients
+    const activeMeets = getActiveMeets();
+    broadcastToClients('dataRefreshed', {
+      meets: activeMeets,
+      timestamp: Date.now()
+    });
 
     let summary;
     try {
@@ -315,8 +371,56 @@ const PORT = process.env.PORT || 8888;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-app.listen(PORT, () => {
+// Create HTTP server and attach WebSocket server
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// Handle WebSocket connections
+wss.on('connection', (ws) => {
+  console.log('📡 WebSocket client connected. Total clients:', wsClients.size + 1);
+  
+  // Add client to set
+  wsClients.add(ws);
+  
+  // Send current active meets to new client
+  const activeMeets = getActiveMeets();
+  ws.send(JSON.stringify({
+    type: 'initialData',
+    data: activeMeets,
+    timestamp: Date.now()
+  }));
+  
+  // Handle incoming messages
+  ws.on('message', (message) => {
+    try {
+      const parsed = JSON.parse(message);
+      
+      // Handle subscription to specific meets
+      if (parsed.type === 'subscribeMeet') {
+        // Client is interested in updates for a specific meet
+        ws.subscribedMeets = ws.subscribedMeets || new Set();
+        ws.subscribedMeets.add(parsed.meetId);
+      }
+    } catch (e) {
+      console.error('Failed to parse WebSocket message:', e.message);
+    }
+  });
+  
+  // Handle client disconnect
+  ws.on('close', () => {
+    wsClients.delete(ws);
+    console.log('📡 WebSocket client disconnected. Total clients:', wsClients.size);
+  });
+  
+  // Handle errors
+  ws.on('error', (err) => {
+    console.error('WebSocket error:', err.message);
+  });
+});
+
+server.listen(PORT, () => {
   console.log(`🤸 OSU Gymnastics 2026 running on http://localhost:${PORT}`);
+  console.log(`📡 WebSocket server ready at ws://localhost:${PORT}`);
   
   // Check for required and optional configuration
   if (!ANTHROPIC_API_KEY) {

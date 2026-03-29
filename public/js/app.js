@@ -932,6 +932,13 @@
 
     grid.innerHTML = rendered.join('');
 
+    // Register meet cards with live updates UI
+    if (typeof liveUI !== 'undefined') {
+      grid.querySelectorAll('[data-meet-id]').forEach(card => {
+        liveUI.registerMeetCard(card);
+      });
+    }
+
     // Animate bars after render
     requestAnimationFrame(() => {
       grid.querySelectorAll('.event-bar-fill').forEach(bar => {

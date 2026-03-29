@@ -1,0 +1,243 @@
+/**
+ * Live Updates CSS
+ * Styles for live meet badges and indicators
+ */
+
+/* Live Badge */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #ff3b30 0%, #ff6b6b 100%);
+  color: white;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);
+  animation: livePulseIn 0.4s ease-out;
+  margin-bottom: 12px;
+}
+
+@keyframes livePulseIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Live Pulse Indicator */
+.live-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: white;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0);
+  }
+}
+
+/* Live Meet Card Styling */
+.meet-card.is-live {
+  border-color: rgba(255, 59, 48, 0.3);
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.02) 0%, rgba(255, 107, 107, 0.02) 100%);
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.1), inset 0 0 20px rgba(255, 59, 48, 0.05);
+  transition: all 0.3s ease;
+}
+
+.meet-card.is-live:hover {
+  box-shadow: 0 8px 20px rgba(255, 59, 48, 0.15), inset 0 0 20px rgba(255, 59, 48, 0.08);
+}
+
+/* Glow effect for live meets */
+@keyframes liveGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 59, 48, 0);
+  }
+}
+
+.meet-card.is-live::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 0%, rgba(255, 59, 48, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+  animation: liveGlow 2s ease-in-out infinite;
+}
+
+/* WebSocket Connection Status Indicator */
+.ws-status-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  color: #333;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideInUp 0.3s ease-out;
+  border-left: 3px solid #999;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ws-status-indicator .status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #999;
+}
+
+/* Connected Status */
+.ws-status-indicator.ws-status-connected {
+  border-left-color: #34c759;
+  background: linear-gradient(135deg, #34c759 0%, #5ac77a 100%);
+  color: white;
+}
+
+.ws-status-indicator.ws-status-connected .status-dot {
+  background-color: white;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Disconnected Status */
+.ws-status-indicator.ws-status-disconnected {
+  border-left-color: #ff9500;
+  background: linear-gradient(135deg, #ff9500 0%, #ffb143 100%);
+  color: white;
+}
+
+.ws-status-indicator.ws-status-disconnected .status-dot {
+  background-color: white;
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 49%, 100% {
+    opacity: 1;
+  }
+  50%, 99% {
+    opacity: 0.4;
+  }
+}
+
+/* Error Status */
+.ws-status-indicator.ws-status-error {
+  border-left-color: #ff3b30;
+  background: linear-gradient(135deg, #ff3b30 0%, #ff6b6b 100%);
+  color: white;
+}
+
+.ws-status-indicator.ws-status-error .status-dot {
+  background-color: white;
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ws-status-indicator {
+    bottom: 70px; /* Above mobile nav */
+    right: 10px;
+    left: 10px;
+    justify-content: center;
+  }
+
+  .live-badge {
+    font-size: 0.7rem;
+    padding: 5px 10px;
+    gap: 6px;
+  }
+
+  .live-pulse {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+/* Dark mode support (if applicable) */
+@media (prefers-color-scheme: dark) {
+  .ws-status-indicator {
+    background: rgba(255, 255, 255, 0.95);
+    color: #222;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .ws-status-indicator.ws-status-connected {
+    background: linear-gradient(135deg, #30b84b 0%, #4ac766 100%);
+    color: white;
+  }
+
+  .ws-status-indicator.ws-status-disconnected {
+    background: linear-gradient(135deg, #ff8c00 0%, #ffaa33 100%);
+    color: white;
+  }
+
+  .ws-status-indicator.ws-status-error {
+    background: linear-gradient(135deg, #ff2c2c 0%, #ff5555 100%);
+    color: white;
+  }
+}
+
+/* Animation for new live meets */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.live-badge {
+  animation: slideIn 0.3s ease-out;
+}
