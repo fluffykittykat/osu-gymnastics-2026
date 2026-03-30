@@ -1,0 +1,52 @@
+[
+  {
+    "id": "1774838148534-n23zfjgtt",
+    "title": "Savannah Mill - Updated Season Analysis",
+    "summary": "Performance review for season",
+    "category": "Athlete Comparison",
+    "chatHistory": [
+      {
+        "role": "user",
+        "content": "How has Savannah performed this season?"
+      },
+      {
+        "role": "assistant",
+        "content": "Savannah has shown strong performance with improved consistency on vault and beam events."
+      }
+    ],
+    "insights": [
+      {
+        "id": "ins_1774838151559",
+        "content": "She is strongest on vault and beam",
+        "createdAt": "2026-03-30T02:35:51.559Z"
+      }
+    ],
+    "createdAt": "2026-03-30T02:35:48.534Z",
+    "updatedAt": "2026-03-30T02:35:54.377Z"
+  },
+  {
+    "id": "1774838173544-6d5uirwkn",
+    "title": "Updated Test Analysis",
+    "summary": "Testing the full implementation",
+    "category": "Athlete Performance",
+    "chatHistory": [
+      {
+        "role": "user",
+        "content": "Test question"
+      },
+      {
+        "role": "assistant",
+        "content": "Test response"
+      }
+    ],
+    "insights": [
+      {
+        "id": "ins_1774838173600",
+        "content": "Test insight",
+        "createdAt": "2026-03-30T02:36:13.600Z"
+      }
+    ],
+    "createdAt": "2026-03-30T02:36:13.544Z",
+    "updatedAt": "2026-03-30T02:36:13.606Z"
+  }
+]

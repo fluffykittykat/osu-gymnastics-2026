@@ -381,10 +381,9 @@ class ChatbotWidget {
   }
 
   updateSaveButtonVisibility() {
-    const userMessages = this.messages.filter(m => m.role === 'user');
     const saveArea = document.getElementById('chatbotSaveArea');
     if (saveArea) {
-      saveArea.style.display = userMessages.length >= 2 ? 'block' : 'none';
+      saveArea.style.display = 'block';
     }
   }
 
