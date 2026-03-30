@@ -254,6 +254,13 @@
       else if (view === 'gymnasts') renderGymnasts();
       else if (view === 'leaderboards') { renderHeatMap(); renderLeaderboard('vault'); }
       else if (view === 'insights') renderInsights();
+      else if (view === 'notes') {
+        // Dispatch event for saved notes manager
+        document.dispatchEvent(new CustomEvent('viewChanged', { detail: 'notes' }));
+        if (window.savedNotesManager) {
+          window.savedNotesManager.loadAndRender();
+        }
+      }
     } catch (err) {
       console.error('Render error in view "' + view + '":', err);
       const el = document.getElementById('view-' + view);

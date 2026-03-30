@@ -779,6 +779,275 @@ If live stats are unavailable:
   }
 });
 
+// ============================================================================
+// SAVED ANALYSES API ENDPOINTS
+// ============================================================================
+
+const ANALYSES_FILE = path.join(__dirname, 'data', 'saved-analyses.json');
+
+/**
+ * Helper: Load analyses from file
+ */
+function loadAnalyses() {
+  try {
+    if (fs.existsSync(ANALYSES_FILE)) {
+      const data = fs.readFileSync(ANALYSES_FILE, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    console.warn('[Analyses] Failed to load analyses:', err.message);
+  }
+  return [];
+}
+
+/**
+ * Helper: Save analyses to file
+ */
+function saveAnalyses(analyses) {
+  try {
+    // Ensure data directory exists
+    const dataDir = path.dirname(ANALYSES_FILE);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    fs.writeFileSync(ANALYSES_FILE, JSON.stringify(analyses, null, 2));
+    return true;
+  } catch (err) {
+    console.error('[Analyses] Failed to save analyses:', err.message);
+    return false;
+  }
+}
+
+/**
+ * Generate unique ID for analysis
+ */
+function generateAnalysisId() {
+  return `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * POST /api/analyses - Save a new chat analysis
+ */
+app.post('/api/analyses', (req, res) => {
+  try {
+    const { title, summary, category, chatHistory } = req.body;
+    
+    // Validation
+    if (!title || typeof title !== 'string') {
+      return res.status(400).json({ error: 'Title is required and must be a string' });
+    }
+    
+    if (title.trim().length < 3) {
+      return res.status(400).json({ error: 'Title must be at least 3 characters' });
+    }
+    
+    if (title.trim().length > 200) {
+      return res.status(400).json({ error: 'Title must be less than 200 characters' });
+    }
+    
+    if (!Array.isArray(chatHistory)) {
+      return res.status(400).json({ error: 'chatHistory must be an array' });
+    }
+    
+    // Load existing analyses
+    const analyses = loadAnalyses();
+    
+    // Create new analysis
+    const now = new Date().toISOString();
+    const newAnalysis = {
+      id: generateAnalysisId(),
+      title: title.trim(),
+      summary: summary && typeof summary === 'string' ? summary.trim() : '',
+      category: category && typeof category === 'string' ? category.trim() : 'General',
+      chatHistory: chatHistory || [],
+      insights: [],
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    // Add to list and save
+    analyses.push(newAnalysis);
+    if (saveAnalyses(analyses)) {
+      console.log(`[Analyses] Created new analysis: ${newAnalysis.id}`);
+      res.status(201).json(newAnalysis);
+    } else {
+      res.status(500).json({ error: 'Failed to save analysis' });
+    }
+  } catch (err) {
+    console.error('[Analyses] POST /api/analyses error:', err.message);
+    res.status(500).json({ error: 'Failed to save analysis' });
+  }
+});
+
+/**
+ * GET /api/analyses - List all saved analyses
+ */
+app.get('/api/analyses', (req, res) => {
+  try {
+    const analyses = loadAnalyses();
+    
+    // Return list with basic info (no full chatHistory)
+    const summaries = analyses.map(a => ({
+      id: a.id,
+      title: a.title,
+      summary: a.summary,
+      category: a.category,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+      insightCount: (a.insights || []).length,
+      chatLength: (a.chatHistory || []).length
+    }));
+    
+    res.json(summaries);
+  } catch (err) {
+    console.error('[Analyses] GET /api/analyses error:', err.message);
+    res.status(500).json({ error: 'Failed to load analyses' });
+  }
+});
+
+/**
+ * GET /api/analyses/:id - Get specific analysis with all insights
+ */
+app.get('/api/analyses/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const analyses = loadAnalyses();
+    
+    const analysis = analyses.find(a => a.id === id);
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+    
+    res.json(analysis);
+  } catch (err) {
+    console.error('[Analyses] GET /api/analyses/:id error:', err.message);
+    res.status(500).json({ error: 'Failed to load analysis' });
+  }
+});
+
+/**
+ * POST /api/analyses/:id/insights - Add insight to analysis
+ */
+app.post('/api/analyses/:id/insights', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    
+    // Validation
+    if (!content || typeof content !== 'string') {
+      return res.status(400).json({ error: 'Insight content is required and must be a string' });
+    }
+    
+    if (content.trim().length < 3) {
+      return res.status(400).json({ error: 'Insight must be at least 3 characters' });
+    }
+    
+    const analyses = loadAnalyses();
+    const analysis = analyses.find(a => a.id === id);
+    
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+    
+    // Initialize insights array if missing
+    if (!Array.isArray(analysis.insights)) {
+      analysis.insights = [];
+    }
+    
+    // Add new insight
+    const insight = {
+      content: content.trim(),
+      createdAt: new Date().toISOString()
+    };
+    
+    analysis.insights.push(insight);
+    analysis.updatedAt = new Date().toISOString();
+    
+    if (saveAnalyses(analyses)) {
+      console.log(`[Analyses] Added insight to ${id}`);
+      res.status(201).json(insight);
+    } else {
+      res.status(500).json({ error: 'Failed to save insight' });
+    }
+  } catch (err) {
+    console.error('[Analyses] POST /api/analyses/:id/insights error:', err.message);
+    res.status(500).json({ error: 'Failed to add insight' });
+  }
+});
+
+/**
+ * PUT /api/analyses/:id - Update analysis title/category
+ */
+app.put('/api/analyses/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, summary, category } = req.body;
+    
+    const analyses = loadAnalyses();
+    const analysis = analyses.find(a => a.id === id);
+    
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+    
+    // Update fields
+    if (title && typeof title === 'string') {
+      const trimmedTitle = title.trim();
+      if (trimmedTitle.length >= 3 && trimmedTitle.length <= 200) {
+        analysis.title = trimmedTitle;
+      }
+    }
+    
+    if (summary && typeof summary === 'string') {
+      analysis.summary = summary.trim();
+    }
+    
+    if (category && typeof category === 'string') {
+      analysis.category = category.trim();
+    }
+    
+    analysis.updatedAt = new Date().toISOString();
+    
+    if (saveAnalyses(analyses)) {
+      console.log(`[Analyses] Updated analysis ${id}`);
+      res.json(analysis);
+    } else {
+      res.status(500).json({ error: 'Failed to update analysis' });
+    }
+  } catch (err) {
+    console.error('[Analyses] PUT /api/analyses/:id error:', err.message);
+    res.status(500).json({ error: 'Failed to update analysis' });
+  }
+});
+
+/**
+ * DELETE /api/analyses/:id - Delete saved analysis
+ */
+app.delete('/api/analyses/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    let analyses = loadAnalyses();
+    
+    const index = analyses.findIndex(a => a.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+    
+    // Remove analysis
+    const deleted = analyses.splice(index, 1);
+    
+    if (saveAnalyses(analyses)) {
+      console.log(`[Analyses] Deleted analysis ${id}`);
+      res.json({ success: true, deleted: deleted[0] });
+    } else {
+      res.status(500).json({ error: 'Failed to delete analysis' });
+    }
+  } catch (err) {
+    console.error('[Analyses] DELETE /api/analyses/:id error:', err.message);
+    res.status(500).json({ error: 'Failed to delete analysis' });
+  }
+});
+
 const PORT = process.env.PORT || 8888;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;

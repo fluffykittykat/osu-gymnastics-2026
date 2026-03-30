@@ -22,6 +22,7 @@
       <a href="#" class="nav-link" data-view="gymnasts">🤸 Gymnasts</a>
       <a href="#" class="nav-link" data-view="leaderboards">📊 Leaderboards</a>
       <a href="#" class="nav-link" data-view="insights">🔍 Insights</a>
+      <a href="#" class="nav-link" data-view="notes">📓 My Notes</a>
     </div>
     <div class="nav-actions">
       <div id="liveIndicator" class="live-indicator disconnected" title="Live updates connecting...">
@@ -108,6 +109,11 @@
       <div id="mainContent"></div>
     </section>
 
+    <!-- Saved Notes & Analysis -->
+    <section id="view-notes" class="view" style="display:none;">
+      <div class="saved-notes-container" id="savedNotesContainer"></div>
+    </section>
+
     <!-- Event Detail Drill-down -->
     <section id="view-event" class="view" style="display:none;">
       <button class="back-btn" id="backFromEvent">← Back to Meet</button>
@@ -133,6 +139,10 @@
       <span class="nav-icon">🔍</span>
       <span class="nav-label">Insights</span>
     </a>
+    <a href="#" class="bottom-nav-item" data-view="notes">
+      <span class="nav-icon">📓</span>
+      <span class="nav-label">My Notes</span>
+    </a>
     <a href="#" class="bottom-nav-item refresh-mobile" id="refreshBtnMobile">
       <span class="nav-icon">🔄</span>
       <span class="nav-label">Refresh</span>
@@ -145,6 +155,7 @@
   <script src="js/stats.js?v=0"></script>
   <script src="js/search.js?v=0"></script>
   <script src="js/live-updates.js?v=0"></script>
+  <script src="js/saved-notes.js?v=0"></script>
   <script src="js/app.js?v=0"></script>
   <script src="js/chatbot.js?v=0"></script>
 </body>

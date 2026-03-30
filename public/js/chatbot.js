@@ -105,6 +105,13 @@ class ChatbotWidget {
           </button>
         </div>
 
+        <!-- Save Chat Button -->
+        <div class="save-chat-section">
+          <button class="save-chat-btn" id="saveChatBtn" title="Save this conversation">
+            <span>💾 Save Analysis</span>
+          </button>
+        </div>
+
         <!-- Footer Info -->
         <div class="chatbot-footer">
           <small>💡 Ask about meet results, athlete stats, or gymnastics analysis</small>
@@ -122,6 +129,7 @@ class ChatbotWidget {
     const minimizeBtn = document.getElementById('minimizeBtn');
     const input = document.getElementById('chatbotInput');
     const sendBtn = document.getElementById('sendBtn');
+    const saveChatBtn = document.getElementById('saveChatBtn');
 
     // Toggle window on bubble click
     bubble.addEventListener('click', () => {
@@ -140,6 +148,9 @@ class ChatbotWidget {
 
     // Send message on button click with debouncing
     sendBtn.addEventListener('click', () => this.debouncedSend());
+
+    // Save chat button
+    saveChatBtn.addEventListener('click', () => this.showSaveModal());
 
     // Send message on Enter (but allow Shift+Enter for newline)
     input.addEventListener('keydown', (e) => {
@@ -394,6 +405,202 @@ class ChatbotWidget {
     const indicator = document.getElementById('typingIndicator');
     indicator.style.display = 'none';
     this.isLoading = false;
+  }
+
+  /**
+   * Show modal to save current chat as analysis
+   */
+  showSaveModal() {
+    // Validate that we have messages to save
+    if (!this.messages || this.messages.length <= 1) {
+      alert('Please have a conversation before saving');
+      return;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'save-modal-overlay';
+    modal.innerHTML = `
+      <div class="save-modal-content">
+        <h3>Save This Analysis</h3>
+        <p class="modal-hint">Give your conversation a title and optional details</p>
+        
+        <div class="form-group">
+          <label for="analysisTitle">Title *</label>
+          <input 
+            type="text" 
+            id="analysisTitle" 
+            placeholder="e.g., Savannah Mill Season Analysis"
+            maxlength="200"
+            required
+          >
+          <small class="char-count"><span id="titleCount">0</span>/200</small>
+        </div>
+
+        <div class="form-group">
+          <label for="analysisSummary">Summary (optional)</label>
+          <textarea 
+            id="analysisSummary" 
+            placeholder="Briefly summarize the key findings..."
+            rows="3"
+            maxlength="500"
+          ></textarea>
+          <small class="char-count"><span id="summaryCount">0</span>/500</small>
+        </div>
+
+        <div class="form-group">
+          <label for="analysisCategory">Category</label>
+          <select id="analysisCategory">
+            <option value="General">General Analysis</option>
+            <option value="Athlete Performance">Athlete Performance</option>
+            <option value="Athlete Comparison">Athlete Comparison</option>
+            <option value="Performance Trends">Performance Trends</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelSaveBtn">Cancel</button>
+          <button class="btn-primary" id="confirmSaveBtn">💾 Save Analysis</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Setup char counters
+    const titleInput = modal.querySelector('#analysisTitle');
+    const summaryInput = modal.querySelector('#analysisSummary');
+    
+    titleInput.addEventListener('input', () => {
+      modal.querySelector('#titleCount').textContent = titleInput.value.length;
+    });
+
+    summaryInput.addEventListener('input', () => {
+      modal.querySelector('#summaryCount').textContent = summaryInput.value.length;
+    });
+
+    titleInput.focus();
+
+    // Cancel button
+    modal.querySelector('#cancelSaveBtn').addEventListener('click', () => {
+      modal.remove();
+    });
+
+    // Confirm button
+    modal.querySelector('#confirmSaveBtn').addEventListener('click', async () => {
+      const title = titleInput.value.trim();
+      const summary = summaryInput.value.trim();
+      const category = modal.querySelector('#analysisCategory').value;
+
+      // Validate
+      if (!title) {
+        this.showModalError(modal, 'Please enter a title');
+        return;
+      }
+
+      if (title.length < 3) {
+        this.showModalError(modal, 'Title must be at least 3 characters');
+        return;
+      }
+
+      await this.saveAnalysis(title, summary, category, modal);
+    });
+
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  /**
+   * Save analysis to server
+   */
+  async saveAnalysis(title, summary, category, modal) {
+    try {
+      const btn = modal.querySelector('#confirmSaveBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Saving...';
+
+      const response = await fetch('/api/analyses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          summary,
+          category,
+          chatHistory: this.messages.map(m => ({
+            role: m.role,
+            content: m.content
+          }))
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || `Failed to save: ${response.status}`);
+      }
+
+      const saved = await response.json();
+      
+      // Close modal
+      modal.remove();
+
+      // Show success and offer to view notes
+      this.showSaveSuccess();
+    } catch (err) {
+      console.error('Save error:', err);
+      this.showModalError(modal, `Failed to save: ${err.message}`);
+      
+      const btn = modal.querySelector('#confirmSaveBtn');
+      btn.disabled = false;
+      btn.textContent = '💾 Save Analysis';
+    }
+  }
+
+  /**
+   * Show modal error message
+   */
+  showModalError(modal, message) {
+    let errorEl = modal.querySelector('.error-message');
+    if (!errorEl) {
+      errorEl = document.createElement('div');
+      errorEl.className = 'error-message';
+      modal.querySelector('.save-modal-content').insertBefore(errorEl, modal.querySelector('.form-group'));
+    }
+    errorEl.textContent = '❌ ' + message;
+  }
+
+  /**
+   * Show save success notification
+   */
+  showSaveSuccess() {
+    const container = document.getElementById('toastContainer') || document.body;
+    const toast = document.createElement('div');
+    toast.className = 'save-toast';
+    toast.innerHTML = `
+      <div class="toast-content">
+        <div class="toast-message">✅ Analysis saved to your notebook!</div>
+        <button class="toast-action" id="viewNotesBtn">View Notes →</button>
+      </div>
+    `;
+
+    container.appendChild(toast);
+
+    toast.querySelector('#viewNotesBtn').addEventListener('click', () => {
+      toast.remove();
+      // Trigger the notes view
+      const event = new CustomEvent('viewChanged', { detail: 'notes' });
+      document.dispatchEvent(event);
+      
+      // Trigger nav click
+      const navLink = document.querySelector('[data-view="notes"]');
+      if (navLink) navLink.click();
+    });
+
+    setTimeout(() => {
+      if (toast.parentNode) toast.remove();
+    }, 5000);
   }
 }
 
