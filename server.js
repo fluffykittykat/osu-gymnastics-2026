@@ -531,53 +531,43 @@ app.get('/healthz', (req, res) => {
  * Build comprehensive athlete profiles for chatbot analysis
  * Extracts detailed stats from the computed stats cache
  * Handles null/undefined safely with fallbacks
+ * Returns ALL athletes (no cap) in a compact format for token efficiency
  */
 function buildAthleteProfiles() {
   const profiles = {};
-  
+
   try {
     if (!statsCache || !statsCache.athletes) {
       return profiles;
     }
-    
+
     for (const [name, athleteStats] of Object.entries(statsCache.athletes)) {
       try {
-        // Compute overall season metrics from all events
         const allScores = [];
         const eventProfiles = {};
         let strongestEvent = null;
         let strongestScore = 0;
         let consistencyScores = [];
 
-        // Process each event with null safety
         if (athleteStats.events && typeof athleteStats.events === 'object') {
           for (const [event, eventData] of Object.entries(athleteStats.events)) {
             try {
-              // Skip if event data is null or invalid
-              if (!eventData || !eventData.entries || !Array.isArray(eventData.entries)) {
-                continue;
-              }
-
-              if (eventData.entries.length === 0) {
+              if (!eventData || !eventData.entries || !Array.isArray(eventData.entries) || eventData.entries.length === 0) {
                 continue;
               }
 
               const scores = eventData.entries.map(e => e && typeof e.score === 'number' ? e.score : null).filter(s => s !== null);
-              if (scores.length === 0) {
-                continue;
-              }
+              if (scores.length === 0) continue;
 
               scores.forEach(s => allScores.push(s));
 
-              // Calculate consistency (inverse of coefficient of variation)
               const avg = eventData.avg || 0;
               const stdDev = eventData.stdDev || 0;
               const cv = avg > 0 ? Math.abs(stdDev) / avg : 0;
               const consistency = Math.max(0, (1 - Math.min(cv / 0.1, 1)) * 100);
               consistencyScores.push(consistency);
 
-              // Safe number formatting
-              const trend = eventData.trendSlope 
+              const trend = eventData.trendSlope
                 ? (eventData.trendSlope > 0.01 ? 'improving' : eventData.trendSlope < -0.01 ? 'declining' : 'stable')
                 : 'stable';
 
@@ -599,7 +589,6 @@ function buildAthleteProfiles() {
                 })) : []
               };
 
-              // Track strongest event
               if ((eventData.avg || 0) > strongestScore) {
                 strongestScore = eventData.avg || 0;
                 strongestEvent = event;
@@ -611,7 +600,6 @@ function buildAthleteProfiles() {
           }
         }
 
-        // Overall season metrics with null safety
         const seasonAvg = allScores.length > 0 ? allScores.reduce((a, b) => a + b) / allScores.length : null;
         const seasonHigh = allScores.length > 0 ? Math.max(...allScores) : null;
         const seasonLow = allScores.length > 0 ? Math.min(...allScores) : null;
@@ -660,14 +648,14 @@ function buildTeamContext() {
         nqs: null
       };
     }
-    
+
     const team = statsCache.team;
     return {
-      record: (team.record && typeof team.record === 'object') 
+      record: (team.record && typeof team.record === 'object')
         ? { wins: team.record.wins || 0, losses: team.record.losses || 0 }
         : { wins: 0, losses: 0 },
-      season_average: team.seasonAvg && typeof team.seasonAvg === 'number' 
-        ? parseFloat(Math.max(0, team.seasonAvg).toFixed(3)) 
+      season_average: team.seasonAvg && typeof team.seasonAvg === 'number'
+        ? parseFloat(Math.max(0, team.seasonAvg).toFixed(3))
         : null,
       season_high: team.seasonHigh && typeof team.seasonHigh === 'number'
         ? parseFloat(Math.max(0, team.seasonHigh).toFixed(3))
@@ -697,6 +685,610 @@ function buildTeamContext() {
   }
 }
 
+// ── Chatbot Tool Handler Functions ──────────────────────────────────────────
+
+/**
+ * Tool 1: Get athlete progression through the season (meet-by-meet)
+ */
+function toolGetAthleteProgression(input) {
+  const athleteName = input.athlete_name;
+  if (!athleteName) return { error: 'athlete_name is required' };
+  if (!meetsData || !statsCache || !statsCache.athletes) return { error: 'Data not available' };
+
+  // Find best match for name
+  const matchedName = findAthleteName(athleteName);
+  if (!matchedName) return { error: `Athlete "${athleteName}" not found` };
+
+  const meetsByDate = {};
+  const meetDatesSet = new Set();
+
+  meetsData.forEach(meet => {
+    if (!meet.date || !meet.athletes) return;
+    const athleteEntry = meet.athletes.find(a =>
+      (a.name || '').toLowerCase() === matchedName.toLowerCase()
+    );
+    if (!athleteEntry) return;
+
+    meetDatesSet.add(meet.date);
+    if (!meetsByDate[meet.date]) {
+      meetsByDate[meet.date] = {
+        date: meet.date,
+        opponent: meet.opponent || 'Unknown',
+        location: meet.isHome ? 'Home' : 'Away',
+        scores: {},
+        lineup_positions: {}
+      };
+    }
+
+    if (athleteEntry.scores) {
+      Object.entries(athleteEntry.scores).forEach(([event, score]) => {
+        if (GYMNASTICS_EVENTS.includes(event)) {
+          meetsByDate[meet.date].scores[event] = score;
+        }
+      });
+    }
+
+    // Get lineup positions
+    if (meet.lineups) {
+      GYMNASTICS_EVENTS.forEach(event => {
+        if (meet.lineups[event] && Array.isArray(meet.lineups[event])) {
+          const pos = meet.lineups[event].findIndex(n =>
+            n && n.toLowerCase() === matchedName.toLowerCase()
+          );
+          if (pos >= 0) meetsByDate[meet.date].lineup_positions[event] = pos + 1;
+        }
+      });
+    }
+
+    // Calculate AA
+    const competed = GYMNASTICS_EVENTS.filter(ev => meetsByDate[meet.date].scores[ev] !== undefined);
+    if (competed.length > 0) {
+      meetsByDate[meet.date].scores.aa = parseFloat(
+        competed.reduce((sum, ev) => sum + meetsByDate[meet.date].scores[ev], 0).toFixed(3)
+      );
+    }
+  });
+
+  const meetDates = Array.from(meetDatesSet).sort((a, b) => new Date(a) - new Date(b));
+  const meets = meetDates.map(date => meetsByDate[date]);
+
+  // Summary
+  const allAAs = meets.filter(m => m.scores.aa).map(m => m.scores.aa);
+  const midpoint = Math.ceil(meets.length / 2);
+  const firstHalfAAs = meets.slice(0, midpoint).filter(m => m.scores.aa).map(m => m.scores.aa);
+  const secondHalfAAs = meets.slice(midpoint).filter(m => m.scores.aa).map(m => m.scores.aa);
+  const avg = arr => arr.length ? parseFloat((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(3)) : null;
+
+  let trend = 'stable';
+  const fha = avg(firstHalfAAs);
+  const sha = avg(secondHalfAAs);
+  if (fha && sha) {
+    const diff = sha - fha;
+    if (diff > 0.2) trend = 'improving';
+    else if (diff < -0.2) trend = 'declining';
+  }
+
+  const bestMeet = meets.reduce((best, m) => (m.scores.aa || 0) > (best.scores.aa || 0) ? m : best, meets[0] || { scores: {} });
+  const worstMeet = meets.reduce((worst, m) => (m.scores.aa || Infinity) < (worst.scores.aa || Infinity) ? m : worst, meets[0] || { scores: {} });
+
+  return {
+    athlete: matchedName,
+    meets,
+    summary: {
+      total_meets: meets.length,
+      trend,
+      best_meet: bestMeet ? { date: bestMeet.date, opponent: bestMeet.opponent, aa: bestMeet.scores.aa } : null,
+      worst_meet: worstMeet ? { date: worstMeet.date, opponent: worstMeet.opponent, aa: worstMeet.scores.aa } : null,
+      first_half_avg: fha,
+      second_half_avg: sha
+    }
+  };
+}
+
+/**
+ * Tool 2: Get meet details
+ */
+function toolGetMeetDetails(input) {
+  if (!meetsData) return { error: 'Data not available' };
+
+  let meet = null;
+  if (input.meet_id) {
+    meet = meetsData.find(m => m.id === input.meet_id);
+  } else if (input.date) {
+    meet = meetsData.find(m => m.date === input.date);
+  } else {
+    return { error: 'Provide meet_id or date' };
+  }
+
+  if (!meet) return { error: 'Meet not found' };
+
+  return {
+    meet_id: meet.id,
+    date: meet.date,
+    opponent: meet.opponent,
+    location: meet.location || (meet.isHome ? 'Home' : 'Away'),
+    result: meet.result,
+    osuScore: meet.osuScore,
+    opponentScore: meet.opponentScore,
+    athletes: meet.athletes || [],
+    lineups: meet.lineups || {},
+    competitorAthletes: meet.competitorAthletes || {}
+  };
+}
+
+/**
+ * Tool 3: Compare athletes side-by-side
+ */
+function toolCompareAthletes(input) {
+  if (!input.athlete_names || !Array.isArray(input.athlete_names) || input.athlete_names.length === 0) {
+    return { error: 'athlete_names array is required' };
+  }
+  if (!statsCache || !statsCache.athletes) return { error: 'Data not available' };
+
+  const eventFilter = input.event || null;
+  const athletes = {};
+
+  for (const rawName of input.athlete_names) {
+    const name = findAthleteName(rawName);
+    if (!name) {
+      athletes[rawName] = { error: 'Not found' };
+      continue;
+    }
+
+    const stats = statsCache.athletes[name];
+    if (!stats) { athletes[rawName] = { error: 'No stats' }; continue; }
+
+    const result = { averages: {}, highs: {}, lows: {}, trends: {}, meet_count: {} };
+    const events = eventFilter ? [eventFilter] : GYMNASTICS_EVENTS;
+
+    events.forEach(ev => {
+      const ed = stats.events && stats.events[ev];
+      if (!ed || !ed.entries || ed.entries.length === 0) return;
+      result.averages[ev] = ed.avg ? parseFloat(ed.avg.toFixed(3)) : null;
+      result.highs[ev] = ed.best ? parseFloat(ed.best.toFixed(3)) : null;
+      result.lows[ev] = ed.worst ? parseFloat(ed.worst.toFixed(3)) : null;
+      result.trends[ev] = ed.trendSlope ? (ed.trendSlope > 0.01 ? 'improving' : ed.trendSlope < -0.01 ? 'declining' : 'stable') : 'stable';
+      result.meet_count[ev] = ed.appearances || ed.entries.length;
+    });
+
+    athletes[name] = result;
+  }
+
+  // Head-to-head: meets where both athletes competed
+  const names = Object.keys(athletes).filter(n => !athletes[n].error);
+  const headToHead = [];
+  if (names.length >= 2 && meetsData) {
+    meetsData.forEach(meet => {
+      if (!meet.athletes) return;
+      const found = {};
+      names.forEach(name => {
+        const entry = meet.athletes.find(a => (a.name || '').toLowerCase() === name.toLowerCase());
+        if (entry) found[name] = entry.scores || {};
+      });
+      if (Object.keys(found).length >= 2) {
+        headToHead.push({ date: meet.date, opponent: meet.opponent, athletes: found });
+      }
+    });
+  }
+
+  return { athletes, head_to_head: headToHead };
+}
+
+/**
+ * Tool 4: Get event rankings
+ */
+function toolGetEventRankings(input) {
+  if (!input.event || !GYMNASTICS_EVENTS.includes(input.event)) {
+    return { error: `Invalid event. Must be one of: ${GYMNASTICS_EVENTS.join(', ')}` };
+  }
+  if (!statsCache || !statsCache.athletes) return { error: 'Data not available' };
+
+  const metric = input.metric || 'average';
+  const event = input.event;
+  const rankings = [];
+
+  for (const [name, stats] of Object.entries(statsCache.athletes)) {
+    const ed = stats.events && stats.events[event];
+    if (!ed || !ed.entries || ed.entries.length === 0) continue;
+
+    let value;
+    if (metric === 'high') {
+      value = ed.best || 0;
+    } else if (metric === 'consistency') {
+      const avg = ed.avg || 0;
+      const stdDev = ed.stdDev || 0;
+      value = avg > 0 ? parseFloat(((1 - Math.abs(stdDev) / avg / 0.1) * 100).toFixed(1)) : 0;
+    } else {
+      value = ed.avg || 0;
+    }
+
+    rankings.push({
+      name,
+      value: parseFloat(value.toFixed(3)),
+      count: ed.appearances || ed.entries.length
+    });
+  }
+
+  rankings.sort((a, b) => b.value - a.value);
+  rankings.forEach((r, i) => r.rank = i + 1);
+
+  return { event, metric, rankings };
+}
+
+/**
+ * Tool 5: Get team trends across the season
+ */
+function toolGetTeamTrends(input) {
+  if (!meetsData) return { error: 'Data not available' };
+
+  const eventFilter = input.event || null;
+  const sortedMeets = [...meetsData].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const meetResults = [];
+
+  sortedMeets.forEach(meet => {
+    if (!meet.date) return;
+    const entry = {
+      date: meet.date,
+      opponent: meet.opponent || 'Unknown',
+      team_total: meet.osuScore || null,
+      result: meet.result || null,
+      is_home: meet.isHome || false,
+      event_totals: {}
+    };
+
+    // Compute event totals from lineups
+    if (meet.lineups && meet.athletes) {
+      GYMNASTICS_EVENTS.forEach(ev => {
+        if (eventFilter && ev !== eventFilter) return;
+        const lineupNames = meet.lineups[ev] || [];
+        let total = 0;
+        let count = 0;
+        lineupNames.forEach(athleteName => {
+          const athlete = meet.athletes.find(a => (a.name || '').toLowerCase() === (athleteName || '').toLowerCase());
+          if (athlete && athlete.scores && typeof athlete.scores[ev] === 'number') {
+            total += athlete.scores[ev];
+            count++;
+          }
+        });
+        if (count > 0) entry.event_totals[ev] = parseFloat(total.toFixed(3));
+      });
+    }
+
+    meetResults.push(entry);
+  });
+
+  // Compute trends
+  const teamTotals = meetResults.filter(m => m.team_total).map(m => m.team_total);
+  const homeTotals = meetResults.filter(m => m.is_home && m.team_total).map(m => m.team_total);
+  const awayTotals = meetResults.filter(m => !m.is_home && m.team_total).map(m => m.team_total);
+  const avg = arr => arr.length ? parseFloat((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(3)) : null;
+
+  const mid = Math.ceil(teamTotals.length / 2);
+  const firstHalf = avg(teamTotals.slice(0, mid));
+  const secondHalf = avg(teamTotals.slice(mid));
+  let direction = 'stable';
+  if (firstHalf && secondHalf) {
+    if (secondHalf - firstHalf > 0.5) direction = 'improving';
+    else if (firstHalf - secondHalf > 0.5) direction = 'declining';
+  }
+
+  const bestMeet = meetResults.reduce((best, m) => (m.team_total || 0) > (best.team_total || 0) ? m : best, meetResults[0] || {});
+  const worstMeet = meetResults.reduce((worst, m) => (m.team_total || Infinity) < (worst.team_total || Infinity) ? m : worst, meetResults[0] || {});
+
+  return {
+    meets: meetResults,
+    trends: {
+      overall_direction: direction,
+      season_avg: avg(teamTotals),
+      home_avg: avg(homeTotals),
+      away_avg: avg(awayTotals),
+      best_meet: bestMeet ? { date: bestMeet.date, opponent: bestMeet.opponent, total: bestMeet.team_total } : null,
+      worst_meet: worstMeet ? { date: worstMeet.date, opponent: worstMeet.opponent, total: worstMeet.team_total } : null,
+      first_half_avg: firstHalf,
+      second_half_avg: secondHalf
+    }
+  };
+}
+
+/**
+ * Tool 6: Get lineup analysis for an event
+ */
+function toolGetLineupAnalysis(input) {
+  if (!input.event || !GYMNASTICS_EVENTS.includes(input.event)) {
+    return { error: `Invalid event. Must be one of: ${GYMNASTICS_EVENTS.join(', ')}` };
+  }
+  if (!meetsData) return { error: 'Data not available' };
+
+  const event = input.event;
+  const athleteFilter = input.athlete_name ? findAthleteName(input.athlete_name) : null;
+  const positions = {}; // position -> { scores: [], athletes: {} }
+
+  meetsData.forEach(meet => {
+    if (!meet.lineups || !meet.lineups[event] || !meet.athletes) return;
+    const lineup = meet.lineups[event];
+
+    lineup.forEach((athleteName, idx) => {
+      if (!athleteName) return;
+      const pos = idx + 1;
+      if (!positions[pos]) positions[pos] = { scores: [], athletes: {} };
+
+      const athlete = meet.athletes.find(a => (a.name || '').toLowerCase() === (athleteName || '').toLowerCase());
+      const score = athlete && athlete.scores && typeof athlete.scores[event] === 'number' ? athlete.scores[event] : null;
+
+      if (score !== null) {
+        positions[pos].scores.push(score);
+        if (!positions[pos].athletes[athleteName]) {
+          positions[pos].athletes[athleteName] = { scores: [], count: 0 };
+        }
+        positions[pos].athletes[athleteName].scores.push(score);
+        positions[pos].athletes[athleteName].count++;
+      }
+    });
+  });
+
+  // Compute averages
+  const positionSummary = {};
+  for (const [pos, data] of Object.entries(positions)) {
+    const avg = data.scores.length ? parseFloat((data.scores.reduce((a, b) => a + b, 0) / data.scores.length).toFixed(3)) : null;
+    const athleteSummary = {};
+    for (const [name, ad] of Object.entries(data.athletes)) {
+      athleteSummary[name] = {
+        avg: parseFloat((ad.scores.reduce((a, b) => a + b, 0) / ad.scores.length).toFixed(3)),
+        count: ad.count,
+        high: parseFloat(Math.max(...ad.scores).toFixed(3))
+      };
+    }
+    positionSummary[pos] = { avg, count: data.scores.length, athletes: athleteSummary };
+  }
+
+  const result = { event, positions: positionSummary };
+
+  // If athlete filter, add their specific detail
+  if (athleteFilter) {
+    const athleteDetail = { positions_used: [], scores_by_position: {} };
+    for (const [pos, data] of Object.entries(positionSummary)) {
+      if (data.athletes[athleteFilter]) {
+        athleteDetail.positions_used.push(parseInt(pos));
+        athleteDetail.scores_by_position[pos] = data.athletes[athleteFilter];
+      }
+    }
+    result.athlete_detail = { name: athleteFilter, ...athleteDetail };
+  }
+
+  return result;
+}
+
+/**
+ * Tool 7: Search athletes by partial/fuzzy name match
+ */
+function toolSearchAthletes(input) {
+  if (!input.query) return { error: 'query is required' };
+  if (!statsCache || !statsCache.athletes) return { error: 'Data not available' };
+
+  const query = input.query.toLowerCase();
+  const matches = [];
+
+  for (const [name, stats] of Object.entries(statsCache.athletes)) {
+    const nameLower = name.toLowerCase();
+    // Match if query is substring of name or any word in name starts with query
+    const words = nameLower.split(/\s+/);
+    const isMatch = nameLower.includes(query) || words.some(w => w.startsWith(query));
+    if (!isMatch) continue;
+
+    let strongestEvent = null;
+    let strongestAvg = 0;
+    let totalAppearances = 0;
+
+    if (stats.events) {
+      for (const [ev, ed] of Object.entries(stats.events)) {
+        if (ed && ed.avg && ed.avg > strongestAvg) {
+          strongestAvg = ed.avg;
+          strongestEvent = ev;
+        }
+        totalAppearances += (ed && ed.appearances) || 0;
+      }
+    }
+
+    const allScores = [];
+    if (stats.events) {
+      for (const ed of Object.values(stats.events)) {
+        if (ed && ed.entries) {
+          ed.entries.forEach(e => { if (e && typeof e.score === 'number') allScores.push(e.score); });
+        }
+      }
+    }
+    const seasonAvg = allScores.length ? parseFloat((allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(3)) : null;
+
+    matches.push({
+      name,
+      season_average: seasonAvg,
+      strongest_event: strongestEvent,
+      meets_competed: stats.totalAppearances || totalAppearances
+    });
+  }
+
+  matches.sort((a, b) => (b.season_average || 0) - (a.season_average || 0));
+
+  return { query: input.query, matches };
+}
+
+/**
+ * Tool 8: Get competitor data from meets
+ */
+function toolGetCompetitorData(input) {
+  if (!meetsData) return { error: 'Data not available' };
+
+  let filtered = meetsData;
+  if (input.meet_id) {
+    filtered = filtered.filter(m => m.id === input.meet_id);
+  }
+  if (input.team_name) {
+    const teamQuery = input.team_name.toLowerCase();
+    filtered = filtered.filter(m =>
+      (m.opponent || '').toLowerCase().includes(teamQuery) ||
+      (m.quadName || '').toLowerCase().includes(teamQuery) ||
+      (m.allTeams || []).some(t => t.toLowerCase().includes(teamQuery))
+    );
+  }
+
+  return {
+    meets: filtered.map(m => ({
+      date: m.date,
+      opponent: m.opponent,
+      osuScore: m.osuScore,
+      opponentScore: m.opponentScore,
+      result: m.result,
+      competitorAthletes: m.competitorAthletes || {},
+      competitorLineups: m.competitorLineups || {}
+    }))
+  };
+}
+
+/**
+ * Helper: Find best matching athlete name (case-insensitive, partial match)
+ */
+function findAthleteName(query) {
+  if (!statsCache || !statsCache.athletes) return null;
+  const names = Object.keys(statsCache.athletes);
+  const q = query.toLowerCase().trim();
+
+  // Exact match (case-insensitive)
+  const exact = names.find(n => n.toLowerCase() === q);
+  if (exact) return exact;
+
+  // Partial match (query is substring)
+  const partial = names.find(n => n.toLowerCase().includes(q));
+  if (partial) return partial;
+
+  // Word-start match
+  const wordMatch = names.find(n => {
+    const words = n.toLowerCase().split(/\s+/);
+    return words.some(w => w.startsWith(q));
+  });
+  return wordMatch || null;
+}
+
+/**
+ * Execute a tool call by name and return the result
+ */
+function executeToolCall(toolName, input) {
+  try {
+    switch (toolName) {
+      case 'get_athlete_progression': return toolGetAthleteProgression(input);
+      case 'get_meet_details': return toolGetMeetDetails(input);
+      case 'compare_athletes': return toolCompareAthletes(input);
+      case 'get_event_rankings': return toolGetEventRankings(input);
+      case 'get_team_trends': return toolGetTeamTrends(input);
+      case 'get_lineup_analysis': return toolGetLineupAnalysis(input);
+      case 'search_athletes': return toolSearchAthletes(input);
+      case 'get_competitor_data': return toolGetCompetitorData(input);
+      default: return { error: `Unknown tool: ${toolName}` };
+    }
+  } catch (err) {
+    console.error(`[Tool] Error executing ${toolName}:`, err.message);
+    return { error: `Tool execution failed: ${err.message}` };
+  }
+}
+
+// ── Claude Tool Definitions ─────────────────────────────────────────────────
+
+const chatbotTools = [
+  {
+    name: 'get_athlete_progression',
+    description: 'Get an athlete\'s meet-by-meet progression through the season. Returns chronological scores per event, AA totals, lineup positions, and trend summary with first/second half averages. Use for progression, trend, improvement, and trajectory questions.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        athlete_name: { type: 'string', description: 'The athlete\'s name (partial match supported)' }
+      },
+      required: ['athlete_name']
+    }
+  },
+  {
+    name: 'get_meet_details',
+    description: 'Get full details of a specific meet including all athletes, scores, lineups, and competitor data. Use when asked about a particular meet or date.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        meet_id: { type: 'string', description: 'The meet ID' },
+        date: { type: 'string', description: 'The meet date (YYYY-MM-DD)' }
+      }
+    }
+  },
+  {
+    name: 'compare_athletes',
+    description: 'Compare multiple athletes side-by-side with averages, highs, lows, trends, and head-to-head meet results. Use when asked to compare two or more gymnasts.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        athlete_names: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of athlete names to compare'
+        },
+        event: { type: 'string', description: 'Optional: filter to a specific event (vault, bars, beam, floor)' }
+      },
+      required: ['athlete_names']
+    }
+  },
+  {
+    name: 'get_event_rankings',
+    description: 'Rank all athletes on a specific event by average, season high, or consistency. Use for "who\'s the best on vault?" or "rank the beam gymnasts" type questions.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        event: { type: 'string', enum: ['vault', 'bars', 'beam', 'floor'], description: 'The gymnastics event' },
+        metric: { type: 'string', enum: ['average', 'high', 'consistency'], description: 'Ranking metric (default: average)' }
+      },
+      required: ['event']
+    }
+  },
+  {
+    name: 'get_team_trends',
+    description: 'Get team-level performance trends across the season: meet-by-meet team totals, event totals, home/away splits, and overall direction. Use for team trajectory and season overview questions.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        event: { type: 'string', description: 'Optional: filter to a specific event (vault, bars, beam, floor)' }
+      }
+    }
+  },
+  {
+    name: 'get_lineup_analysis',
+    description: 'Analyze lineup rotation positions for an event: who competed in each position, position averages, and per-athlete position performance. Use for lineup strategy and rotation questions.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        event: { type: 'string', enum: ['vault', 'bars', 'beam', 'floor'], description: 'The gymnastics event' },
+        athlete_name: { type: 'string', description: 'Optional: focus on a specific athlete\'s position history' }
+      },
+      required: ['event']
+    }
+  },
+  {
+    name: 'search_athletes',
+    description: 'Search for athletes by partial name match. Returns matching athletes with basic stats. Use when the user mentions a name you\'re not sure about or to find athletes.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Partial name to search for' }
+      },
+      required: ['query']
+    }
+  },
+  {
+    name: 'get_competitor_data',
+    description: 'Get competitor/opponent team data from meets. Can filter by meet ID or team name. Use when asked about opponents, rival teams, or competitor scores.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        meet_id: { type: 'string', description: 'Optional: filter to a specific meet' },
+        team_name: { type: 'string', description: 'Optional: filter by opponent team name (partial match)' }
+      }
+    }
+  }
+];
+
 // Claude AI Chatbot Endpoint
 app.post('/api/chat', async (req, res) => {
   let athleteProfiles = null;
@@ -706,7 +1298,7 @@ app.post('/api/chat', async (req, res) => {
 
   try {
     console.log('[Chat API] Received message request');
-    
+
     const { messages } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
@@ -724,12 +1316,12 @@ app.post('/api/chat', async (req, res) => {
 
     console.log(`[Chat API] API Key found: ${apiKey.substring(0, 10)}...`);
 
-    const client = new Anthropic({ 
+    const client = new Anthropic({
       apiKey,
-      timeout: 30000, // 30 second timeout for API requests
+      timeout: 60000, // 60 second timeout for API requests
       maxRetries: 1    // Retry once on transient failures
     });
-    console.log('[Chat API] Anthropic client initialized with 30s timeout');
+    console.log('[Chat API] Anthropic client initialized with 60s timeout');
 
     // Format messages for Claude API
     const claudeMessages = messages.map(msg => ({
@@ -751,150 +1343,172 @@ app.post('/api/chat', async (req, res) => {
       statsAvailable = false;
     }
 
-    // Build data context string with fallback if stats unavailable
+    // Build compact data context for system prompt (all athletes, no cap)
     let dataContext = '';
-    
+
     if (statsAvailable && athleteIndex.length > 0) {
+      // Compact team overview
+      const t = teamContext;
+      const teamLine = `Record: ${t.record.wins}-${t.record.losses} | Avg: ${t.season_average || 'N/A'} | High: ${t.season_high || 'N/A'} | Home: ${t.home_average || 'N/A'} | Away: ${t.away_average || 'N/A'} | Meets: ${t.meets_played} | NQS: ${t.nqs || 'N/A'}`;
+
+      // Compact athlete summaries (ALL athletes, no cap)
+      const athleteLines = athleteIndex.map(name => {
+        const p = athleteProfiles[name];
+        if (!p) return null;
+        const evts = p.events && typeof p.events === 'object'
+          ? Object.entries(p.events).map(([ev, s]) => `${ev}:${s.average || '-'}(${s.count})`).join(' ')
+          : '';
+        return `${name}|apps:${p.lineup_appearances || 0}|avg:${p.season_average || '-'}|hi:${p.season_high || '-'}|lo:${p.season_low || '-'}|con:${p.overall_consistency !== null ? p.overall_consistency + '%' : '-'}|best:${p.strongest_event || '-'}|${evts}`;
+      }).filter(Boolean).join('\n');
+
+      // Season highlights
+      const sortedByAvg = athleteIndex
+        .map(n => ({ name: n, avg: athleteProfiles[n]?.season_average || 0 }))
+        .sort((a, b) => b.avg - a.avg);
+      const topPerformers = sortedByAvg.slice(0, 5).map(a => `${a.name} (${a.avg})`).join(', ');
+
       dataContext = `
-## REAL 2026 OSU GYMNASTICS DATA
+## TEAM OVERVIEW
+${teamLine}
 
-### Team Overview
-${JSON.stringify(teamContext, null, 2)}
+## TOP PERFORMERS
+${topPerformers}
 
-### Available Athletes & Their Performance
-${athleteIndex.slice(0, 25).map(name => {
-  const profile = athleteProfiles[name];
-  if (!profile) return '';
-  const events = profile.events && typeof profile.events === 'object' 
-    ? Object.entries(profile.events).map(([ev, stats]) => 
-        `${ev} (avg: ${stats.average || 'N/A'}, count: ${stats.count || 0})`
-      ).join(', ')
-    : 'N/A';
-  
-  return `
-**${name}**
-- Lineup appearances: ${profile.lineup_appearances || 0}
-- Season average: ${profile.season_average || 'N/A'}
-- Season range: ${profile.season_low || 'N/A'} - ${profile.season_high || 'N/A'}
-- Overall consistency: ${profile.overall_consistency !== null ? profile.overall_consistency + '%' : 'N/A'}
-- Strongest event: ${profile.strongest_event || 'N/A'}
-- Events: ${events}`;
-}).filter(Boolean).join('\n')}
-${athleteIndex.length > 25 ? `\n[...and ${athleteIndex.length - 25} more athletes]` : ''}
-
-### All Athletes Index
-${athleteIndex.join(', ')}
+## ALL ATHLETES (${athleteIndex.length} total)
+Format: Name|apps:N|avg:N|hi:N|lo:N|con:N%|best:event|event:avg(count)...
+${athleteLines}
 `;
     } else {
       dataContext = `
-## GYMNASTICS DATA STATUS
-
-⚠️ Real-time statistics are currently unavailable or being computed.
-
-Your role is to:
-1. Engage in gymnastics discussion and analysis
-2. Answer questions about gymnastics training, rules, and techniques
-3. Provide general guidance when specific OSU data is not available
-4. Let users know that live statistics will be available when data loads
-
-When stats do load, they will be included in your context.
+## DATA STATUS
+Statistics are currently unavailable or being computed. You can still discuss gymnastics generally. Let users know data will be available when stats load.
 `;
     }
 
-    const systemPrompt = `You are an elite gymnastics analytics AI for OSU Gymnastics 2026 season.
+    const systemPrompt = `You are an elite, positive gymnastics analytics AI for the OSU Beavers 2026 season. You celebrate achievements and frame areas for improvement as growth opportunities.
 
-# YOUR ROLE
+# IDENTITY
+You are the OSU Gymnastics AI Assistant -- deeply knowledgeable about every athlete, every meet, every score from the 2026 season. You are enthusiastic about the Beavers and provide data-driven, encouraging analysis.
 
-You are a specialized gymnastics analytics engine with deep knowledge of OSU's 2026 season performance data.
-
+# PRE-COMPUTED DATA
 ${dataContext}
 
-# DATA SOURCES & CAPABILITIES
+# ANALYTICAL WORKFLOW
+When answering questions, follow this process:
+1. **Understand**: Parse the user's intent -- what are they really asking?
+2. **Plan**: Decide what data is needed. Can you answer from the pre-computed context above?
+3. **Gather**: If needed, call tools to get detailed data (progression, comparisons, lineups, etc.)
+4. **Verify**: Sanity-check the data -- do the numbers make sense?
+5. **Analyze**: Find patterns, trends, and insights in the data
+6. **Present**: Deliver a clear, positive, data-backed response
 
-## Available Data
-- You DO have meet-by-meet chronological data for trend analysis
-- You can access complete meet-by-meet performance history via /api/athlete-progression/:name
-- You have full event-by-event scores (vault, bars, beam, floor, AA) for each athlete at each meet
-- You have season progression data showing athlete performance evolution
+# EFFICIENCY RULES
+- Answer from pre-computed context FIRST -- only call tools when you need deeper data
+- Max 3 tool calls for simple questions (e.g., "How's Jade doing?" -> check context first)
+- Be decisive -- don't over-research simple questions
+- For complex analyses (comparisons, trends, lineup strategy), use as many tools as needed (up to 5 rounds)
 
-## Trend Analysis Powers
-You can now answer progression and trend questions with full meet-by-meet data:
-- "Show me [athlete]'s scores from meet to meet through the season"
-- "Which meet did [athlete] perform best/worst?"
-- "Has [athlete] improved over time? By how much?"
-- "Compare [athlete1]'s progression vs [athlete2]'s"
-- "What events show improvement trends for [athlete]?"
-- "Identify turning points in [athlete]'s season"
-- "Track [athlete]'s consistency across all meets"
+# TOOLS AVAILABLE
+You have 8 tools for deep analysis:
+- **get_athlete_progression**: Meet-by-meet scores and trends for one athlete. Use for "show me their season" or "how have they improved?"
+- **get_meet_details**: Full details of a specific meet. Use for "what happened at the BYU meet?"
+- **compare_athletes**: Side-by-side athlete comparison. Use for "compare X vs Y"
+- **get_event_rankings**: Rank all athletes on an event. Use for "who's the best on bars?"
+- **get_team_trends**: Season-long team performance trends. Use for "how's the team doing over time?"
+- **get_lineup_analysis**: Rotation position analysis. Use for "what positions does she compete in?"
+- **search_athletes**: Find athletes by partial name. Use when unsure about a name
+- **get_competitor_data**: Opponent team data. Use for "how did BYU score against us?"
 
-# ANALYTICAL FRAMEWORK
+# FORMATTING GUIDELINES
+- Use tables for comparisons and rankings
+- Use bullet points for summaries
+- Always cite specific numbers (3 decimal places for scores)
+- Use bold for key stats and athlete names
+- Keep responses focused and scannable
 
-When asked about an athlete or team:
-1. Look up their stats in the provided data
-2. Provide SPECIFIC numbers (averages, highs, lows, event breakdown)
-3. Identify TRENDS and patterns (improving, declining, stable)
-4. Compare to team averages and other athletes when relevant
-5. Give coaching-level insights about strengths and weaknesses
-6. Use meet-by-meet progressions for deep trend analysis
-
-## Analysis Capabilities:
-- **Event Strengths**: Which apparatus are they strongest/weakest on?
-- **Consistency**: How reliable are they across competitions?
-- **Trends**: Are they improving or declining? By how much?
-- **Progression**: Meet-by-meet performance through the season
-- **Team Impact**: How do they contribute to team performance?
-- **Competitive Positioning**: Where do they rank among teammates?
-- **Comparative Analysis**: Side-by-side athlete comparisons
-- **Turning Points**: Identify key performance shifts in the season
-
-## Questions you can answer:
-- "How has [athlete] done this season?"
-- "Show me [athlete]'s progression through the season"
-- "Compare [athlete1] vs [athlete2]"
-- "Which events is [athlete] strongest in?"
-- "What's the team average on [event]?"
-- "Who's trending up/down?"
-- "Show me consistency metrics"
-- "Who's most improved?"
-- "Deep dive on [athlete]'s performance"
-- "When did [athlete]'s performance shift?"
+# TONE
+- Always positive and encouraging -- celebrate what athletes do well
+- Frame weaknesses as "growth opportunities" or "areas to watch"
+- Show genuine enthusiasm for great performances
+- Be supportive and team-oriented
+- Use phrases like "impressive," "strong showing," "exciting trajectory"
 
 # CRITICAL RULES
-
-- When you have data, be DATA-DRIVEN and never generic
-- Always show specific numbers with 3 decimal places when available
-- Use clear formatting: headers, bullet points, tables
-- Provide statistical context and comparisons
-- Be analytical, insightful, not just conversational
-- If stats are unavailable, say so explicitly and offer general gymnastics guidance
-- Never make up or hallucinate specific numbers
-- Handle missing data gracefully
-- For progression questions, reference meet-by-meet data to show trajectory
-
-# FALLBACK BEHAVIOR
-
-If live stats are unavailable:
-- Acknowledge this clearly to the user
-- Offer to discuss gymnastics topics generally
-- Explain that specific athlete/team data will be available when stats load
-- Stay helpful and conversational`;
+- NEVER make up or hallucinate specific numbers
+- Always use real data from context or tools
+- If data is unavailable, say so honestly
+- Show 3 decimal places for gymnastics scores
+- Handle missing data gracefully with "N/A" rather than guessing`;
 
     console.log('[Chat API] Athlete profiles ready. Stats available: ' + statsAvailable);
     console.log(`[Chat API] Context includes ${athleteIndex.length} athletes`);
-    console.log('[Chat API] Making request to Claude API...');
+    console.log('[Chat API] Starting agentic chat loop...');
     const startTime = Date.now();
-    
-    const response = await client.messages.create({
-      model: 'claude-opus-4-1-20250805',
-      max_tokens: 2048,
-      system: systemPrompt,
-      messages: claudeMessages,
-    });
+
+    // Agentic chat loop with tool use
+    let currentMessages = [...claudeMessages];
+    let rounds = 0;
+    const MAX_ROUNDS = 5;
+    const LOOP_TIMEOUT = 45000; // 45 seconds
+    let assistantMessage = '';
+
+    while (rounds < MAX_ROUNDS) {
+      if (Date.now() - startTime > LOOP_TIMEOUT) {
+        console.log(`[Chat API] Loop timeout reached after ${rounds} rounds`);
+        if (!assistantMessage) {
+          assistantMessage = "I'm still analyzing your question. The data is complex -- could you try asking again? I'll work faster this time!";
+        }
+        break;
+      }
+
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: currentMessages,
+        tools: chatbotTools,
+      });
+
+      rounds++;
+      const roundDuration = Date.now() - startTime;
+      console.log(`[Chat API] Round ${rounds} completed (${roundDuration}ms elapsed)`);
+
+      // Check for tool use vs text response
+      const toolUseBlocks = response.content.filter(b => b.type === 'tool_use');
+      const textBlocks = response.content.filter(b => b.type === 'text');
+
+      if (toolUseBlocks.length === 0) {
+        // Final text response -- done!
+        assistantMessage = textBlocks.map(b => b.text).join('\n');
+        console.log(`[Chat API] Final response received after ${rounds} round(s)`);
+        break;
+      }
+
+      // Execute tool calls
+      console.log(`[Chat API] Processing ${toolUseBlocks.length} tool call(s) in round ${rounds}`);
+      const toolResults = [];
+      for (const toolCall of toolUseBlocks) {
+        console.log(`[Chat API] Tool call: ${toolCall.name}(${JSON.stringify(toolCall.input)})`);
+        const result = executeToolCall(toolCall.name, toolCall.input);
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolCall.id,
+          content: JSON.stringify(result),
+        });
+      }
+
+      // Capture any partial text in case we timeout next round
+      if (textBlocks.length > 0) {
+        assistantMessage = textBlocks.map(b => b.text).join('\n');
+      }
+
+      // Add assistant response and tool results to conversation
+      currentMessages.push({ role: 'assistant', content: response.content });
+      currentMessages.push({ role: 'user', content: toolResults });
+    }
 
     const duration = Date.now() - startTime;
-    console.log(`[Chat API] Successfully received response from Claude API (took ${duration}ms)`);
-
-    const assistantMessage = response.content[0]?.text || '';
+    console.log(`[Chat API] Successfully completed in ${duration}ms with ${rounds} round(s)`);
 
     res.json({
       success: true,
@@ -908,33 +1522,33 @@ If live stats are unavailable:
       status: error.status,
       type: error.type,
       code: error.code,
-      stack: error.stack?.split('\n').slice(0, 3).join('\n'), // First 3 lines of stack
+      stack: error.stack?.split('\n').slice(0, 3).join('\n'),
     });
-    
+
     // Handle timeout errors
     if (error.name === 'APIConnectionTimeoutError' || error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
       console.error('[Chat API] Request timed out - Claude API may be slow or unreachable');
       return res.status(504).json({ error: 'Request timed out. Please try again.' });
     }
-    
+
     // Handle network/connection errors
     if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED' || error.code === 'EAI_AGAIN') {
       console.error('[Chat API] Network error - cannot reach Claude API');
       return res.status(503).json({ error: 'Cannot reach AI service. Please check network connection.' });
     }
-    
+
     // Handle authentication errors
     if (error.status === 401) {
       console.error('[Chat API] Authentication failed - invalid API key');
       return res.status(500).json({ error: 'Invalid API credentials' });
     }
-    
+
     // Handle rate limiting
     if (error.status === 429) {
       console.error('[Chat API] Rate limited');
       return res.status(429).json({ error: 'Rate limited. Please try again later.' });
     }
-    
+
     // Generic error fallback
     console.error('[Chat API] Generic error:', error.message);
     res.status(500).json({ error: 'Failed to process chat message' });
