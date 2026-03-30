@@ -14,37 +14,28 @@ class SavedNotesManager {
   }
 
   init() {
-    this.loadAnalysesFromStorage();
     this.attachEventListeners();
-    this.renderListView();
+    this.loadAnalysesFromServer();
   }
 
   /**
-   * Load all saved analyses from localStorage
+   * Load all saved analyses from backend API
    */
-  loadAnalysesFromStorage() {
+  async loadAnalysesFromServer() {
     try {
-      const stored = localStorage.getItem('gym_saved_analyses');
-      if (stored) {
-        this.analyses = JSON.parse(stored).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      } else {
-        this.analyses = [];
+      const response = await fetch('/api/analyses');
+      if (!response.ok) {
+        throw new Error('Failed to load analyses');
       }
+      const data = await response.json();
+      this.analyses = data.analyses || [];
+      this.analyses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      this.renderListView();
     } catch (e) {
-      console.error('Failed to load analyses from storage:', e);
+      console.error('Failed to load analyses from server:', e);
       this.analyses = [];
-    }
-  }
-
-  /**
-   * Save all analyses to localStorage
-   */
-  saveAnalysesToStorage() {
-    try {
-      localStorage.setItem('gym_saved_analyses', JSON.stringify(this.analyses));
-    } catch (e) {
-      console.error('Failed to save analyses to storage:', e);
-      this.showToast('Error saving analyses', 'error');
+      this.showToast('Error loading saved analyses', 'error');
+      this.renderListView();
     }
   }
 
@@ -80,12 +71,13 @@ class SavedNotesManager {
 
     // Refresh button
     document.getElementById('refreshBtn').addEventListener('click', () => {
-      this.loadAnalysesFromStorage();
-      if (this.currentAnalysisId) {
-        this.showDetailView(this.currentAnalysisId);
-      } else {
-        this.applyFiltersAndRender();
-      }
+      this.loadAnalysesFromServer().then(() => {
+        if (this.currentAnalysisId) {
+          this.showDetailView(this.currentAnalysisId);
+        } else {
+          this.applyFiltersAndRender();
+        }
+      });
     });
   }
 
@@ -328,7 +320,7 @@ class SavedNotesManager {
   /**
    * Save a new insight
    */
-  saveNewInsight() {
+  async saveNewInsight() {
     const textarea = document.getElementById('insightTextarea');
     const content = textarea.value.trim();
 
@@ -342,51 +334,84 @@ class SavedNotesManager {
       return;
     }
 
-    // Find and update the current analysis
-    const analysis = this.analyses.find(a => a.id === this.currentAnalysisId);
-    if (!analysis) return;
+    try {
+      // Call API to add insight
+      const response = await fetch(`/api/analyses/${this.currentAnalysisId}/insights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
 
-    if (!analysis.insights) {
-      analysis.insights = [];
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to add insight');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local analysis
+        const analysis = this.analyses.find(a => a.id === this.currentAnalysisId);
+        if (analysis) {
+          analysis.insights = data.analysis.insights;
+          analysis.updatedAt = data.analysis.updatedAt;
+        }
+
+        // Clear textarea and re-render
+        textarea.value = '';
+        this.showDetailView(this.currentAnalysisId);
+        this.showToast('Insight added successfully! 📌', 'success');
+      } else {
+        throw new Error('Failed to add insight');
+      }
+    } catch (e) {
+      console.error('Failed to add insight:', e);
+      this.showToast(`Error: ${e.message}`, 'error');
     }
-
-    analysis.insights.push({
-      id: `insight_${Date.now()}`,
-      content,
-      createdAt: new Date().toISOString(),
-    });
-
-    // Save and re-render
-    this.saveAnalysesToStorage();
-    this.showDetailView(this.currentAnalysisId);
-    this.showToast('Insight added successfully! 📌', 'success');
   }
 
   /**
    * Delete the current analysis
    */
-  deleteCurrentAnalysis() {
+  async deleteCurrentAnalysis() {
     if (!this.currentAnalysisId) return;
 
     if (!confirm('Are you sure you want to delete this analysis? This action cannot be undone.')) {
       return;
     }
 
-    // Remove from analyses array
-    this.analyses = this.analyses.filter(a => a.id !== this.currentAnalysisId);
+    try {
+      // Call API to delete analysis
+      const response = await fetch(`/api/analyses/${this.currentAnalysisId}`, {
+        method: 'DELETE',
+      });
 
-    // Save and return to list
-    this.saveAnalysesToStorage();
-    this.showToast('Analysis deleted successfully', 'success');
-    this.backToListView();
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete analysis');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Remove from local array
+        this.analyses = this.analyses.filter(a => a.id !== this.currentAnalysisId);
+        this.showToast('Analysis deleted successfully', 'success');
+        this.backToListView();
+      } else {
+        throw new Error('Failed to delete analysis');
+      }
+    } catch (e) {
+      console.error('Failed to delete analysis:', e);
+      this.showToast(`Error: ${e.message}`, 'error');
+    }
   }
 
   /**
    * Go back to list view
    */
   backToListView() {
-    this.loadAnalysesFromStorage();
-    this.applyFiltersAndRender();
+    this.loadAnalysesFromServer();
   }
 
   /**

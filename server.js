@@ -779,6 +779,290 @@ If live stats are unavailable:
   }
 });
 
+// ============================================================================
+// SAVED ANALYSES API ENDPOINTS
+// ============================================================================
+
+const ANALYSES_FILE = path.join(__dirname, 'data', 'saved-analyses.json');
+
+/**
+ * Load saved analyses from JSON file
+ */
+function loadAnalyses() {
+  try {
+    if (fs.existsSync(ANALYSES_FILE)) {
+      const data = fs.readFileSync(ANALYSES_FILE, 'utf-8');
+      return JSON.parse(data);
+    }
+    return [];
+  } catch (err) {
+    console.error('[Analyses] Error loading saved-analyses.json:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Save analyses to JSON file
+ */
+function saveAnalyses(analyses) {
+  try {
+    // Ensure data directory exists
+    const dataDir = path.dirname(ANALYSES_FILE);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    fs.writeFileSync(ANALYSES_FILE, JSON.stringify(analyses, null, 2), 'utf-8');
+    return true;
+  } catch (err) {
+    console.error('[Analyses] Error saving saved-analyses.json:', err.message);
+    return false;
+  }
+}
+
+/**
+ * Generate a unique ID for analyses
+ */
+function generateAnalysisId() {
+  return `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * POST /api/analyses - Save a new chat analysis
+ */
+app.post('/api/analyses', (req, res) => {
+  try {
+    const { title, summary, category, chatHistory } = req.body;
+
+    // Validation
+    if (!title || typeof title !== 'string') {
+      return res.status(400).json({ error: 'Title is required and must be a string' });
+    }
+
+    if (title.trim().length < 5) {
+      return res.status(400).json({ error: 'Title must be at least 5 characters' });
+    }
+
+    if (!Array.isArray(chatHistory)) {
+      return res.status(400).json({ error: 'Chat history must be an array' });
+    }
+
+    // Load existing analyses
+    let analyses = loadAnalyses();
+
+    // Create new analysis
+    const newAnalysis = {
+      id: generateAnalysisId(),
+      title: title.trim(),
+      summary: (summary || '').trim(),
+      category: category || 'other',
+      chatHistory: chatHistory.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp || new Date().toISOString(),
+      })),
+      insights: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Add to analyses
+    analyses.push(newAnalysis);
+
+    // Save to file
+    if (!saveAnalyses(analyses)) {
+      return res.status(500).json({ error: 'Failed to save analysis' });
+    }
+
+    console.log(`[Analyses] Saved new analysis: ${newAnalysis.id}`);
+    res.json({
+      success: true,
+      analysis: newAnalysis,
+    });
+  } catch (err) {
+    console.error('[Analyses] Error in POST /api/analyses:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/analyses - List all saved analyses
+ */
+app.get('/api/analyses', (req, res) => {
+  try {
+    const analyses = loadAnalyses();
+    // Sort by creation date (newest first)
+    analyses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.json({
+      success: true,
+      analyses: analyses,
+    });
+  } catch (err) {
+    console.error('[Analyses] Error in GET /api/analyses:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /api/analyses/:id - Get specific analysis with all insights
+ */
+app.get('/api/analyses/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const analyses = loadAnalyses();
+    const analysis = analyses.find(a => a.id === id);
+
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    res.json({
+      success: true,
+      analysis: analysis,
+    });
+  } catch (err) {
+    console.error('[Analyses] Error in GET /api/analyses/:id:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/analyses/:id/insights - Add insight to analysis
+ */
+app.post('/api/analyses/:id/insights', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+
+    // Validation
+    if (!content || typeof content !== 'string') {
+      return res.status(400).json({ error: 'Insight content is required' });
+    }
+
+    if (content.trim().length === 0) {
+      return res.status(400).json({ error: 'Insight cannot be empty' });
+    }
+
+    // Load analyses
+    let analyses = loadAnalyses();
+    const analysis = analyses.find(a => a.id === id);
+
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    // Create insight
+    const insight = {
+      content: content.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    // Add insight
+    if (!analysis.insights) {
+      analysis.insights = [];
+    }
+    analysis.insights.push(insight);
+    analysis.updatedAt = new Date().toISOString();
+
+    // Save
+    if (!saveAnalyses(analyses)) {
+      return res.status(500).json({ error: 'Failed to save insight' });
+    }
+
+    console.log(`[Analyses] Added insight to analysis: ${id}`);
+    res.json({
+      success: true,
+      analysis: analysis,
+    });
+  } catch (err) {
+    console.error('[Analyses] Error in POST /api/analyses/:id/insights:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /api/analyses/:id - Update analysis title/category
+ */
+app.put('/api/analyses/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, summary, category } = req.body;
+
+    // Load analyses
+    let analyses = loadAnalyses();
+    const analysis = analyses.find(a => a.id === id);
+
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    // Update fields if provided
+    if (title !== undefined) {
+      if (typeof title !== 'string' || title.trim().length < 5) {
+        return res.status(400).json({ error: 'Title must be at least 5 characters' });
+      }
+      analysis.title = title.trim();
+    }
+
+    if (summary !== undefined) {
+      analysis.summary = (summary || '').trim();
+    }
+
+    if (category !== undefined) {
+      analysis.category = category || 'other';
+    }
+
+    analysis.updatedAt = new Date().toISOString();
+
+    // Save
+    if (!saveAnalyses(analyses)) {
+      return res.status(500).json({ error: 'Failed to update analysis' });
+    }
+
+    console.log(`[Analyses] Updated analysis: ${id}`);
+    res.json({
+      success: true,
+      analysis: analysis,
+    });
+  } catch (err) {
+    console.error('[Analyses] Error in PUT /api/analyses/:id:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /api/analyses/:id - Delete saved analysis
+ */
+app.delete('/api/analyses/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Load analyses
+    let analyses = loadAnalyses();
+    const index = analyses.findIndex(a => a.id === id);
+
+    if (index === -1) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    // Remove analysis
+    const deleted = analyses.splice(index, 1)[0];
+
+    // Save
+    if (!saveAnalyses(analyses)) {
+      return res.status(500).json({ error: 'Failed to delete analysis' });
+    }
+
+    console.log(`[Analyses] Deleted analysis: ${id}`);
+    res.json({
+      success: true,
+      message: 'Analysis deleted successfully',
+    });
+  } catch (err) {
+    console.error('[Analyses] Error in DELETE /api/analyses/:id:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 const PORT = process.env.PORT || 8888;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;

@@ -510,7 +510,7 @@ class ChatbotWidget {
   /**
    * Save the current chat as an analysis
    */
-  saveChat() {
+  async saveChat() {
     const title = document.getElementById('analysisTitleInput').value.trim();
     const summary = document.getElementById('analysisSummaryInput').value.trim();
     const category = document.getElementById('analysisCategorySelect').value;
@@ -527,48 +527,53 @@ class ChatbotWidget {
       return;
     }
 
-    // Create analysis object
-    const analysis = {
-      id: `analysis_${Date.now()}`,
-      title,
-      summary: summary || '',
-      category,
-      chatHistory: this.messages.map(m => ({
-        role: m.role,
-        content: m.content,
-        timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : m.timestamp,
-      })),
-      insights: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    // Show loading state
+    this.showFormMessage('Saving analysis...', 'info');
+    const saveBtn = document.getElementById('modalSaveBtn');
+    if (saveBtn) saveBtn.disabled = true;
 
-    // Load existing analyses from localStorage
-    let analyses = [];
     try {
-      const stored = localStorage.getItem('gym_saved_analyses');
-      if (stored) {
-        analyses = JSON.parse(stored);
+      // Call backend API to save analysis
+      const response = await fetch('/api/analyses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          summary,
+          category,
+          chatHistory: this.messages.map(m => ({
+            role: m.role,
+            content: m.content,
+            timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : m.timestamp,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save analysis');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        this.showFormMessage('✓ Analysis saved successfully!', 'success');
+        
+        // Close modal after a short delay
+        setTimeout(() => {
+          this.closeSaveChatModal();
+          // Clear the input fields
+          document.getElementById('analysisTitleInput').value = '';
+          document.getElementById('analysisSummaryInput').value = '';
+        }, 1000);
+      } else {
+        throw new Error('Failed to save analysis');
       }
     } catch (e) {
-      console.error('Failed to load analyses:', e);
-    }
-
-    // Add new analysis
-    analyses.push(analysis);
-
-    // Save to localStorage
-    try {
-      localStorage.setItem('gym_saved_analyses', JSON.stringify(analyses));
-      this.showFormMessage('✓ Analysis saved successfully!', 'success');
-      
-      // Close modal after a short delay
-      setTimeout(() => {
-        this.closeSaveChatModal();
-      }, 1000);
-    } catch (e) {
       console.error('Failed to save analysis:', e);
-      this.showFormMessage('Error saving analysis. Please try again.', 'error');
+      this.showFormMessage(`Error: ${e.message}`, 'error');
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
     }
   }
 
