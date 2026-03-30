@@ -151,17 +151,62 @@ class NotesPage {
     badge.textContent = analysis.category;
     badge.className = `modal-category-badge ${this.getCategoryClass(analysis.category)}`;
 
-    // Render chat messages
+    // Render formatted report or fallback to chat messages
     const chatContainer = document.getElementById('modalChatMessages');
-    chatContainer.innerHTML = (analysis.chatHistory || []).map(msg => {
-      const content = this.formatMessage(msg.content);
-      return `
-        <div class="modal-message ${msg.role}-message">
-          <div class="modal-message-label">${msg.role === 'user' ? 'You' : 'AI Assistant'}</div>
-          <div class="modal-message-content">${content}</div>
+
+    if (analysis.formattedReport) {
+      // Show the AI-generated professional report
+      chatContainer.innerHTML = `
+        <div class="report-view active" id="reportView">
+          <div class="formatted-report">${analysis.formattedReport}</div>
+        </div>
+        <div class="chat-view" id="chatView" style="display:none;">
+          ${(analysis.chatHistory || []).map(msg => {
+            const content = this.formatMessage(msg.content);
+            return `
+              <div class="modal-message ${msg.role}-message">
+                <div class="modal-message-label">${msg.role === 'user' ? 'You' : 'AI Assistant'}</div>
+                <div class="modal-message-content">${content}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        <div class="view-toggle">
+          <button class="toggle-btn active" id="toggleReport">Report</button>
+          <button class="toggle-btn" id="toggleChat">Raw Chat</button>
         </div>
       `;
-    }).join('');
+
+      // Attach toggle listeners
+      document.getElementById('toggleReport').addEventListener('click', () => {
+        document.getElementById('reportView').style.display = 'block';
+        document.getElementById('chatView').style.display = 'none';
+        document.getElementById('toggleReport').classList.add('active');
+        document.getElementById('toggleChat').classList.remove('active');
+      });
+      document.getElementById('toggleChat').addEventListener('click', () => {
+        document.getElementById('reportView').style.display = 'none';
+        document.getElementById('chatView').style.display = 'block';
+        document.getElementById('toggleChat').classList.add('active');
+        document.getElementById('toggleReport').classList.remove('active');
+      });
+    } else {
+      // No formatted report yet — show generating message + raw chat
+      chatContainer.innerHTML = `
+        <div class="report-generating">
+          <p>Report is being generated... Refresh in a moment to see the formatted version.</p>
+        </div>
+        ${(analysis.chatHistory || []).map(msg => {
+          const content = this.formatMessage(msg.content);
+          return `
+            <div class="modal-message ${msg.role}-message">
+              <div class="modal-message-label">${msg.role === 'user' ? 'You' : 'AI Assistant'}</div>
+              <div class="modal-message-content">${content}</div>
+            </div>
+          `;
+        }).join('')}
+      `;
+    }
 
     // Render insights
     this.renderInsights(analysis.insights || []);

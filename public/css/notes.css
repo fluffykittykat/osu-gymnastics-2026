@@ -599,6 +599,110 @@
   flex-shrink: 0;
 }
 
+/* Formatted Report */
+.formatted-report {
+  background: #0d1117;
+  border-radius: 12px;
+  padding: 28px 32px;
+  line-height: 1.7;
+  color: #e6edf3;
+  font-size: 15px;
+  overflow-x: auto;
+}
+
+.formatted-report h1,
+.formatted-report h2,
+.formatted-report h3,
+.formatted-report h4 {
+  color: #FFD700;
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+.formatted-report h1 { font-size: 24px; }
+.formatted-report h2 { font-size: 20px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
+.formatted-report h3 { font-size: 17px; }
+
+.formatted-report table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+}
+
+.formatted-report th {
+  background: #BA0021;
+  color: #fff;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.formatted-report td {
+  padding: 9px 14px;
+  border-bottom: 1px solid #21262d;
+}
+
+.formatted-report tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.formatted-report strong {
+  color: #FFD700;
+}
+
+.formatted-report ul, .formatted-report ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.formatted-report li {
+  margin: 4px 0;
+}
+
+/* View Toggle */
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: center;
+}
+
+.toggle-btn {
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: 1px solid #30363d;
+  background: transparent;
+  color: #8b949e;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  border-color: #FFD700;
+  color: #FFD700;
+}
+
+.toggle-btn.active {
+  background: #BA0021;
+  border-color: #BA0021;
+  color: #fff;
+}
+
+/* Report generating state */
+.report-generating {
+  text-align: center;
+  padding: 20px;
+  color: #FFD700;
+  font-style: italic;
+  background: rgba(255, 215, 0, 0.05);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px dashed rgba(255, 215, 0, 0.3);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .notes-main {

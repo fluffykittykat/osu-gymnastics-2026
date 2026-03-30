@@ -553,8 +553,8 @@ function saveAnalyses(analyses) {
   fs.writeFileSync(filePath, JSON.stringify(analyses, null, 2));
 }
 
-// POST /api/analyses — Save new analysis
-app.post('/api/analyses', (req, res) => {
+// POST /api/analyses — Save new analysis with AI-generated formatted report
+app.post('/api/analyses', async (req, res) => {
   try {
     const { title, summary, category, chatHistory } = req.body;
     if (!title || !chatHistory || !Array.isArray(chatHistory)) {
@@ -569,15 +569,84 @@ app.post('/api/analyses', (req, res) => {
       summary: summary || '',
       category: category || 'General',
       chatHistory,
+      formattedReport: '',
       insights: [],
       createdAt: now,
       updatedAt: now
     };
 
+    // Save immediately so user gets fast feedback
     analyses.push(newAnalysis);
     saveAnalyses(analyses);
-
     res.json({ success: true, analysis: newAnalysis });
+
+    // Generate AI-formatted report in the background
+    try {
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) throw new Error('No API key');
+
+      const client = new Anthropic({ apiKey, timeout: 60000, maxRetries: 1 });
+      const chatTranscript = chatHistory
+        .map(m => `${m.role === 'user' ? 'User' : 'AI Assistant'}: ${m.content}`)
+        .join('\n\n');
+
+      const reportResponse = await client.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        system: `You are a professional sports analytics note-taker for OSU Gymnastics. Your job is to take a raw chatbot conversation and transform it into a beautifully formatted, professional analysis report.
+
+# OUTPUT FORMAT
+Generate a complete, self-contained HTML document body (no <html>, <head>, or <body> tags — just the inner content). Use rich HTML with inline styles for a polished look.
+
+# STYLING GUIDELINES
+- Use a clean, professional layout with clear visual hierarchy
+- Color scheme: OSU Scarlet (#BA0021) for headings and accents, Gold (#FFD700) for highlights, dark backgrounds (#1a1a2e, #16213e) with white/light text
+- Use tables with alternating row colors for data
+- Use styled cards/sections with rounded corners and subtle shadows
+- Bold key numbers and athlete names
+- Use meaningful section headers with icons (emoji are fine)
+- Include a summary/executive overview at the top
+- Make data visual — use progress-bar style elements for scores where appropriate
+- Keep the tone positive and professional
+
+# CONTENT GUIDELINES
+- Extract ALL data points, statistics, and findings from the conversation
+- Organize logically by topic (not chronologically by chat message)
+- Add context and interpretation — don't just list numbers
+- Highlight key takeaways and notable findings
+- Include any comparisons, trends, or patterns discussed
+- If standard deviations, averages, or other stats were calculated, present them clearly
+- Add a "Key Takeaways" or "Summary" section at the top
+- Add a "Detailed Findings" section with all the data
+- End with any recommendations or areas to watch
+
+# IMPORTANT
+- This is NOT a chat transcript — it's a professional report
+- Transform the raw conversation into polished, organized content
+- The reader should understand all findings without seeing the original chat
+- Make it look like a report a coach or analyst would present`,
+        messages: [{
+          role: 'user',
+          content: `Transform this chat conversation into a professional analysis report. Title: "${title}"\n\n--- CONVERSATION ---\n${chatTranscript}`
+        }]
+      });
+
+      const report = reportResponse.content[0]?.text || '';
+      if (report) {
+        // Update the saved analysis with the formatted report
+        const updatedAnalyses = loadAnalyses();
+        const idx = updatedAnalyses.findIndex(a => a.id === newAnalysis.id);
+        if (idx >= 0) {
+          updatedAnalyses[idx].formattedReport = report;
+          updatedAnalyses[idx].updatedAt = new Date().toISOString();
+          saveAnalyses(updatedAnalyses);
+          console.log(`[Analyses API] Formatted report generated for "${title}" (${report.length} chars)`);
+        }
+      }
+    } catch (reportErr) {
+      console.error('[Analyses API] Failed to generate formatted report:', reportErr.message);
+      // Analysis is already saved with raw chat — report generation is best-effort
+    }
   } catch (err) {
     console.error('[Analyses API] Error saving analysis:', err.message);
     res.status(500).json({ error: 'Failed to save analysis' });
@@ -898,9 +967,10 @@ function toolGetAthleteProgression(input) {
     if (meet.lineups) {
       GYMNASTICS_EVENTS.forEach(event => {
         if (meet.lineups[event] && Array.isArray(meet.lineups[event])) {
-          const pos = meet.lineups[event].findIndex(n =>
-            n && n.toLowerCase() === matchedName.toLowerCase()
-          );
+          const pos = meet.lineups[event].findIndex(n => {
+            const name = typeof n === 'string' ? n : (n && n.name ? n.name : '');
+            return name && name.toLowerCase() === matchedName.toLowerCase();
+          });
           if (pos >= 0) meetsByDate[meet.date].lineup_positions[event] = pos + 1;
         }
       });
@@ -1109,7 +1179,8 @@ function toolGetTeamTrends(input) {
         const lineupNames = meet.lineups[ev] || [];
         let total = 0;
         let count = 0;
-        lineupNames.forEach(athleteName => {
+        lineupNames.forEach(entry => {
+          const athleteName = typeof entry === 'string' ? entry : (entry && entry.name ? entry.name : '');
           const athlete = meet.athletes.find(a => (a.name || '').toLowerCase() === (athleteName || '').toLowerCase());
           if (athlete && athlete.scores && typeof athlete.scores[ev] === 'number') {
             total += athlete.scores[ev];
@@ -1173,12 +1244,13 @@ function toolGetLineupAnalysis(input) {
     if (!meet.lineups || !meet.lineups[event] || !meet.athletes) return;
     const lineup = meet.lineups[event];
 
-    lineup.forEach((athleteName, idx) => {
+    lineup.forEach((entry, idx) => {
+      const athleteName = typeof entry === 'string' ? entry : (entry && entry.name ? entry.name : '');
       if (!athleteName) return;
       const pos = idx + 1;
       if (!positions[pos]) positions[pos] = { scores: [], athletes: {} };
 
-      const athlete = meet.athletes.find(a => (a.name || '').toLowerCase() === (athleteName || '').toLowerCase());
+      const athlete = meet.athletes.find(a => (a.name || '').toLowerCase() === athleteName.toLowerCase());
       const score = athlete && athlete.scores && typeof athlete.scores[event] === 'number' ? athlete.scores[event] : null;
 
       if (score !== null) {
@@ -1315,8 +1387,9 @@ function toolGetCompetitorData(input) {
  */
 function findAthleteName(query) {
   if (!statsCache || !statsCache.athletes) return null;
-  const names = Object.keys(statsCache.athletes);
-  const q = query.toLowerCase().trim();
+  const names = Object.keys(statsCache.athletes).filter(n => typeof n === 'string' && n.length > 0);
+  const q = (query || '').toLowerCase().trim();
+  if (!q) return null;
 
   // Exact match (case-insensitive)
   const exact = names.find(n => n.toLowerCase() === q);
