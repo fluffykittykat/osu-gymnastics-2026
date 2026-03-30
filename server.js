@@ -116,6 +116,18 @@ app.get('/', async (req, res) => {
   }
 });
 
+// Serve notes.html with injected asset version for automatic cache-busting
+app.get('/notes.html', async (req, res) => {
+  try {
+    let html = await fs.promises.readFile(path.join(__dirname, 'public', 'notes.html'), 'utf8');
+    html = html.replace(/\?v=[^"']*/g, `?v=${ASSET_VERSION}`);
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send('Failed to load page');
+  }
+});
+
 app.use(express.static('public', {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
@@ -523,6 +535,160 @@ app.post('/api/refresh', async (req, res) => {
 app.get('/healthz', (req, res) => {
   const { name, version } = require('./package.json');
   res.json({ status: 'ok', uptime: process.uptime(), version });
+});
+
+// ── Saved Analyses API ──────────────────────────────────────────────────────
+
+function loadAnalyses() {
+  const filePath = path.join(__dirname, 'data', 'saved-analyses.json');
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch {
+    return [];
+  }
+}
+
+function saveAnalyses(analyses) {
+  const filePath = path.join(__dirname, 'data', 'saved-analyses.json');
+  fs.writeFileSync(filePath, JSON.stringify(analyses, null, 2));
+}
+
+// POST /api/analyses — Save new analysis
+app.post('/api/analyses', (req, res) => {
+  try {
+    const { title, summary, category, chatHistory } = req.body;
+    if (!title || !chatHistory || !Array.isArray(chatHistory)) {
+      return res.status(400).json({ error: 'title and chatHistory array are required' });
+    }
+
+    const analyses = loadAnalyses();
+    const now = new Date().toISOString();
+    const newAnalysis = {
+      id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+      title,
+      summary: summary || '',
+      category: category || 'General',
+      chatHistory,
+      insights: [],
+      createdAt: now,
+      updatedAt: now
+    };
+
+    analyses.push(newAnalysis);
+    saveAnalyses(analyses);
+
+    res.json({ success: true, analysis: newAnalysis });
+  } catch (err) {
+    console.error('[Analyses API] Error saving analysis:', err.message);
+    res.status(500).json({ error: 'Failed to save analysis' });
+  }
+});
+
+// GET /api/analyses — List all saved analyses
+app.get('/api/analyses', (req, res) => {
+  try {
+    const analyses = loadAnalyses();
+    // Sort by updatedAt descending
+    analyses.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    // Return preview with only first 2 chat messages
+    const previews = analyses.map(a => ({
+      ...a,
+      chatHistory: a.chatHistory ? a.chatHistory.slice(0, 2) : []
+    }));
+    res.json(previews);
+  } catch (err) {
+    console.error('[Analyses API] Error loading analyses:', err.message);
+    res.status(500).json({ error: 'Failed to load analyses' });
+  }
+});
+
+// GET /api/analyses/:id — Get specific analysis
+app.get('/api/analyses/:id', (req, res) => {
+  try {
+    const analyses = loadAnalyses();
+    const analysis = analyses.find(a => a.id === req.params.id);
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+    res.json(analysis);
+  } catch (err) {
+    console.error('[Analyses API] Error loading analysis:', err.message);
+    res.status(500).json({ error: 'Failed to load analysis' });
+  }
+});
+
+// POST /api/analyses/:id/insights — Add insight
+app.post('/api/analyses/:id/insights', (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content) {
+      return res.status(400).json({ error: 'content is required' });
+    }
+
+    const analyses = loadAnalyses();
+    const analysis = analyses.find(a => a.id === req.params.id);
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    const insight = {
+      id: 'ins_' + Date.now(),
+      content,
+      createdAt: new Date().toISOString()
+    };
+
+    analysis.insights = analysis.insights || [];
+    analysis.insights.push(insight);
+    analysis.updatedAt = new Date().toISOString();
+    saveAnalyses(analyses);
+
+    res.json({ success: true, insight });
+  } catch (err) {
+    console.error('[Analyses API] Error adding insight:', err.message);
+    res.status(500).json({ error: 'Failed to add insight' });
+  }
+});
+
+// PUT /api/analyses/:id — Update analysis metadata
+app.put('/api/analyses/:id', (req, res) => {
+  try {
+    const { title, summary, category } = req.body;
+    const analyses = loadAnalyses();
+    const analysis = analyses.find(a => a.id === req.params.id);
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    if (title !== undefined) analysis.title = title;
+    if (summary !== undefined) analysis.summary = summary;
+    if (category !== undefined) analysis.category = category;
+    analysis.updatedAt = new Date().toISOString();
+    saveAnalyses(analyses);
+
+    res.json({ success: true, analysis });
+  } catch (err) {
+    console.error('[Analyses API] Error updating analysis:', err.message);
+    res.status(500).json({ error: 'Failed to update analysis' });
+  }
+});
+
+// DELETE /api/analyses/:id — Delete analysis
+app.delete('/api/analyses/:id', (req, res) => {
+  try {
+    let analyses = loadAnalyses();
+    const index = analyses.findIndex(a => a.id === req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    analyses.splice(index, 1);
+    saveAnalyses(analyses);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[Analyses API] Error deleting analysis:', err.message);
+    res.status(500).json({ error: 'Failed to delete analysis' });
+  }
 });
 
 // ── Chatbot Data Preparation ────────────────────────────────────────────────

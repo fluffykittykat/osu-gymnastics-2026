@@ -105,6 +105,32 @@ class ChatbotWidget {
           </button>
         </div>
 
+        <!-- Save Chat Button -->
+        <div class="chatbot-save-area" id="chatbotSaveArea" style="display: none;">
+          <button class="chatbot-save-btn" id="saveChatBtn" title="Save this conversation">
+            <span>💾</span> Save This Chat
+          </button>
+        </div>
+
+        <!-- Save Form (inline) -->
+        <div class="chatbot-save-form" id="chatbotSaveForm" style="display: none;">
+          <div class="save-form-header">Save Analysis</div>
+          <input type="text" class="save-form-input" id="saveTitle" placeholder="Title (required)" maxlength="100">
+          <textarea class="save-form-textarea" id="saveSummary" placeholder="Summary (optional)" rows="2" maxlength="300"></textarea>
+          <select class="save-form-select" id="saveCategory">
+            <option value="General">General</option>
+            <option value="Athlete Performance">Athlete Performance</option>
+            <option value="Team Analysis">Team Analysis</option>
+            <option value="Event Breakdown">Event Breakdown</option>
+            <option value="Comparison">Comparison</option>
+          </select>
+          <div class="save-form-actions">
+            <button class="save-form-cancel" id="saveCancelBtn">Cancel</button>
+            <button class="save-form-submit" id="saveSubmitBtn">Save</button>
+          </div>
+          <div class="save-form-feedback" id="saveFeedback" style="display: none;"></div>
+        </div>
+
         <!-- Footer Info -->
         <div class="chatbot-footer">
           <small>💡 Ask about meet results, athlete stats, or gymnastics analysis</small>
@@ -159,6 +185,15 @@ class ChatbotWidget {
         input.value = input.value.substring(0, 2000);
       }
     });
+
+    // Save chat button
+    const saveChatBtn = document.getElementById('saveChatBtn');
+    const saveCancelBtn = document.getElementById('saveCancelBtn');
+    const saveSubmitBtn = document.getElementById('saveSubmitBtn');
+
+    saveChatBtn.addEventListener('click', () => this.showSaveForm());
+    saveCancelBtn.addEventListener('click', () => this.hideSaveForm());
+    saveSubmitBtn.addEventListener('click', () => this.saveChat());
 
     // Greet user when widget is first opened
     if (this.messages.length === 0) {
@@ -340,6 +375,72 @@ class ChatbotWidget {
 
     // Scroll to bottom
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Update save button visibility
+    this.updateSaveButtonVisibility();
+  }
+
+  updateSaveButtonVisibility() {
+    const userMessages = this.messages.filter(m => m.role === 'user');
+    const saveArea = document.getElementById('chatbotSaveArea');
+    if (saveArea) {
+      saveArea.style.display = userMessages.length >= 2 ? 'block' : 'none';
+    }
+  }
+
+  showSaveForm() {
+    document.getElementById('chatbotSaveArea').style.display = 'none';
+    document.getElementById('chatbotSaveForm').style.display = 'block';
+    document.getElementById('saveTitle').focus();
+  }
+
+  hideSaveForm() {
+    document.getElementById('chatbotSaveForm').style.display = 'none';
+    document.getElementById('saveFeedback').style.display = 'none';
+    document.getElementById('saveTitle').value = '';
+    document.getElementById('saveSummary').value = '';
+    document.getElementById('saveCategory').value = 'General';
+    this.updateSaveButtonVisibility();
+  }
+
+  async saveChat() {
+    const title = document.getElementById('saveTitle').value.trim();
+    const summary = document.getElementById('saveSummary').value.trim();
+    const category = document.getElementById('saveCategory').value;
+    const feedback = document.getElementById('saveFeedback');
+
+    if (!title) {
+      feedback.textContent = 'Title is required';
+      feedback.className = 'save-form-feedback error';
+      feedback.style.display = 'block';
+      return;
+    }
+
+    try {
+      const chatHistory = this.messages.map(m => ({
+        role: m.role,
+        content: m.content
+      }));
+
+      const response = await fetch('/api/analyses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, summary, category, chatHistory })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save');
+      }
+
+      feedback.textContent = 'Saved successfully!';
+      feedback.className = 'save-form-feedback success';
+      feedback.style.display = 'block';
+      setTimeout(() => this.hideSaveForm(), 1500);
+    } catch (err) {
+      feedback.textContent = 'Error saving. Please try again.';
+      feedback.className = 'save-form-feedback error';
+      feedback.style.display = 'block';
+    }
   }
 
   formatMessage(content) {

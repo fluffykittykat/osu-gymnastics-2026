@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saved Analyses - OSU Gymnastics 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=0">
+  <link rel="stylesheet" href="css/chatbot.css?v=0">
+  <link rel="stylesheet" href="css/notes.css?v=0">
+</head>
+<body>
+  <!-- Top Nav -->
+  <nav class="top-nav" id="topNav">
+    <div class="nav-brand">
+      <span class="brand-icon">🦫</span>
+      <span class="brand-text">OSU GYMNASTICS</span>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="nav-link">🏠 Season</a>
+      <a href="notes.html" class="nav-link active">📝 Notes</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="notes-main">
+    <!-- Header -->
+    <div class="notes-header">
+      <h1 class="notes-title">Saved Analyses</h1>
+      <p class="notes-subtitle">Your saved chatbot conversations and insights</p>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="notes-filter-bar">
+      <button class="filter-pill active" data-category="all">All</button>
+      <button class="filter-pill" data-category="Athlete Performance">Athlete Performance</button>
+      <button class="filter-pill" data-category="Team Analysis">Team Analysis</button>
+      <button class="filter-pill" data-category="Event Breakdown">Event Breakdown</button>
+      <button class="filter-pill" data-category="Comparison">Comparison</button>
+      <button class="filter-pill" data-category="General">General</button>
+    </div>
+
+    <!-- Analysis Cards Grid -->
+    <div class="notes-grid" id="notesGrid">
+      <!-- Cards rendered by JS -->
+    </div>
+
+    <!-- Empty State -->
+    <div class="notes-empty" id="notesEmpty" style="display: none;">
+      <div class="empty-icon">📝</div>
+      <h3>No saved analyses yet</h3>
+      <p>Start a conversation with the AI chatbot and save it to see it here.</p>
+      <a href="/" class="empty-cta">Go to Dashboard</a>
+    </div>
+
+    <!-- Loading State -->
+    <div class="notes-loading" id="notesLoading">
+      <div class="spinner"></div>
+      <p>Loading saved analyses...</p>
+    </div>
+  </main>
+
+  <!-- Detail Modal -->
+  <div class="notes-modal-overlay" id="notesModal" style="display: none;">
+    <div class="notes-modal">
+      <div class="modal-header">
+        <div class="modal-title-area">
+          <h2 class="modal-title" id="modalTitle"></h2>
+          <span class="modal-category-badge" id="modalCategory"></span>
+        </div>
+        <div class="modal-actions">
+          <button class="modal-edit-btn" id="modalEditBtn" title="Edit">✏️</button>
+          <button class="modal-delete-btn" id="modalDeleteBtn" title="Delete">🗑️</button>
+          <button class="modal-close-btn" id="modalCloseBtn" title="Close">✕</button>
+        </div>
+      </div>
+
+      <!-- Edit Form (hidden by default) -->
+      <div class="modal-edit-form" id="modalEditForm" style="display: none;">
+        <input type="text" class="edit-title-input" id="editTitleInput" placeholder="Title">
+        <select class="edit-category-select" id="editCategorySelect">
+          <option value="General">General</option>
+          <option value="Athlete Performance">Athlete Performance</option>
+          <option value="Team Analysis">Team Analysis</option>
+          <option value="Event Breakdown">Event Breakdown</option>
+          <option value="Comparison">Comparison</option>
+        </select>
+        <div class="edit-form-actions">
+          <button class="edit-cancel-btn" id="editCancelBtn">Cancel</button>
+          <button class="edit-save-btn" id="editSaveBtn">Save</button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <!-- Chat Transcript -->
+        <div class="modal-chat-section">
+          <h3 class="section-label">Chat Transcript</h3>
+          <div class="modal-chat-messages" id="modalChatMessages"></div>
+        </div>
+
+        <!-- Insights -->
+        <div class="modal-insights-section">
+          <h3 class="section-label">Insights</h3>
+          <div class="modal-insights-list" id="modalInsightsList"></div>
+          <div class="add-insight-form">
+            <textarea class="insight-input" id="insightInput" placeholder="Add an insight..." rows="2"></textarea>
+            <button class="add-insight-btn" id="addInsightBtn">Add Insight</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <small id="modalTimestamps"></small>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/notes.js?v=0"></script>
+  <script src="js/chatbot.js?v=0"></script>
+</body>
+</html>
