@@ -31,6 +31,9 @@ let wss = null;
 let connectedClients = new Set();
 let lastMeetsChecksum = null;
 
+// Gymnastics events list (used for athlete progression analysis)
+const GYMNASTICS_EVENTS = ['vault', 'bars', 'beam', 'floor'];
+
 function loadBiosData() {
   try {
     biosData = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'bios.json'), 'utf-8'));
@@ -351,7 +354,7 @@ app.get('/api/athlete-progression/:name', (req, res) => {
   // Collect meet-by-meet data for this athlete
   const meetsByDate = {};
   const meetDatesSet = new Set();
-  const events = ['vault', 'bars', 'beam', 'floor'];
+  const events = GYMNASTICS_EVENTS;
 
   // Iterate through all meets and find entries for this athlete
   if (meetsData && Array.isArray(meetsData)) {
@@ -383,10 +386,13 @@ app.get('/api/athlete-progression/:name', (req, res) => {
           });
         }
 
-        // Calculate All-Around (AA) if athlete competed all 4 events
-        if (events.every(ev => meetsByDate[meet.date].scores[ev] !== undefined)) {
-          const aa = events.reduce((sum, ev) => sum + meetsByDate[meet.date].scores[ev], 0);
+        // Calculate All-Around (AA) based on events actually competed
+        // In gymnastics, AA is the sum of whatever events the athlete competed in
+        const competedEvents = events.filter(ev => meetsByDate[meet.date].scores[ev] !== undefined);
+        if (competedEvents.length > 0) {
+          const aa = competedEvents.reduce((sum, ev) => sum + meetsByDate[meet.date].scores[ev], 0);
           meetsByDate[meet.date].scores.aa = parseFloat(aa.toFixed(3));
+          meetsByDate[meet.date].competed_events = competedEvents;
         }
       }
     });
