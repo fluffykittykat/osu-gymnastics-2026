@@ -364,6 +364,127 @@
   flex-shrink: 0;
 }
 
+/* Save Chat Area */
+.chatbot-save-area {
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border-top: 1px solid #e5e5e5;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.chatbot-save-btn {
+  background: linear-gradient(135deg, #BA0021 0%, #8B0015 100%);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.chatbot-save-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(186, 0, 33, 0.3);
+}
+
+/* Save Form */
+.chatbot-save-form {
+  padding: 12px;
+  background: #f9f9f9;
+  border-top: 1px solid #e5e5e5;
+  flex-shrink: 0;
+}
+
+.save-form-header {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.save-form-input,
+.save-form-textarea,
+.save-form-select {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.save-form-input:focus,
+.save-form-textarea:focus,
+.save-form-select:focus {
+  border-color: #BA0021;
+}
+
+.save-form-textarea {
+  resize: none;
+}
+
+.save-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.save-form-cancel,
+.save-form-submit {
+  border: none;
+  border-radius: 16px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.save-form-cancel {
+  background: #e5e5e5;
+  color: #666;
+}
+
+.save-form-cancel:hover {
+  background: #d5d5d5;
+}
+
+.save-form-submit {
+  background: #BA0021;
+  color: white;
+}
+
+.save-form-submit:hover {
+  background: #8B0015;
+}
+
+.save-form-feedback {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.save-form-feedback.success {
+  background: #e6f9e6;
+  color: #1a7a1a;
+}
+
+.save-form-feedback.error {
+  background: #ffe6e6;
+  color: #c00;
+}
+
 /* Responsive Design */
 @media (max-width: 480px) {
   #chatbot-widget {
