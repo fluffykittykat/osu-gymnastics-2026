@@ -724,10 +724,10 @@ ChatbotWidget.prototype.saveChat=async function(){var fb=document.getElementById
 if(ch.length<2){if(fb){fb.textContent='Have a conversation first.';fb.className='save-form-feedback error';fb.style.display='block';}return;}
 try{var r=await fetch('/api/analyses/'+AID+'/append',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chatHistory:ch})});if(!r.ok)throw 0;
 this.messages=[this.messages[0]];this.renderMessages();this.saveConversationToStorage();
+var old=document.getElementById('updateBanner');if(old)old.remove();
 var banner=document.createElement('div');banner.id='updateBanner';
 banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:10000;background:linear-gradient(135deg,#D73F09,#a03000);color:#fff;padding:16px 24px;text-align:center;font-family:Inter,sans-serif;font-weight:600;font-size:15px;box-shadow:0 4px 20px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;gap:12px';
-banner.innerHTML='<span style="animation:spin 1s linear infinite;display:inline-block">⏳</span> Regenerating report with new scope... Page will refresh automatically.';
-var st=document.createElement('style');st.textContent='@keyframes spin{to{transform:rotate(360deg)}}';document.head.appendChild(st);
+banner.innerHTML='<span style="animation:chatbot-spin 1s linear infinite;display:inline-block">⏳</span> Regenerating report with new scope... Page will refresh automatically.';
 document.body.appendChild(banner);
 var saveTime=new Date().toISOString();
 (function poll(){if(Date.now()-Date.parse(saveTime)>60000){banner.innerHTML='Taking longer than expected. <a href="" style="color:#fff;text-decoration:underline">Refresh manually</a>';return;}
@@ -741,6 +741,22 @@ var ch=bot.messages.filter(function(m){return!m.isError&&!m.isGreeting}).map(fun
 fetch('/api/analyses',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title,summary:summary,category:category,chatHistory:ch})}).then(function(r){if(!r.ok)throw 0;fb.textContent='Saved! Redirecting to notes...';fb.className='save-form-feedback success';fb.style.display='block';bot.messages=[{role:'assistant',content:'Chat saved as new note! Redirecting...',timestamp:new Date(),isGreeting:true}];bot.saveConversationToStorage();setTimeout(function(){window.location.href='/notes.html'},1500)}).catch(function(){fb.textContent='Error saving. Try again.';fb.className='save-form-feedback error';fb.style.display='block'});},true);}
 // Override cancel to restore two-button area
 var origCancel=document.getElementById('saveCancelBtn');if(origCancel){origCancel.addEventListener('click',function(e){e.stopImmediatePropagation();document.getElementById('chatbotSaveForm').style.display='none';document.getElementById('saveFeedback').style.display='none';document.getElementById('chatbotSaveArea').style.display='flex';},true);}
+// Add "Update Report" button below input area
+var inputArea=document.querySelector('.chatbot-input-area');if(inputArea){var ub=document.createElement('button');ub.className='chatbot-update-report-btn';ub.id='updateReportBtn';ub.innerHTML='⚡ Update Report';ub.title='Send your prompt directly to regenerate the report';inputArea.parentNode.insertBefore(ub,inputArea.nextSibling);
+ub.addEventListener('click',async function(){var inp=document.getElementById('chatbotInput');var text=inp.value.trim();if(!text||ub.disabled)return;
+ub.disabled=true;ub.textContent='Updating...';inp.value='';inp.style.height='auto';
+var ch=[{role:'user',content:text}];
+try{var r=await fetch('/api/analyses/'+AID+'/append',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chatHistory:ch})});if(!r.ok)throw 0;
+bot.messages=[{role:'assistant',content:'Report is regenerating with your feedback...',timestamp:new Date(),isGreeting:true}];bot.renderMessages();bot.saveConversationToStorage();
+var old2=document.getElementById('updateBanner');if(old2)old2.remove();
+var banner=document.createElement('div');banner.id='updateBanner';
+banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:10000;background:linear-gradient(135deg,#D73F09,#a03000);color:#fff;padding:16px 24px;text-align:center;font-family:Inter,sans-serif;font-weight:600;font-size:15px;box-shadow:0 4px 20px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;gap:12px';
+banner.innerHTML='<span style="animation:chatbot-spin 1s linear infinite;display:inline-block">⏳</span> Updating report... Page will refresh automatically.';
+document.body.appendChild(banner);
+var saveTime=new Date().toISOString();
+(function poll(){if(Date.now()-Date.parse(saveTime)>60000){banner.innerHTML='Taking longer than expected. <a href="" style="color:#fff;text-decoration:underline">Refresh manually</a>';ub.disabled=false;ub.innerHTML='⚡ Update Report';return;}
+fetch('/api/analyses/'+AID).then(function(r){return r.json()}).then(function(d){if(d.reportGeneratedAt&&d.reportGeneratedAt>saveTime){window.location.reload()}else{setTimeout(poll,2000)}}).catch(function(){setTimeout(poll,3000)})})();
+}catch(e){ub.disabled=false;ub.innerHTML='⚡ Update Report';bot.messages.push({role:'assistant',content:'Failed to update report. Please try again.',timestamp:new Date(),isError:true});bot.renderMessages();}});}
 },200);});
 })();
 </script>

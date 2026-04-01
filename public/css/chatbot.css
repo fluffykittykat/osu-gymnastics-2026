@@ -394,6 +394,37 @@
   transform: scale(1.05);
 }
 
+.chatbot-update-report-btn {
+  display: block;
+  width: calc(100% - 24px);
+  margin: 0 12px 8px;
+  background: linear-gradient(135deg, #D73F09 0%, #a03000 100%);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.chatbot-update-report-btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(215, 63, 9, 0.4);
+}
+
+.chatbot-update-report-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@keyframes chatbot-spin {
+  to { transform: rotate(360deg); }
+}
+
 .chatbot-save-btn {
   background: linear-gradient(135deg, #D73F09 0%, #a03000 100%);
   color: white;
