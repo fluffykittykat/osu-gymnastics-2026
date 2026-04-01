@@ -25,6 +25,7 @@ try {
 let meetsData = null;
 let biosData = null;
 let statsCache = null;
+let competitorData = {}; // { alabama: {...}, utah: {...}, denver: {...} }
 
 // WebSocket server and connected clients
 let wss = null;
@@ -55,6 +56,27 @@ function loadMeetsData() {
   } catch (err) {
     console.error('Failed to load meets.json:', err.message);
     meetsData = [];
+  }
+}
+
+function loadCompetitorData() {
+  const compDir = path.join(__dirname, 'data', 'competitors');
+  try {
+    const indexFile = path.join(compDir, 'index.json');
+    if (!fs.existsSync(indexFile)) {
+      console.log('No competitor data found. Run: node scripts/build_competitor_data.js');
+      return;
+    }
+    const index = JSON.parse(fs.readFileSync(indexFile, 'utf-8'));
+    for (const team of index.teams) {
+      const teamFile = path.join(compDir, `${team.key}.json`);
+      if (fs.existsSync(teamFile)) {
+        competitorData[team.key] = JSON.parse(fs.readFileSync(teamFile, 'utf-8'));
+        console.log(`Loaded competitor data: ${team.name} (${Object.keys(competitorData[team.key].athletes).length} athletes, ${competitorData[team.key].meets.length} meets)`);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load competitor data:', err.message);
   }
 }
 
@@ -103,6 +125,7 @@ function recomputeStats() {
 loadBiosData();
 loadMeetsData();
 recomputeStats();
+loadCompetitorData();
 
 // Serve index.html with injected asset version for automatic cache-busting
 app.get('/', async (req, res) => {
@@ -343,6 +366,55 @@ app.get('/api/competitor-scores', (req, res) => {
   })));
 });
 
+// GET /api/competitors — list all competitor teams with summary stats
+app.get('/api/competitors', (req, res) => {
+  const teams = Object.entries(competitorData).map(([key, data]) => ({
+    key,
+    ...data.team,
+    teamStats: data.teamStats,
+    athleteCount: Object.keys(data.athletes).length,
+    meetsPlayed: data.meets.length,
+  }));
+  res.json(teams);
+});
+
+// GET /api/competitors/:team — full team data with athletes, meets, indexes
+app.get('/api/competitors/:team', (req, res) => {
+  const teamKey = req.params.team.toLowerCase();
+  const data = competitorData[teamKey];
+  if (!data) {
+    const available = Object.keys(competitorData).join(', ') || 'none';
+    return res.status(404).json({ error: `Team "${req.params.team}" not found. Available: ${available}` });
+  }
+  res.json(data);
+});
+
+// GET /api/competitors/:team/athletes/:name — individual athlete data
+app.get('/api/competitors/:team/athletes/:name', (req, res) => {
+  const teamKey = req.params.team.toLowerCase();
+  const data = competitorData[teamKey];
+  if (!data) return res.status(404).json({ error: 'Team not found' });
+
+  const name = decodeURIComponent(req.params.name).toLowerCase();
+  const match = Object.entries(data.athletes).find(([n]) => n.toLowerCase().includes(name));
+  if (!match) return res.status(404).json({ error: `Athlete "${req.params.name}" not found on ${data.team.name}` });
+
+  res.json({ name: match[0], ...match[1] });
+});
+
+// GET /api/competitors/:team/event-rankings/:event — ranked athletes for an event
+app.get('/api/competitors/:team/event-rankings/:event', (req, res) => {
+  const teamKey = req.params.team.toLowerCase();
+  const data = competitorData[teamKey];
+  if (!data) return res.status(404).json({ error: 'Team not found' });
+
+  const event = req.params.event.toLowerCase();
+  const rankings = data.eventRankings[event];
+  if (!rankings) return res.status(404).json({ error: `Event "${event}" not found. Valid: vault, bars, beam, floor` });
+
+  res.json({ team: data.team.name, event, rankings });
+});
+
 /**
  * Get athlete progression through the season (meet-by-meet data)
  * GET /api/athlete-progression/:name
@@ -553,6 +625,142 @@ function saveAnalyses(analyses) {
   fs.writeFileSync(filePath, JSON.stringify(analyses, null, 2));
 }
 
+function writeReportPage(analysisId, title, category, createdAt, reportBody) {
+  // Strip markdown code fences if AI wrapped the output
+  reportBody = reportBody.replace(/^```html?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+  // Strip any remaining inline style attributes
+  reportBody = reportBody.replace(/\s*style="[^"]*"/g, '');
+  const safeTitle = (title || 'Report').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;');
+  const dateStr = new Date(createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const page = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${safeTitle} - OSU Gymnastics Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--orange:#FF6B35;--orange-dark:#D73F09;--orange-light:#FF8C5A;--black:#1a1612;--dark:#100e0b;--card:#2a241e;--card-hover:#332d26;--text:#F5EFEA;--text-muted:#A08B78;--border:#3d3228}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--dark);color:var(--text);min-height:100vh;line-height:1.7}
+.banner{background:linear-gradient(135deg,var(--orange-dark) 0%,#a03000 100%);position:relative;overflow:hidden}
+.banner::after{content:'';position:absolute;inset:0;background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" x="50" font-size="80" text-anchor="middle" dominant-baseline="central" opacity="0.06">🤸</text></svg>') repeat;background-size:120px;pointer-events:none}
+.bi{max-width:1000px;margin:0 auto;padding:40px 40px 35px;position:relative;z-index:1}
+.bnav{display:flex;align-items:center;gap:12px;margin-bottom:24px;font-size:14px}
+.bnav a{color:rgba(255,255,255,.7);text-decoration:none}.bnav a:hover{color:var(--orange-light)}
+.bnav .s{color:rgba(255,255,255,.3)}
+.bbrand{font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--orange-light);margin-bottom:12px}
+.banner h1{font-family:'Oswald',sans-serif;font-size:36px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:12px}
+.bmeta{display:flex;gap:20px;flex-wrap:wrap;font-size:14px;color:rgba(255,255,255,.8)}.bmeta span{display:flex;align-items:center;gap:6px}
+.cbadge{background:rgba(255,107,53,.2);color:var(--orange-light);padding:3px 12px;border-radius:12px;font-size:12px;font-weight:600;border:1px solid rgba(255,107,53,.3)}
+.main{max-width:1000px;margin:0 auto;padding:40px}
+.content{background:var(--card);border-radius:16px;padding:40px 48px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.content h1{font-family:'Oswald',sans-serif;font-size:28px;color:var(--orange);margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid rgba(255,107,53,.2)}.content h1:first-child{margin-top:0}
+.content h2{font-family:'Oswald',sans-serif;font-size:22px;color:var(--orange);margin:28px 0 14px;padding-bottom:6px;border-bottom:1px solid rgba(255,107,53,.15)}
+.content h3{font-size:18px;color:var(--text);font-weight:600;margin:24px 0 10px}
+.content h4{font-size:15px;color:var(--text-muted);font-weight:600;margin:20px 0 8px}
+.content p{margin:10px 0;color:var(--text)}.content strong{color:var(--orange);font-weight:600}.content em{color:var(--text-muted)}
+.content ul,.content ol{padding-left:24px;margin:10px 0}.content li{margin:6px 0;color:var(--text)}.content li strong{color:var(--orange)}
+.content table{width:100%;border-collapse:separate;border-spacing:0;margin:20px 0;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.content th{background:linear-gradient(135deg,var(--orange-dark),#a03000);color:#fff;padding:12px 16px;text-align:left;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+.content td{padding:11px 16px;border-bottom:1px solid var(--border);font-size:14px;color:var(--text)}
+.content tr:nth-child(even) td{background:rgba(255,255,255,.02)}.content tr:hover td{background:rgba(255,107,53,.06)}.content tr:last-child td{border-bottom:none}
+.content a{color:var(--orange);text-decoration:none}.content code{background:rgba(255,107,53,.1);padding:2px 6px;border-radius:4px;font-size:13px;color:var(--orange-light)}
+.isec{max-width:1000px;margin:0 auto;padding:0 40px 40px}
+.ibox{background:var(--card);border-radius:16px;padding:32px 40px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.ibox h2{font-family:'Oswald',sans-serif;font-size:22px;color:var(--orange);margin:0 0 20px;padding-bottom:8px;border-bottom:1px solid rgba(255,107,53,.15)}
+.ii{background:rgba(255,255,255,.03);border-radius:10px;padding:16px 20px;margin-bottom:12px;border-left:3px solid var(--orange-dark)}
+.it{color:var(--text);font-size:14px;line-height:1.6}.id{color:var(--text-muted);font-size:12px;margin-top:6px}
+.ie{color:var(--text-muted);font-style:italic;padding:12px 0}
+.iform{display:flex;gap:12px;margin-top:20px}
+.iinp{flex:1;background:var(--black);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;resize:vertical;min-height:48px}
+.iinp:focus{outline:none;border-color:var(--orange)}.iinp::placeholder{color:var(--text-muted)}
+.ibtn{background:linear-gradient(135deg,var(--orange-dark),#a03000);color:#fff;border:none;border-radius:10px;padding:12px 24px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.ibtn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(215,63,9,.4)}.ibtn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.foot{max-width:1000px;margin:0 auto;padding:20px 40px 40px;text-align:center;color:var(--text-muted);font-size:13px}.foot a{color:var(--orange);text-decoration:none}.foot a:hover{color:var(--orange-light)}
+@media print{body{background:#fff;color:#000}.banner{background:var(--orange-dark)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.content{border:1px solid #ddd;box-shadow:none;background:#fff}.content h1,.content h2,.content strong{color:var(--orange-dark)}.content th{background:var(--orange-dark)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.bnav,.isec{display:none}}
+@media(max-width:768px){.bi{padding:24px 16px}.banner h1{font-size:26px}.bmeta{gap:10px;font-size:12px}.bnav{font-size:12px;gap:8px;flex-wrap:wrap}.main,.isec{padding-left:16px;padding-right:16px}.content,.ibox{padding:24px 16px}.iform{flex-direction:column}.content table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}}
+@media(max-width:480px){.banner h1{font-size:22px}.bbrand{font-size:11px}.bmeta{flex-direction:column;gap:6px}.cbadge{align-self:flex-start}}
+</style>
+</head>
+<body>
+<header class="banner"><div class="bi">
+<nav class="bnav"><a href="/">🦫 OSU Gymnastics</a><span class="s">/</span><a href="/notes.html">Saved Notes</a><span class="s">/</span><span style="color:rgba(255,255,255,.5)">Report</span></nav>
+<div class="bbrand">OSU Beavers Gymnastics 2026 — Analysis Report</div>
+<h1>${safeTitle}</h1>
+<div class="bmeta"><span>📅 ${dateStr}</span><span class="cbadge">${category}</span><span>🤖 AI-Generated Analysis</span></div>
+</div></header>
+<main class="main"><div class="content">${reportBody}</div></main>
+<section class="isec"><div class="ibox">
+<h2>📌 Insights &amp; Notes</h2>
+<div id="insightsList"><p class="ie">Loading...</p></div>
+<div class="iform"><textarea id="insightInput" class="iinp" placeholder="Add a new insight or observation..." rows="2"></textarea><button id="addInsightBtn" class="ibtn">Add Insight</button></div>
+</div></section>
+<footer class="foot"><p>Generated by OSU Gymnastics AI Assistant · <a href="/notes.html">Back to Notes</a> · <a href="/">Dashboard</a></p></footer>
+<link rel="stylesheet" href="/css/chatbot.css">
+<script src="/js/chatbot.js"></script>
+<script>
+(function(){
+var AID='${analysisId}',RT='${safeTitle.replace(/'/g,"\\'")}';
+document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){
+if(!window.chatbot)return;var bot=window.chatbot;
+var re=document.querySelector('.content');var rt=re?re.innerText.substring(0,8000):'';
+bot.contextMessages=[{role:'user',content:'CONTEXT: User is viewing a saved analysis report titled "'+RT+'". Here is the FULL current report content:\\n'+rt+'\\n\\nIMPORTANT: You have the entire existing report above. The user may want to ADD to this analysis, REVISE parts of it, or EXPAND its scope. When they give you a prompt:\\n- Consider ALL the existing report content as valid context\\n- Their new request builds ON TOP of the existing analysis\\n- When you respond, incorporate both the existing findings AND the new data/analysis\\n- Keep everything from the existing report that is still relevant\\n- The regenerated report should be a comprehensive merged document — the original content plus the new additions\\n- When user says her/his/she/he/they/this, they mean the subject of this analysis. Do NOT ask who.'},{role:'assistant',content:'Got it. I have the full content of "'+RT+'". I\\'ll treat your next message as building on this existing analysis. I\\'ll incorporate the current findings with any new data or analysis you request, and when you save, the report will be regenerated with everything merged together.'}];
+bot.messages=[{role:'assistant',content:'Hi! 👋 I can see you are reviewing **'+RT+'**. Ask me anything — I can add new analysis, expand sections, or update the report with new data. When you\\'re done, hit **Regenerate Report** to update.',timestamp:new Date(),isGreeting:true}];
+bot.saveConversationToStorage();if(bot.isOpen)bot.renderMessages();
+var sa=document.getElementById('chatbotSaveArea');if(sa){var b=sa.querySelector('.chatbot-save-btn');if(b){b.textContent='🔄 Regenerate Report';b.id='regenReportBtn';}
+var nb=document.createElement('button');nb.className='chatbot-save-btn-secondary';nb.id='saveNewNoteBtn';nb.textContent='💾 Save as New Note';sa.appendChild(nb);
+nb.addEventListener('click',function(){document.getElementById('chatbotSaveArea').style.display='none';document.getElementById('chatbotSaveForm').style.display='block';document.getElementById('saveFeedback').style.display='none';
+var ti=document.getElementById('saveTitle');var si=document.getElementById('saveSummary');
+var today=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});ti.value='Chat Analysis - '+today;
+var firstUser=bot.messages.find(function(m){return m.role==='user'&&!m.isGreeting});if(firstUser)si.value=firstUser.content.substring(0,120);else si.value='';
+ti.focus();ti.select();});}
+// Override showSaveForm to regenerate (for the main save btn)
+ChatbotWidget.prototype.showSaveForm=function(){this.saveChat()};
+// Override saveChat to append to this note (Regenerate Report)
+ChatbotWidget.prototype.saveChat=async function(){var fb=document.getElementById('saveFeedback');var ch=this.messages.filter(function(m){return!m.isError&&!m.isGreeting}).map(function(m){return{role:m.role,content:m.content}});
+if(ch.length<2){if(fb){fb.textContent='Have a conversation first.';fb.className='save-form-feedback error';fb.style.display='block';}return;}
+try{var r=await fetch('/api/analyses/'+AID+'/append',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chatHistory:ch})});if(!r.ok)throw 0;
+this.messages=[this.messages[0]];this.renderMessages();this.saveConversationToStorage();
+var banner=document.createElement('div');banner.id='updateBanner';
+banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:10000;background:linear-gradient(135deg,#D73F09,#a03000);color:#fff;padding:16px 24px;text-align:center;font-family:Inter,sans-serif;font-weight:600;font-size:15px;box-shadow:0 4px 20px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;gap:12px';
+banner.innerHTML='<span style="animation:spin 1s linear infinite;display:inline-block">⏳</span> Regenerating report with new scope... Page will refresh automatically.';
+var st=document.createElement('style');st.textContent='@keyframes spin{to{transform:rotate(360deg)}}';document.head.appendChild(st);
+document.body.appendChild(banner);
+var saveTime=new Date().toISOString();
+(function poll(){if(Date.now()-Date.parse(saveTime)>60000){banner.innerHTML='Taking longer than expected. <a href="" style="color:#fff;text-decoration:underline">Refresh manually</a>';return;}
+fetch('/api/analyses/'+AID).then(function(r){return r.json()}).then(function(d){if(d.reportGeneratedAt&&d.reportGeneratedAt>saveTime){window.location.reload()}else{setTimeout(poll,2000)}}).catch(function(){setTimeout(poll,3000)})})();
+}catch(e){if(fb){fb.textContent='Error. Try again.';fb.className='save-form-feedback error';fb.style.display='block';}}};
+// Override save form submit to create NEW note
+var origSubmit=document.getElementById('saveSubmitBtn');if(origSubmit){origSubmit.addEventListener('click',function(e){e.stopImmediatePropagation();
+var title=document.getElementById('saveTitle').value.trim();var summary=document.getElementById('saveSummary').value.trim();var category=document.getElementById('saveCategory').value;var fb=document.getElementById('saveFeedback');
+if(!title){fb.textContent='Title is required';fb.className='save-form-feedback error';fb.style.display='block';return;}
+var ch=bot.messages.filter(function(m){return!m.isError&&!m.isGreeting}).map(function(m){return{role:m.role,content:m.content}});
+fetch('/api/analyses',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title,summary:summary,category:category,chatHistory:ch})}).then(function(r){if(!r.ok)throw 0;fb.textContent='Saved! Redirecting to notes...';fb.className='save-form-feedback success';fb.style.display='block';bot.messages=[{role:'assistant',content:'Chat saved as new note! Redirecting...',timestamp:new Date(),isGreeting:true}];bot.saveConversationToStorage();setTimeout(function(){window.location.href='/notes.html'},1500)}).catch(function(){fb.textContent='Error saving. Try again.';fb.className='save-form-feedback error';fb.style.display='block'});},true);}
+// Override cancel to restore two-button area
+var origCancel=document.getElementById('saveCancelBtn');if(origCancel){origCancel.addEventListener('click',function(e){e.stopImmediatePropagation();document.getElementById('chatbotSaveForm').style.display='none';document.getElementById('saveFeedback').style.display='none';document.getElementById('chatbotSaveArea').style.display='flex';},true);}
+},200);});
+})();
+</script>
+<script>
+var AID='${analysisId}';
+async function loadInsights(){try{var r=await fetch('/api/analyses/'+AID);if(!r.ok)throw 0;var d=await r.json();renderInsights(d.insights||[])}catch(e){document.getElementById('insightsList').innerHTML='<p class="ie">Could not load insights.</p>'}}
+function renderInsights(ins){var el=document.getElementById('insightsList');if(!ins.length){el.innerHTML='<p class="ie">No insights yet. Add your first below!</p>';return;}el.innerHTML=ins.map(function(i){var d=new Date(i.createdAt).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});return'<div class="ii"><div class="it">'+i.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div><div class="id">'+d+'</div></div>'}).join('')}
+document.getElementById('addInsightBtn').addEventListener('click',async function(){var inp=document.getElementById('insightInput'),c=inp.value.trim();if(!c)return;var btn=document.getElementById('addInsightBtn');btn.disabled=true;btn.textContent='Saving...';try{var r=await fetch('/api/analyses/'+AID+'/insights',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:c})});if(!r.ok)throw 0;inp.value='';await loadInsights()}catch(e){alert('Failed to add insight.')}finally{btn.disabled=false;btn.textContent='Add Insight'}});
+document.getElementById('insightInput').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('addInsightBtn').click()}});
+loadInsights();
+</script>
+</body>
+</html>`;
+
+  const notesDir = path.join(__dirname, 'public', 'notes');
+  if (!fs.existsSync(notesDir)) fs.mkdirSync(notesDir, { recursive: true });
+  fs.writeFileSync(path.join(notesDir, analysisId + '.html'), page, 'utf-8');
+  console.log('[Analyses] Report page written: /notes/' + analysisId + '.html');
+}
+
 // POST /api/analyses — Save new analysis with AI-generated formatted report
 app.post('/api/analyses', async (req, res) => {
   try {
@@ -591,40 +799,40 @@ app.post('/api/analyses', async (req, res) => {
         .join('\n\n');
 
       const reportResponse = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
-        system: `You are a professional sports analytics note-taker for OSU Gymnastics. Your job is to take a raw chatbot conversation and transform it into a beautifully formatted, professional analysis report.
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 16000,
+        system: `You are a professional sports analytics report writer for OSU Gymnastics 2026. Transform a chatbot conversation into the BODY CONTENT of a professional analysis report.
 
-# OUTPUT FORMAT
-Generate a complete, self-contained HTML document body (no <html>, <head>, or <body> tags — just the inner content). Use rich HTML with inline styles for a polished look.
+# OUTPUT RULES — READ CAREFULLY
+- Generate ONLY plain semantic HTML: <h1>, <h2>, <h3>, <p>, <ul>, <ol>, <li>, <table>, <tr>, <th>, <td>, <strong>, <em>
+- Do NOT use <div>, <span>, or <style> tags
+- Do NOT use any inline styles (no style="" attributes anywhere)
+- Do NOT use CSS, backgrounds, colors, fonts, padding, margins, or any visual styling
+- Do NOT wrap content in any container elements
+- Do NOT use markdown code fences — output raw HTML directly
+- The page already has professional styling. You just provide the content structure.
 
-# STYLING GUIDELINES
-- Use a clean, professional layout with clear visual hierarchy
-- Color scheme: OSU Scarlet (#BA0021) for headings and accents, Gold (#FFD700) for highlights, dark backgrounds (#1a1a2e, #16213e) with white/light text
-- Use tables with alternating row colors for data
-- Use styled cards/sections with rounded corners and subtle shadows
-- Bold key numbers and athlete names
-- Use meaningful section headers with icons (emoji are fine)
-- Include a summary/executive overview at the top
-- Make data visual — use progress-bar style elements for scores where appropriate
-- Keep the tone positive and professional
+# CONTENT STRUCTURE
+1. <h1> with the report title
+2. <h2>Executive Summary</h2> — 2-3 sentences of key findings
+3. <h2>Key Takeaways</h2> — <ul> with the most important bullets
+4. <h2>Detailed Analysis</h2> — organized by topic with <h3> subsections
+5. Use <table> with <th> and <td> for any numerical data or comparisons
+6. <h2>Trends & Patterns</h2> — what the data reveals
+7. <h2>Outlook</h2> — forward-looking insights
 
-# CONTENT GUIDELINES
-- Extract ALL data points, statistics, and findings from the conversation
-- Organize logically by topic (not chronologically by chat message)
-- Add context and interpretation — don't just list numbers
-- Highlight key takeaways and notable findings
-- Include any comparisons, trends, or patterns discussed
-- If standard deviations, averages, or other stats were calculated, present them clearly
-- Add a "Key Takeaways" or "Summary" section at the top
-- Add a "Detailed Findings" section with all the data
-- End with any recommendations or areas to watch
+# WRITING GUIDELINES
+- Professional but positive — celebrate achievements
+- Use specific numbers with 3 decimal places for gymnastics scores
+- Use <strong> for key numbers and athlete names
+- Use <em> for supplementary notes
+- Use emoji sparingly in <h2> headers only (one per heading max)
+- The reader should understand everything without seeing the original chat
 
 # IMPORTANT
-- This is NOT a chat transcript — it's a professional report
-- Transform the raw conversation into polished, organized content
-- The reader should understand all findings without seeing the original chat
-- Make it look like a report a coach or analyst would present`,
+- This is a PROFESSIONAL REPORT, not a chat transcript
+- Organize by topic, not conversation flow
+- Extract ALL data points from the conversation`,
         messages: [{
           role: 'user',
           content: `Transform this chat conversation into a professional analysis report. Title: "${title}"\n\n--- CONVERSATION ---\n${chatTranscript}`
@@ -633,14 +841,15 @@ Generate a complete, self-contained HTML document body (no <html>, <head>, or <b
 
       const report = reportResponse.content[0]?.text || '';
       if (report) {
-        // Update the saved analysis with the formatted report
+        writeReportPage(newAnalysis.id, title, category || 'General', now, report);
         const updatedAnalyses = loadAnalyses();
         const idx = updatedAnalyses.findIndex(a => a.id === newAnalysis.id);
         if (idx >= 0) {
           updatedAnalyses[idx].formattedReport = report;
+          updatedAnalyses[idx].reportUrl = '/notes/' + newAnalysis.id + '.html';
           updatedAnalyses[idx].updatedAt = new Date().toISOString();
           saveAnalyses(updatedAnalyses);
-          console.log(`[Analyses API] Formatted report generated for "${title}" (${report.length} chars)`);
+          console.log(`[Analyses API] Report page generated for "${title}"`);
         }
       }
     } catch (reportErr) {
@@ -715,6 +924,110 @@ app.post('/api/analyses/:id/insights', (req, res) => {
   } catch (err) {
     console.error('[Analyses API] Error adding insight:', err.message);
     res.status(500).json({ error: 'Failed to add insight' });
+  }
+});
+
+// POST /api/analyses/:id/append — Append new chat to existing analysis and regenerate report
+app.post('/api/analyses/:id/append', async (req, res) => {
+  try {
+    const { chatHistory } = req.body;
+    if (!chatHistory || !Array.isArray(chatHistory) || chatHistory.length === 0) {
+      return res.status(400).json({ error: 'chatHistory array is required' });
+    }
+
+    const analyses = loadAnalyses();
+    const analysis = analyses.find(a => a.id === req.params.id);
+    if (!analysis) {
+      return res.status(404).json({ error: 'Analysis not found' });
+    }
+
+    // Append new chat messages with separator
+    analysis.chatHistory = analysis.chatHistory || [];
+    analysis.chatHistory.push(
+      { role: 'system', content: '--- Follow-up conversation ---' },
+      ...chatHistory
+    );
+    analysis.updatedAt = new Date().toISOString();
+    saveAnalyses(analyses);
+
+    res.json({ success: true, message: 'Chat appended. Report is regenerating.' });
+
+    // Regenerate formatted report in background with ALL chat content
+    try {
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) throw new Error('No API key');
+
+      const client = new Anthropic({ apiKey, timeout: 60000, maxRetries: 1 });
+      const chatTranscript = analysis.chatHistory
+        .map(m => {
+          if (m.role === 'system') return '\n--- ' + m.content + ' ---\n';
+          return (m.role === 'user' ? 'User' : 'AI Assistant') + ': ' + m.content;
+        })
+        .join('\n\n');
+
+      const reportResponse = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 16000,
+        system: `You are a professional sports analytics report writer for OSU Gymnastics 2026. Transform conversations into the BODY CONTENT of a professional analysis report.
+
+# OUTPUT RULES — CRITICAL, READ CAREFULLY
+- Generate ONLY plain semantic HTML tags: <h1>, <h2>, <h3>, <p>, <ul>, <ol>, <li>, <table>, <tr>, <th>, <td>, <strong>, <em>
+- Do NOT use <div>, <span>, or <style> tags
+- Do NOT use any inline styles (no style="" attributes anywhere)
+- Do NOT use CSS, backgrounds, colors, fonts, padding, margins, or any visual styling
+- Do NOT wrap content in any container elements
+- ABSOLUTELY NO MARKDOWN. No #, ##, ###, **, -, ---, \`\`\` or any markdown syntax. Output ONLY HTML tags.
+- The page already has professional styling. You just provide the content structure using HTML tags.
+- Every heading MUST use <h1>, <h2>, or <h3> tags. Every paragraph MUST use <p> tags. Every list MUST use <ul>/<ol> and <li> tags.
+
+# CONTENT STRUCTURE
+1. <h1> with the report title
+2. <h2>Executive Summary</h2> — 2-3 paragraphs in <p> tags
+3. <h2>Key Takeaways</h2> — <ul> with <li> bullets
+4. <h2>Detailed Analysis</h2> — organized by topic with <h3> subsections, <p> paragraphs, <table> for data
+5. <h2>Trends & Patterns</h2>, <h2>Outlook</h2>
+
+# WRITING GUIDELINES
+- Professional but positive — celebrate achievements
+- Use specific numbers with 3 decimal places for gymnastics scores
+- Use <strong> for key numbers and athlete names
+
+# REGENERATION RULES
+This report is being updated. The conversation history includes the ORIGINAL analysis AND follow-up conversations that ADD TO or EXPAND the report. Your job is to produce a single cohesive report that MERGES everything together:
+- Keep ALL valid findings from the original conversations
+- Integrate NEW data and analysis from the latest conversations
+- The final report should read as one unified document — not as separate sections bolted together
+- If new data contradicts old data, use the newer data
+- If the user asked to expand scope (e.g., from one event to all events), the report should now cover the full expanded scope while keeping the original analysis that is still relevant
+- Organize logically by topic, not chronologically by conversation
+
+Professional, positive, specific numbers with 3 decimal places.`,
+        messages: [{
+          role: 'user',
+          content: 'Regenerate this analysis report by merging ALL conversation data into one cohesive document. Keep everything from earlier conversations that is still valid, and integrate the new findings from the latest conversation. The report should read as a single comprehensive analysis.\n\nTitle: "' + analysis.title + '"\n\nCategory: ' + analysis.category + '\n\n--- CONVERSATIONS ---\n' + chatTranscript
+        }]
+      });
+
+      const report = reportResponse.content[0]?.text || '';
+      if (report) {
+        writeReportPage(analysis.id, analysis.title, analysis.category || 'General', analysis.createdAt, report);
+        const updatedAnalyses = loadAnalyses();
+        const idx = updatedAnalyses.findIndex(a => a.id === analysis.id);
+        if (idx >= 0) {
+          updatedAnalyses[idx].formattedReport = report;
+          updatedAnalyses[idx].reportUrl = '/notes/' + analysis.id + '.html';
+          updatedAnalyses[idx].reportGeneratedAt = new Date().toISOString();
+          updatedAnalyses[idx].updatedAt = new Date().toISOString();
+          saveAnalyses(updatedAnalyses);
+          console.log('[Analyses API] Report regenerated for "' + analysis.title + '"');
+        }
+      }
+    } catch (reportErr) {
+      console.error('[Analyses API] Failed to regenerate report:', reportErr.message);
+    }
+  } catch (err) {
+    console.error('[Analyses API] Error appending chat:', err.message);
+    res.status(500).json({ error: 'Failed to append chat' });
   }
 });
 
@@ -1365,7 +1678,7 @@ function toolGetCompetitorData(input) {
     filtered = filtered.filter(m =>
       (m.opponent || '').toLowerCase().includes(teamQuery) ||
       (m.quadName || '').toLowerCase().includes(teamQuery) ||
-      (m.allTeams || []).some(t => t.toLowerCase().includes(teamQuery))
+      (m.allTeams || []).some(t => typeof t === 'string' && t.toLowerCase().includes(teamQuery))
     );
   }
 
@@ -1379,6 +1692,73 @@ function toolGetCompetitorData(input) {
       competitorAthletes: m.competitorAthletes || {},
       competitorLineups: m.competitorLineups || {}
     }))
+  };
+}
+
+/**
+ * Get full competitor team season data (Alabama, Utah, Denver)
+ */
+function toolGetCompetitorTeam(input) {
+  const teamKey = (input.team_name || '').toLowerCase().trim();
+  if (!teamKey) return { error: 'team_name is required. Available: alabama, utah, denver' };
+
+  // Find by key or partial name match
+  const match = Object.entries(competitorData).find(([key, data]) =>
+    key.includes(teamKey) || data.team.name.toLowerCase().includes(teamKey)
+  );
+
+  if (!match) {
+    const available = Object.keys(competitorData).join(', ') || 'none loaded';
+    return { error: `Team "${input.team_name}" not found. Available: ${available}` };
+  }
+
+  const [key, data] = match;
+
+  // If specific athlete requested, return just that athlete
+  if (input.athlete_name) {
+    const aq = input.athlete_name.toLowerCase();
+    const athleteMatch = Object.entries(data.athletes).find(([name]) =>
+      name.toLowerCase().includes(aq)
+    );
+    if (!athleteMatch) return { error: `Athlete "${input.athlete_name}" not found on ${data.team.name}` };
+    return {
+      team: data.team.name,
+      athlete: athleteMatch[0],
+      profile: athleteMatch[1],
+    };
+  }
+
+  // If specific event requested, return event rankings
+  if (input.event) {
+    const ev = input.event.toLowerCase();
+    return {
+      team: data.team.name,
+      event: ev,
+      rankings: data.eventRankings[ev] || [],
+      teamTrends: data.teamTrends.map(m => ({ date: m.date, [ev]: m[ev], total: m.total })),
+    };
+  }
+
+  // Return full team overview
+  return {
+    team: data.team.name,
+    conference: data.team.conference,
+    teamStats: data.teamStats,
+    teamTrends: data.teamTrends,
+    topScores: data.topScores,
+    eventRankings: data.eventRankings,
+    athletes: Object.fromEntries(
+      Object.entries(data.athletes).map(([name, p]) => [name, {
+        strongestEvent: p.strongestEvent,
+        seasonAvg: p.seasonAvg,
+        seasonHigh: p.seasonHigh,
+        totalAppearances: p.totalAppearances,
+        consistency: p.consistency,
+        events: Object.fromEntries(
+          Object.entries(p.events).map(([ev, s]) => [ev, { avg: s.avg, high: s.high, low: s.low, count: s.count, stdDev: s.stdDev }])
+        ),
+      }])
+    ),
   };
 }
 
@@ -1421,6 +1801,7 @@ function executeToolCall(toolName, input) {
       case 'get_lineup_analysis': return toolGetLineupAnalysis(input);
       case 'search_athletes': return toolSearchAthletes(input);
       case 'get_competitor_data': return toolGetCompetitorData(input);
+      case 'get_competitor_team': return toolGetCompetitorTeam(input);
       default: return { error: `Unknown tool: ${toolName}` };
     }
   } catch (err) {
@@ -1434,7 +1815,7 @@ function executeToolCall(toolName, input) {
 const chatbotTools = [
   {
     name: 'get_athlete_progression',
-    description: 'Get an athlete\'s meet-by-meet progression through the season. Returns chronological scores per event, AA totals, lineup positions, and trend summary with first/second half averages. Use for progression, trend, improvement, and trajectory questions.',
+    description: 'Get an athlete\'s meet-by-meet progression through the season. Returns chronological scores per event, AA totals, lineup positions, HOME/AWAY location for each meet, and trend summary. Use for progression, trend, consistency, home vs away analysis, and any question requiring individual scores. ALWAYS call this tool — do not try to answer from pre-computed context.',
     input_schema: {
       type: 'object',
       properties: {
@@ -1517,13 +1898,26 @@ const chatbotTools = [
   },
   {
     name: 'get_competitor_data',
-    description: 'Get competitor/opponent team data from meets. Can filter by meet ID or team name. Use when asked about opponents, rival teams, or competitor scores.',
+    description: 'Get competitor/opponent team data from OSU meets. Can filter by meet ID or team name. Use when asked about opponents in the context of OSU meets.',
     input_schema: {
       type: 'object',
       properties: {
         meet_id: { type: 'string', description: 'Optional: filter to a specific meet' },
         team_name: { type: 'string', description: 'Optional: filter by opponent team name (partial match)' }
       }
+    }
+  },
+  {
+    name: 'get_competitor_team',
+    description: 'Get FULL SEASON DATA for Alabama, Utah, or Denver — their complete 2026 season with every athlete, every score, every meet, event rankings, team trends, and statistical profiles. Use this for any question about these teams: predictions, comparisons, trend analysis, scouting reports, or head-to-head matchup preparation. This is rich data — call it!',
+    input_schema: {
+      type: 'object',
+      properties: {
+        team_name: { type: 'string', description: 'Team name: alabama, utah, or denver' },
+        athlete_name: { type: 'string', description: 'Optional: get detailed data for a specific athlete on the team' },
+        event: { type: 'string', enum: ['vault', 'bars', 'beam', 'floor'], description: 'Optional: focus on a specific event' }
+      },
+      required: ['team_name']
     }
   }
 ];
@@ -1635,17 +2029,15 @@ ${dataContext}
 # ANALYTICAL WORKFLOW
 When answering questions, follow this process:
 1. **Understand**: Parse the user's intent -- what are they really asking?
-2. **Plan**: Decide what data is needed. Can you answer from the pre-computed context above?
-3. **Gather**: If needed, call tools to get detailed data (progression, comparisons, lineups, etc.)
-4. **Verify**: Sanity-check the data -- do the numbers make sense?
-5. **Analyze**: Find patterns, trends, and insights in the data
-6. **Present**: Deliver a clear, positive, data-backed response
+2. **Gather**: IMMEDIATELY call tools to get the data you need. Do NOT plan or deliberate -- just call the tools in your FIRST response. The pre-computed context above is only a summary; for any real analysis you MUST use tools.
+3. **Analyze**: Find patterns, trends, and insights in the returned data
+4. **Present**: Deliver a clear, positive, data-backed response
 
 # EFFICIENCY RULES
-- Answer from pre-computed context for simple overview questions (e.g., "How's Jade doing?")
-- For ANY question requiring specific scores, trends, progressions, or statistical calculations — ALWAYS call the tools. Do not guess or approximate from pre-computed averages.
-- Be decisive -- gather data and answer. Never ask the user if they want you to try something. Just do it.
+- The pre-computed context is a quick reference ONLY. For ANY question about specific scores, home/away splits, consistency, trends, comparisons, rankings, or statistical calculations — ALWAYS call tools IMMEDIATELY in your first response. Do not attempt to answer without tool data.
+- Be decisive -- call tools and answer. Never say "let me get the data" or "I'll analyze this" without SIMULTANEOUSLY calling the tools. If you find yourself writing text without a tool call, you are doing it wrong.
 - For complex analyses (comparisons, trends, lineup strategy), use as many tools as needed (up to 5 rounds)
+- When asked "who is the most/best/worst X" — call get_event_rankings AND get_athlete_progression for the top candidates to get the detail you need. Do this in your FIRST response.
 
 # TOOLS AVAILABLE
 You have 8 tools that give you access to ALL raw data — every score from every routine at every meet. ALWAYS use these tools when the pre-computed context doesn't have enough detail. Never say you can't access data without trying.
@@ -1656,7 +2048,13 @@ You have 8 tools that give you access to ALL raw data — every score from every
 - **get_team_trends**: Season-long team performance trends. Use for "how's the team doing over time?"
 - **get_lineup_analysis**: Rotation position analysis. Use for "what positions does she compete in?"
 - **search_athletes**: Find athletes by partial name. Use when unsure about a name
-- **get_competitor_data**: Opponent team data. Use for "how did BYU score against us?"
+- **get_competitor_data**: Opponent team data from OSU meets. Use for "how did BYU score against us?"
+- **get_competitor_team**: FULL SEASON DATA for Alabama, Utah, or Denver. Every athlete's scores from every meet, event rankings, team trends, consistency metrics. Use for scouting, predictions, comparisons, matchup analysis. ALWAYS use this when the user asks about Alabama, Utah, or Denver.
+
+# GYMNASTICS FACTS — DO NOT GET THESE WRONG
+- There are exactly 4 events in women's gymnastics: Vault, Bars, Beam, Floor. Always 4. Never say "12 events" or any other number.
+- A quad meet is ONE meet with 4 teams competing, not 4 separate meets. Count meets by date/competition, not by opponent. For example, if OSU competed on 12 different dates, that is 12 meets — even if some were quad meets with multiple opponents.
+- OSU has 12 actual meets this season (some are quad meets with multiple opponents recorded separately in the data, but they are single competitions).
 
 # FORMATTING GUIDELINES
 - Use tables for comparisons and rankings
@@ -1674,11 +2072,13 @@ You have 8 tools that give you access to ALL raw data — every score from every
 
 # CRITICAL RULES
 - NEVER make up or hallucinate specific numbers
-- Always use real data from context or tools
+- Always use real data from tools
+- ALWAYS call tools in your FIRST response. Never write a message saying you will get data or need to look something up — just call the tools. If your first response contains text but no tool calls, you have failed.
 - NEVER claim data is unavailable or that you can't access something WITHOUT FIRST calling the relevant tools. You have access to EVERY individual score from EVERY routine for EVERY athlete via tools. If you need individual scores, call get_athlete_progression. If you need meet details, call get_meet_details. Always try the tools before saying you don't have the data.
 - NEVER ask the user if they want you to try a "different approach" — just DO IT. You are an agentic AI. Figure out how to answer the question and execute.
 - If a tool returns an error, try a different tool or approach. Do not give up after one attempt.
 - You CAN calculate standard deviations, averages, trends, and any statistical analysis from the individual scores returned by tools. Do the math yourself.
+- The get_athlete_progression tool returns home/away location for every meet. Use this to filter for home-only or away-only analysis when asked.
 - Show 3 decimal places for gymnastics scores
 - Handle truly missing data gracefully with "N/A" rather than guessing`;
 
