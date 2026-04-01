@@ -1,6 +1,6 @@
 /**
  * Chatbot Widget Styles - Facebook Messenger inspired
- * OSU Gymnastics branding: Scarlet (#BA0021), Gray (#333333), Gold (#FFD700)
+ * OSU Gymnastics branding: Orange (#D73F09), Gray (#333333), Orange Light (#FF8C5A)
  */
 
 #chatbot-widget {
@@ -16,12 +16,12 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #BA0021 0%, #8B0015 100%);
+  background: linear-gradient(135deg, #D73F09 0%, #a03000 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(186, 0, 33, 0.4);
+  box-shadow: 0 4px 12px rgba(215, 63, 9, 0.4);
   transition: all 0.3s ease;
   border: none;
   padding: 0;
@@ -29,13 +29,13 @@
 
 .chatbot-bubble:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(186, 0, 33, 0.6);
+  box-shadow: 0 6px 20px rgba(215, 63, 9, 0.6);
 }
 
 .chatbot-bubble.active {
-  background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%);
-  color: #BA0021;
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+  background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%);
+  color: #D73F09;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.5);
 }
 
 .bubble-content {
@@ -56,7 +56,7 @@
   right: 0;
   width: 420px;
   height: 600px;
-  background: white;
+  background: #1a1612;
   border-radius: 12px;
   box-shadow: 0 5px 40px rgba(0, 0, 0, 0.16);
   display: flex;
@@ -92,7 +92,7 @@
 
 /* Header */
 .chatbot-header {
-  background: linear-gradient(135deg, #BA0021 0%, #8B0015 100%);
+  background: linear-gradient(135deg, #D73F09 0%, #a03000 100%);
   color: white;
   padding: 16px;
   display: flex;
@@ -151,7 +151,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: #f5f5f5;
+  background: #100e0b;
 }
 
 .chatbot-messages::-webkit-scrollbar {
@@ -163,7 +163,7 @@
 }
 
 .chatbot-messages::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: #3d3228;
   border-radius: 4px;
 }
 
@@ -191,7 +191,7 @@
 }
 
 .user-message .message-content {
-  background: #BA0021;
+  background: #D73F09;
   color: white;
   border-radius: 18px 18px 4px 18px;
   padding: 10px 14px;
@@ -202,9 +202,9 @@
 }
 
 .assistant-message .message-content {
-  background: white;
-  color: #000;
-  border: 1px solid #e5e5e5;
+  background: #1a1612;
+  color: #F5EFEA;
+  border: 1px solid #3d3228;
   border-radius: 18px 18px 18px 4px;
   padding: 10px 14px;
   word-wrap: break-word;
@@ -214,14 +214,14 @@
 }
 
 .message.error .message-content {
-  background: #ffe6e6;
-  color: #c00;
-  border: 1px solid #ffcccc;
+  background: rgba(224, 92, 74, 0.15);
+  color: #e05c4a;
+  border: 1px solid rgba(224, 92, 74, 0.3);
 }
 
 .message-time {
   font-size: 11px;
-  color: #999;
+  color: #A08B78;
   padding: 0 12px;
 }
 
@@ -267,8 +267,8 @@
   display: flex;
   gap: 4px;
   padding: 12px;
-  background: white;
-  border: 1px solid #e5e5e5;
+  background: #1a1612;
+  border: 1px solid #3d3228;
   border-radius: 18px;
   width: fit-content;
   margin-left: 12px;
@@ -306,14 +306,14 @@
   display: flex;
   gap: 8px;
   padding: 12px;
-  background: white;
-  border-top: 1px solid #e5e5e5;
+  background: #1a1612;
+  border-top: 1px solid #3d3228;
   flex-shrink: 0;
 }
 
 .chatbot-input {
   flex: 1;
-  border: 1px solid #e5e5e5;
+  border: 1px solid #3d3228;
   border-radius: 20px;
   padding: 10px 16px;
   font-size: 14px;
@@ -325,11 +325,11 @@
 }
 
 .chatbot-input:focus {
-  border-color: #BA0021;
+  border-color: #D73F09;
 }
 
 .chatbot-input::placeholder {
-  color: #999;
+  color: #A08B78;
 }
 
 .chatbot-send-btn {
@@ -356,10 +356,10 @@
 /* Footer */
 .chatbot-footer {
   padding: 8px 12px;
-  background: #f9f9f9;
-  border-top: 1px solid #e5e5e5;
+  background: #1a1612;
+  border-top: 1px solid #3d3228;
   font-size: 12px;
-  color: #666;
+  color: #A08B78;
   text-align: center;
   flex-shrink: 0;
 }
@@ -367,14 +367,35 @@
 /* Save Chat Area */
 .chatbot-save-area {
   padding: 8px 12px;
-  background: #f9f9f9;
-  border-top: 1px solid #e5e5e5;
+  background: #1a1612;
+  border-top: 1px solid #3d3228;
   text-align: center;
   flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.chatbot-save-btn-secondary {
+  background: transparent;
+  color: #FF6B35;
+  border: 1px solid #FF6B35;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.chatbot-save-btn-secondary:hover {
+  background: rgba(255, 107, 53, 0.1);
+  transform: scale(1.05);
 }
 
 .chatbot-save-btn {
-  background: linear-gradient(135deg, #BA0021 0%, #8B0015 100%);
+  background: linear-gradient(135deg, #D73F09 0%, #a03000 100%);
   color: white;
   border: none;
   border-radius: 20px;
@@ -388,14 +409,14 @@
 
 .chatbot-save-btn:hover {
   transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(186, 0, 33, 0.3);
+  box-shadow: 0 2px 8px rgba(215, 63, 9, 0.3);
 }
 
 /* Save Form */
 .chatbot-save-form {
   padding: 12px;
-  background: #f9f9f9;
-  border-top: 1px solid #e5e5e5;
+  background: #1a1612;
+  border-top: 1px solid #3d3228;
   flex-shrink: 0;
 }
 
@@ -403,14 +424,14 @@
   font-weight: 600;
   font-size: 14px;
   margin-bottom: 8px;
-  color: #333;
+  color: #F5EFEA;
 }
 
 .save-form-input,
 .save-form-textarea,
 .save-form-select {
   width: 100%;
-  border: 1px solid #ddd;
+  border: 1px solid #3d3228;
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 13px;
@@ -424,7 +445,7 @@
 .save-form-input:focus,
 .save-form-textarea:focus,
 .save-form-select:focus {
-  border-color: #BA0021;
+  border-color: #D73F09;
 }
 
 .save-form-textarea {
@@ -450,21 +471,21 @@
 }
 
 .save-form-cancel {
-  background: #e5e5e5;
-  color: #666;
+  background: #2a241e;
+  color: #A08B78;
 }
 
 .save-form-cancel:hover {
-  background: #d5d5d5;
+  background: #332d26;
 }
 
 .save-form-submit {
-  background: #BA0021;
+  background: #D73F09;
   color: white;
 }
 
 .save-form-submit:hover {
-  background: #8B0015;
+  background: #a03000;
 }
 
 .save-form-feedback {
@@ -476,19 +497,27 @@
 }
 
 .save-form-feedback.success {
-  background: #e6f9e6;
-  color: #1a7a1a;
+  background: rgba(76, 175, 130, 0.15);
+  color: #4caf82;
 }
 
 .save-form-feedback.error {
-  background: #ffe6e6;
-  color: #c00;
+  background: rgba(224, 92, 74, 0.15);
+  color: #e05c4a;
+}
+
+/* Push chatbot above bottom nav on mobile */
+@media (max-width: 767px) {
+  #chatbot-widget {
+    bottom: 80px;
+    right: 16px;
+  }
 }
 
 /* Responsive Design */
 @media (max-width: 480px) {
   #chatbot-widget {
-    bottom: 12px;
+    bottom: 80px;
     right: 12px;
   }
 
