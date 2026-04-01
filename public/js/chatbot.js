@@ -75,6 +75,9 @@ class ChatbotWidget {
             <p class="status-text">Powered by Claude</p>
           </div>
           <div class="header-actions">
+            <button class="chatbot-btn clear-btn" id="clearChatBtn" title="Clear chat">
+              <span>🗑</span>
+            </button>
             <button class="chatbot-btn minimize-btn" id="minimizeBtn" title="Minimize">
               <span>−</span>
             </button>
@@ -158,6 +161,9 @@ class ChatbotWidget {
       }
     });
 
+    // Clear chat button
+    document.getElementById('clearChatBtn').addEventListener('click', () => this.clearChat());
+
     // Close button
     closeBtn.addEventListener('click', () => this.closeWindow());
 
@@ -202,6 +208,7 @@ class ChatbotWidget {
           role: 'assistant',
           content: 'Hi! 👋 I\'m your gymnastics AI assistant. Ask me about team stats, athlete performance, meet results, or request detailed analysis of gymnastics data. What would you like to know?',
           timestamp: new Date(),
+          isGreeting: true,
         },
       ];
       this.saveConversationToStorage();
@@ -256,6 +263,20 @@ class ChatbotWidget {
     }
   }
 
+  clearChat() {
+    this.messages = [
+      {
+        role: 'assistant',
+        content: 'Chat cleared! Start a new conversation whenever you\'re ready. 👋',
+        timestamp: new Date(),
+        isGreeting: true,
+      },
+    ];
+    this.renderMessages();
+    this.saveConversationToStorage();
+    this.hideSaveForm();
+  }
+
   async sendMessage() {
     const input = document.getElementById('chatbotInput');
     const userMessage = input.value.trim();
@@ -286,16 +307,21 @@ class ChatbotWidget {
     this.showTypingIndicator();
 
     try {
+      // Auto-detect page context (gymnast profile, meet details, etc.)
+      const pageContext = this.getPageContext();
+
+      // Build messages, prepending any page context if set
+      const apiMessages = [
+        ...pageContext,
+        ...(this.contextMessages || []),
+        ...this.messages.filter(m => !m.isGreeting).map(m => ({ role: m.role, content: m.content })),
+      ];
+
       // Send to backend (which proxies to Claude)
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: this.messages.map(m => ({
-            role: m.role,
-            content: m.content,
-          })),
-        }),
+        body: JSON.stringify({ messages: apiMessages }),
         timeout: 35000, // 35 second timeout to match server config
       });
 
@@ -383,14 +409,53 @@ class ChatbotWidget {
   updateSaveButtonVisibility() {
     const saveArea = document.getElementById('chatbotSaveArea');
     if (saveArea) {
-      saveArea.style.display = 'block';
+      saveArea.style.display = 'flex';
     }
   }
 
   showSaveForm() {
     document.getElementById('chatbotSaveArea').style.display = 'none';
     document.getElementById('chatbotSaveForm').style.display = 'block';
-    document.getElementById('saveTitle').focus();
+
+    // Smart defaults based on page context and conversation
+    const titleInput = document.getElementById('saveTitle');
+    const summaryInput = document.getElementById('saveSummary');
+    const categorySelect = document.getElementById('saveCategory');
+
+    // Detect gymnast name from profile page
+    const profileName = document.querySelector('.profile-name');
+    const gymnastName = profileName ? profileName.textContent.trim() : '';
+
+    // Get first user message for summary
+    const firstUserMsg = this.messages.find(m => m.role === 'user' && !m.isGreeting);
+    const firstQuestion = firstUserMsg ? firstUserMsg.content.substring(0, 100) : '';
+
+    // Build default title
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (gymnastName) {
+      titleInput.value = `${gymnastName} Analysis - ${today}`;
+      categorySelect.value = 'Athlete Performance';
+    } else if (firstQuestion.toLowerCase().includes('compare')) {
+      titleInput.value = `Comparison Analysis - ${today}`;
+      categorySelect.value = 'Comparison';
+    } else if (firstQuestion.toLowerCase().includes('team') || firstQuestion.toLowerCase().includes('season')) {
+      titleInput.value = `Team Analysis - ${today}`;
+      categorySelect.value = 'Team Analysis';
+    } else if (firstQuestion.toLowerCase().match(/vault|bars|beam|floor|event/)) {
+      titleInput.value = `Event Analysis - ${today}`;
+      categorySelect.value = 'Event Breakdown';
+    } else {
+      titleInput.value = `Chat Analysis - ${today}`;
+      categorySelect.value = 'General';
+    }
+
+    // Default summary from first question
+    if (firstQuestion) {
+      summaryInput.value = firstQuestion;
+    }
+
+    titleInput.focus();
+    titleInput.select();
   }
 
   hideSaveForm() {
@@ -431,15 +496,81 @@ class ChatbotWidget {
         throw new Error('Failed to save');
       }
 
-      feedback.textContent = 'Saved successfully!';
+      const data = await response.json();
+      feedback.textContent = 'Saved! Generating report... Redirecting to your notes.';
       feedback.className = 'save-form-feedback success';
       feedback.style.display = 'block';
-      setTimeout(() => this.hideSaveForm(), 1500);
+      // Clear chat
+      this.messages = [{
+        role: 'assistant',
+        content: 'Chat saved! Start a new conversation whenever you\'re ready.',
+        timestamp: new Date(),
+        isGreeting: true,
+      }];
+      this.saveConversationToStorage();
+      // Redirect to notes page (keep feedback visible until navigation)
+      setTimeout(() => { window.location.href = '/notes.html'; }, 1500);
     } catch (err) {
       feedback.textContent = 'Error saving. Please try again.';
       feedback.className = 'save-form-feedback error';
       feedback.style.display = 'block';
     }
+  }
+
+  /**
+   * Auto-detect page context from the current view
+   * Returns context messages to prepend to API calls
+   */
+  getPageContext() {
+    // Skip if contextMessages already set (e.g., report pages)
+    if (this.contextMessages && this.contextMessages.length > 0) return [];
+
+    let context = '';
+
+    // Detect gymnast profile page
+    const profileName = document.querySelector('.profile-name');
+    if (profileName && profileName.textContent.trim()) {
+      const name = profileName.textContent.trim();
+      // Grab visible stats from the profile
+      const profileEl = document.getElementById('gymnastDetail');
+      const profileText = profileEl ? profileEl.innerText.substring(0, 2000) : '';
+      context = `The user is currently viewing the profile page for gymnast "${name}". Here is the profile content they see:\n\n${profileText}\n\nWhen the user says "her", "his", "she", "he", "their", "this gymnast", etc., they are referring to ${name}. Always answer in context. Do NOT ask who they mean.`;
+    }
+
+    // Detect meet detail view
+    if (!context) {
+      const meetTitle = document.querySelector('.meet-detail-title, .meet-header h2');
+      if (meetTitle && meetTitle.textContent.trim()) {
+        const meetEl = meetTitle.closest('.meet-detail, .meet-view, [id*="meet"]');
+        const meetText = meetEl ? meetEl.innerText.substring(0, 2000) : meetTitle.textContent;
+        context = `The user is currently viewing meet details: "${meetTitle.textContent.trim()}". Content:\n\n${meetText}\n\nAnswer questions in the context of this meet.`;
+      }
+    }
+
+    // Detect which main view is active (season, gymnasts list, leaderboards, insights)
+    if (!context) {
+      const activeViews = document.querySelectorAll('.view[style*="display: block"], .view:not([style*="display: none"])');
+      for (const view of activeViews) {
+        if (view.id && view.offsetHeight > 0) {
+          const viewName = view.id.replace('view-', '');
+          const visibleText = view.innerText.substring(0, 2000);
+          context = `The user is currently viewing the "${viewName}" page of the OSU Gymnastics site. Here is what they see on screen:\n\n${visibleText}\n\nAnswer questions in the context of what they are viewing. If they say "this", "these", etc., they refer to what is on screen.`;
+          break;
+        }
+      }
+    }
+
+    // Notes page
+    if (!context && window.location.pathname.includes('notes')) {
+      context = 'The user is on the Saved Notes page viewing their saved analyses.';
+    }
+
+    if (!context) return [];
+
+    return [
+      { role: 'user', content: 'CONTEXT: ' + context },
+      { role: 'assistant', content: 'Got it. I have full context on what the user is viewing and will answer all questions accordingly without asking for clarification.' }
+    ];
   }
 
   formatMessage(content) {
